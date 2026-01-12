@@ -1,0 +1,85 @@
+// api/add-client.js
+const { google } = require('googleapis');
+
+async function getGoogleSheetsClient() {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  return google.sheets({ version: 'v4', auth });
+}
+
+const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+
+function generateID(prefix) {
+  return prefix + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+function generateToken() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+module.exports = async (req, res) => {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { businessID, clientName, mobile, email, breed, birthday } = req.body;
+
+    if (!businessID || !clientName) {
+      return res.status(400).json({ error: 'BusinessID and ClientName are required' });
+    }
+
+    const sheets = await getGoogleSheetsClient();
+
+    const clientID = generateID('CLI_');
+    const token = generateToken();
+    const createdAt = new Date().toISOString();
+
+    const values = [[
+      clientID,
+      businessID,
+      clientName,
+      token,
+      mobile || '',
+      email || '',
+      birthday || '',
+      breed || '',
+      createdAt,
+      '' // notes
+    ]];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: 'Clients!A:J',
+      valueInputOption: 'RAW',
+      resource: { values },
+    });
+
+    return res.status(201).json({
+      success: true,
+      clientID,
+      token,
+      clientName,
+      message: `Client added successfully! Token: ${token}`
+    });
+
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
