@@ -151,12 +151,7 @@ function CustomerCard() {
 
               {/* Stamp Grid */}
               <div className="mb-6">
-                <div className={`grid gap-4 ${
-                  business.requiredVisits <= 6 ? 'grid-cols-3' :
-                  business.requiredVisits <= 9 ? 'grid-cols-3' :
-                  business.requiredVisits <= 12 ? 'grid-cols-4' :
-                  'grid-cols-5'
-                }`}>
+                <div className="grid grid-cols-5 gap-4">
                   {Array.from({ length: business.requiredVisits }).map((_, index) => {
                     const isStamped = index < loyalty.currentProgress;
                     const isMilestone = (index + 1) === 5 || (index + 1) === 10 || (index + 1) === business.requiredVisits;
