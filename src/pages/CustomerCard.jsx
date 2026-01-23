@@ -214,27 +214,10 @@ function CustomerCard() {
                   className="relative mb-6 rounded-2xl overflow-hidden" 
                   style={{ 
                     minHeight: '280px',
-                    backgroundColor: `${business.accentColor}33` // 33 = 20% opacity in hex
+                    backgroundColor: business.cardBackgroundColor // Use card background, not accent color
                   }}
                 >
-                  {/* Background Pattern Text */}
-                  <div className="absolute inset-0 flex flex-col justify-center overflow-hidden">
-                    {Array.from({ length: 7 }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className="text-3xl font-black opacity-30 tracking-wider whitespace-nowrap"
-                        style={{ 
-                          transform: `translateX(${i % 2 === 0 ? '0' : '-50px'})`,
-                          lineHeight: '1.2',
-                          color: business.accentColor
-                        }}
-                      >
-                        {business.name.toUpperCase().replace(' ', ' ').repeat(3)}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Ad Image - Just the image, no HI badge */}
+                  {/* Ad Image - Just the image, clean background */}
                   <div className="relative z-10 flex items-center justify-center p-6">
                     <img 
                       src={`${business.adImageUrl}?t=${Date.now()}`} 
