@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:J' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:Q' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:T' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
     ]);
@@ -69,6 +69,9 @@ module.exports = async (req, res) => {
     console.log('Column 14 (Milestone2Label):', businessRow?.[14]);
     console.log('Column 15 (Milestone1Description):', businessRow?.[15]);
     console.log('Column 16 (Milestone2Description):', businessRow?.[16]);
+    console.log('Column 17 (BorderColor):', businessRow?.[17]);
+    console.log('Column 18 (BackgroundColor):', businessRow?.[18]);
+    console.log('Column 19 (CardBackgroundColor):', businessRow?.[19]);
     
     const business = {
       name: businessRow?.[1] || 'Urban Doggies',
@@ -87,6 +90,9 @@ module.exports = async (req, res) => {
       milestone2Label: businessRow?.[14] || 'TREATS!',
       milestone1Description: businessRow?.[15] || '5th grooming: 10% off',
       milestone2Description: businessRow?.[16] || '10th grooming: Premium dog treats',
+      borderColor: businessRow?.[17] || '#1F3A93',
+      backgroundColor: businessRow?.[18] || '#17BEBB',
+      cardBackgroundColor: businessRow?.[19] || '#F5F1E8',
     };
 
     // Count visits
