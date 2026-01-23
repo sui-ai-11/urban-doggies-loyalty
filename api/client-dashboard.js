@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:J' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:L' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:Q' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
     ]);
