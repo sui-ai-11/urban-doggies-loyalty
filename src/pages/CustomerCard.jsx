@@ -150,7 +150,7 @@ function CustomerCard() {
               </div>
 
               {/* Stamp Grid */}
-              <div className="mb-6">
+              <div className="mb-10">
                 <div className="grid grid-cols-5 gap-4">
                   {Array.from({ length: business.requiredVisits }).map((_, index) => {
                     const isStamped = index < loyalty.currentProgress;
@@ -160,7 +160,7 @@ function CustomerCard() {
                                           (index + 1) === business.requiredVisits ? 'REWARD!' : '';
                     
                     return (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative pb-7">
                         <div
                           className={`aspect-square rounded-full flex items-center justify-center text-xl font-bold border-4 transition-all duration-300 ${
                             isStamped 
@@ -192,9 +192,9 @@ function CustomerCard() {
                           )}
                         </div>
                         {isMilestone && !isStamped && milestoneReward && (
-                          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-bold whitespace-nowrap flex items-center gap-1">
+                          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs font-bold whitespace-nowrap">
                             <span className={(index + 1) === 5 ? 'text-orange-500' : 'text-[#17BEBB]'}>
-                              {(index + 1) === 5 ? '⭐' : '⭐'} {milestoneReward}
+                              ⭐ {milestoneReward}
                             </span>
                           </div>
                         )}
