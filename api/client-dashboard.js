@@ -60,6 +60,16 @@ module.exports = async (req, res) => {
 
     // Find business
     const businessRow = businessesRes.data.values?.find(row => row[0] === client.businessID);
+    
+    // DEBUG: Log the entire business row to see what we're getting
+    console.log('Business Row Length:', businessRow?.length);
+    console.log('Business Row Data:', businessRow);
+    console.log('Column 12 (ProgressText):', businessRow?.[12]);
+    console.log('Column 13 (Milestone1Label):', businessRow?.[13]);
+    console.log('Column 14 (Milestone2Label):', businessRow?.[14]);
+    console.log('Column 15 (Milestone1Description):', businessRow?.[15]);
+    console.log('Column 16 (Milestone2Description):', businessRow?.[16]);
+    
     const business = {
       name: businessRow?.[1] || 'Urban Doggies',
       tagline: businessRow?.[2] || '',
