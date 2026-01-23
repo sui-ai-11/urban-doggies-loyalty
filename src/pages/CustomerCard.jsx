@@ -145,7 +145,7 @@ function CustomerCard() {
                   Hey, {client.name.split(' ')[0]}!
                 </h2>
                 <p className="text-gray-600">
-                  See your grooming progress and rewards.
+                  {business.progressText || 'See your grooming progress and rewards.'}
                 </p>
               </div>
 
@@ -155,22 +155,32 @@ function CustomerCard() {
                   {Array.from({ length: business.requiredVisits }).map((_, index) => {
                     const isStamped = index < loyalty.currentProgress;
                     const isMilestone = (index + 1) === 5 || (index + 1) === 10 || (index + 1) === business.requiredVisits;
-                    const milestoneReward = (index + 1) === 5 ? '10% OFF' : 
-                                          (index + 1) === 10 ? 'TREATS!' : 
-                                          (index + 1) === business.requiredVisits ? 'REWARD!' : '';
+                    const milestoneReward = (index + 1) === 5 ? (business.milestone1Label || '10% OFF') : 
+                                          (index + 1) === 10 ? (business.milestone2Label || 'TREATS!') : 
+                                          (index + 1) === business.requiredVisits ? (business.milestone2Label || 'REWARD!') : '';
                     
                     return (
                       <div key={index} className="relative pb-7">
                         <div
-                          className={`aspect-square rounded-full flex items-center justify-center text-xl font-bold border-4 transition-all duration-300 ${
-                            isStamped 
-                              ? 'bg-[#17BEBB] border-[#17BEBB] text-white scale-100' 
+                          className="aspect-square rounded-full flex items-center justify-center text-xl font-bold border-4 transition-all duration-300"
+                          style={{
+                            backgroundColor: isStamped 
+                              ? business.accentColor
                               : isMilestone && (index + 1) === 5
-                              ? 'bg-[#FF9F1C] border-[#FF9F1C] text-white'
+                              ? '#FF9F1C'
                               : isMilestone
-                              ? 'bg-[#17BEBB] border-[#17BEBB] text-white'
-                              : 'bg-transparent border-gray-300 text-gray-400 scale-95'
-                          }`}
+                              ? business.accentColor
+                              : 'transparent',
+                            borderColor: isStamped 
+                              ? business.accentColor
+                              : isMilestone && (index + 1) === 5
+                              ? '#FF9F1C'
+                              : isMilestone
+                              ? business.accentColor
+                              : '#D1D5DB',
+                            color: isStamped || isMilestone ? '#FFFFFF' : '#9CA3AF',
+                            transform: isStamped ? 'scale(1)' : 'scale(0.95)'
+                          }}
                         >
                           {isStamped ? (
                             index === 0 ? (
@@ -193,7 +203,7 @@ function CustomerCard() {
                         </div>
                         {isMilestone && !isStamped && milestoneReward && (
                           <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs font-bold whitespace-nowrap">
-                            <span className={(index + 1) === 5 ? 'text-orange-500' : 'text-[#17BEBB]'}>
+                            <span style={{ color: (index + 1) === 5 ? '#FF9F1C' : business.accentColor }}>
                               ⭐ {milestoneReward}
                             </span>
                           </div>
@@ -206,16 +216,23 @@ function CustomerCard() {
 
               {/* Ad Space / Dog Photo Section */}
               {business.adImageUrl && (
-                <div className="relative mb-6 rounded-2xl overflow-hidden bg-[#17BEBB] bg-opacity-20" style={{ minHeight: '280px' }}>
+                <div 
+                  className="relative mb-6 rounded-2xl overflow-hidden bg-opacity-20" 
+                  style={{ 
+                    minHeight: '280px',
+                    backgroundColor: `${business.accentColor}33` // 33 = 20% opacity in hex
+                  }}
+                >
                   {/* Background Pattern Text */}
                   <div className="absolute inset-0 flex flex-col justify-center overflow-hidden">
                     {Array.from({ length: 7 }).map((_, i) => (
                       <div 
                         key={i} 
-                        className="text-[#17BEBB] text-3xl font-black opacity-30 tracking-wider whitespace-nowrap"
+                        className="text-3xl font-black opacity-30 tracking-wider whitespace-nowrap"
                         style={{ 
                           transform: `translateX(${i % 2 === 0 ? '0' : '-50px'})`,
-                          lineHeight: '1.2'
+                          lineHeight: '1.2',
+                          color: business.accentColor
                         }}
                       >
                         {business.name.toUpperCase().replace(' ', ' ').repeat(3)}
@@ -226,9 +243,10 @@ function CustomerCard() {
                   {/* Ad Image */}
                   <div className="relative z-10 flex items-center justify-center p-6">
                     <img 
-                      src={business.adImageUrl} 
+                      src={`${business.adImageUrl}?t=${Date.now()}`} 
                       alt="Promotion" 
                       className="max-h-64 w-auto object-contain drop-shadow-2xl"
+                      key={business.adImageUrl}
                     />
                     {/* HI! Badge */}
                     <div className="absolute bottom-8 right-8 bg-[#FF9F1C] text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-black transform rotate-12 shadow-lg">
@@ -244,11 +262,11 @@ function CustomerCard() {
                 <div className="space-y-2 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
                     <span className="text-orange-500">⭐</span>
-                    <span>5th grooming: 10% off</span>
+                    <span>{business.milestone1Description || '5th grooming: 10% off'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#17BEBB]">⭐</span>
-                    <span>10th grooming: {business.defaultReward || 'Premium dog treats'}</span>
+                    <span style={{ color: business.accentColor }}>⭐</span>
+                    <span>{business.milestone2Description || '10th grooming: Premium dog treats'}</span>
                   </div>
                 </div>
               </div>
@@ -265,9 +283,10 @@ function CustomerCard() {
                   {coupons.map((coupon, index) => (
                     <div 
                       key={index}
-                      className={`rounded-2xl p-6 text-white relative overflow-hidden ${
-                        index % 2 === 0 ? 'bg-[#17BEBB]' : 'bg-[#1F3A93]'
-                      }`}
+                      className="rounded-2xl p-6 text-white relative overflow-hidden"
+                      style={{
+                        backgroundColor: index % 2 === 0 ? business.accentColor : '#1F3A93'
+                      }}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="bg-white bg-opacity-20 rounded-full p-2">
@@ -373,11 +392,11 @@ function CustomerCard() {
         <div className="grid grid-cols-3 gap-3 p-4 bg-[#F5F1E8]">
           <button
             onClick={() => setActiveView('stamp')}
-            className={`py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1 ${
-              activeView === 'stamp'
-                ? 'bg-[#1F3A93] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
+            className="py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1"
+            style={{
+              backgroundColor: activeView === 'stamp' ? '#1F3A93' : '#FFFFFF',
+              color: activeView === 'stamp' ? '#FFFFFF' : '#6B7280'
+            }}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-1">
               <circle cx="12" cy="8" r="4"/>
@@ -389,11 +408,11 @@ function CustomerCard() {
           
           <button
             onClick={() => setActiveView('rewards')}
-            className={`py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1 ${
-              activeView === 'rewards'
-                ? 'bg-[#17BEBB] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
+            className="py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1"
+            style={{
+              backgroundColor: activeView === 'rewards' ? business.accentColor : '#FFFFFF',
+              color: activeView === 'rewards' ? '#FFFFFF' : '#6B7280'
+            }}
           >
             <Gift size={24} className="mb-1" />
             Exclusive Rewards
@@ -401,11 +420,11 @@ function CustomerCard() {
           
           <button
             onClick={() => setActiveView('message')}
-            className={`py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1 ${
-              activeView === 'message'
-                ? 'bg-[#FF9F1C] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
+            className="py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1"
+            style={{
+              backgroundColor: activeView === 'message' ? '#FF9F1C' : '#FFFFFF',
+              color: activeView === 'message' ? '#FFFFFF' : '#6B7280'
+            }}
           >
             <MessageCircle size={24} className="mb-1" />
             Message us
