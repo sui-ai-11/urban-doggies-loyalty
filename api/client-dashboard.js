@@ -72,6 +72,11 @@ module.exports = async (req, res) => {
       termsURL: businessRow?.[9] || '',
       supportText: businessRow?.[10] || '',
       adImageUrl: businessRow?.[11] || '',
+      progressText: businessRow?.[12] || 'See your grooming progress and rewards.',
+      milestone1Label: businessRow?.[13] || '10% OFF',
+      milestone2Label: businessRow?.[14] || 'TREATS!',
+      milestone1Description: businessRow?.[15] || '5th grooming: 10% off',
+      milestone2Description: businessRow?.[16] || '10th grooming: Premium dog treats',
     };
 
     // Count visits
