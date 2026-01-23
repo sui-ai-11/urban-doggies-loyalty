@@ -105,9 +105,15 @@ function CustomerCard() {
   const accentColor = '#FF9F1C';
 
   return (
-    <div className="min-h-screen bg-[#17BEBB] py-8 px-4">
+    <div className="min-h-screen" style={{ backgroundColor: business.backgroundColor }}>
       {/* Card Container */}
-      <div className="max-w-md mx-auto bg-[#F5F1E8] rounded-3xl border-8 border-[#1F3A93] shadow-2xl overflow-hidden">
+      <div 
+        className="max-w-md mx-auto rounded-3xl border-8 shadow-2xl overflow-hidden"
+        style={{ 
+          backgroundColor: business.cardBackgroundColor,
+          borderColor: business.borderColor
+        }}
+      >
         
         {/* Header with Logo */}
         <div className="p-6 pb-4">
@@ -117,13 +123,13 @@ function CustomerCard() {
             ) : (
               <div className="flex flex-col items-center">
                 <svg width="60" height="40" viewBox="0 0 60 40" className="mb-1">
-                  <path d="M10 30 Q10 10, 20 10 Q30 10, 30 20" stroke="#1F3A93" strokeWidth="4" fill="none" strokeLinecap="round"/>
-                  <path d="M20 30 Q20 15, 30 15 Q40 15, 40 25" stroke="#17BEBB" strokeWidth="4" fill="none" strokeLinecap="round"/>
-                  <path d="M30 30 Q30 20, 40 20 Q50 20, 50 30" stroke="#FF9F1C" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                  <path d="M10 30 Q10 10, 20 10 Q30 10, 30 20" stroke={business.borderColor} strokeWidth="4" fill="none" strokeLinecap="round"/>
+                  <path d="M20 30 Q20 15, 30 15 Q40 15, 40 25" stroke={business.accentColor} strokeWidth="4" fill="none" strokeLinecap="round"/>
+                  <path d="M30 30 Q30 20, 40 20 Q50 20, 50 30" stroke={business.accentColor} strokeWidth="4" fill="none" strokeLinecap="round"/>
                 </svg>
                 <span className="text-3xl font-bold">
-                  <span className="text-[#1F3A93]">{business.name.split(' ')[0]}</span>
-                  <span className="text-[#17BEBB]">{business.name.split(' ')[1] || ''}</span>
+                  <span style={{ color: business.borderColor }}>{business.name.split(' ')[0]}</span>
+                  <span style={{ color: business.accentColor }}>{business.name.split(' ')[1] || ''}</span>
                 </span>
               </div>
             )}
@@ -164,20 +170,8 @@ function CustomerCard() {
                         <div
                           className="aspect-square rounded-full flex items-center justify-center text-xl font-bold border-4 transition-all duration-300"
                           style={{
-                            backgroundColor: isStamped 
-                              ? business.accentColor
-                              : isMilestone && (index + 1) === 5
-                              ? '#FF9F1C'
-                              : isMilestone
-                              ? business.accentColor
-                              : 'transparent',
-                            borderColor: isStamped 
-                              ? business.accentColor
-                              : isMilestone && (index + 1) === 5
-                              ? '#FF9F1C'
-                              : isMilestone
-                              ? business.accentColor
-                              : '#D1D5DB',
+                            backgroundColor: isStamped || isMilestone ? business.accentColor : 'transparent',
+                            borderColor: isStamped || isMilestone ? business.accentColor : '#D1D5DB',
                             color: isStamped || isMilestone ? '#FFFFFF' : '#9CA3AF',
                             transform: isStamped ? 'scale(1)' : 'scale(0.95)'
                           }}
@@ -203,7 +197,7 @@ function CustomerCard() {
                         </div>
                         {isMilestone && !isStamped && milestoneReward && (
                           <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs font-bold whitespace-nowrap">
-                            <span style={{ color: (index + 1) === 5 ? '#FF9F1C' : business.accentColor }}>
+                            <span style={{ color: business.accentColor }}>
                               ⭐ {milestoneReward}
                             </span>
                           </div>
@@ -217,7 +211,7 @@ function CustomerCard() {
               {/* Ad Space / Dog Photo Section */}
               {business.adImageUrl && (
                 <div 
-                  className="relative mb-6 rounded-2xl overflow-hidden bg-opacity-20" 
+                  className="relative mb-6 rounded-2xl overflow-hidden" 
                   style={{ 
                     minHeight: '280px',
                     backgroundColor: `${business.accentColor}33` // 33 = 20% opacity in hex
@@ -240,7 +234,7 @@ function CustomerCard() {
                     ))}
                   </div>
                   
-                  {/* Ad Image */}
+                  {/* Ad Image - Just the image, no HI badge */}
                   <div className="relative z-10 flex items-center justify-center p-6">
                     <img 
                       src={`${business.adImageUrl}?t=${Date.now()}`} 
@@ -248,10 +242,6 @@ function CustomerCard() {
                       className="max-h-64 w-auto object-contain drop-shadow-2xl"
                       key={business.adImageUrl}
                     />
-                    {/* HI! Badge */}
-                    <div className="absolute bottom-8 right-8 bg-[#FF9F1C] text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-black transform rotate-12 shadow-lg">
-                      HI!
-                    </div>
                   </div>
                 </div>
               )}
@@ -261,7 +251,7 @@ function CustomerCard() {
                 <h3 className="font-bold text-gray-800 mb-3">Rewards:</h3>
                 <div className="space-y-2 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
-                    <span className="text-orange-500">⭐</span>
+                    <span style={{ color: business.accentColor }}>⭐</span>
                     <span>{business.milestone1Description || '5th grooming: 10% off'}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -285,7 +275,7 @@ function CustomerCard() {
                       key={index}
                       className="rounded-2xl p-6 text-white relative overflow-hidden"
                       style={{
-                        backgroundColor: index % 2 === 0 ? business.accentColor : '#1F3A93'
+                        backgroundColor: index % 2 === 0 ? business.accentColor : business.borderColor
                       }}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -389,12 +379,12 @@ function CustomerCard() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="grid grid-cols-3 gap-3 p-4 bg-[#F5F1E8]">
+        <div className="grid grid-cols-3 gap-3 p-4" style={{ backgroundColor: business.cardBackgroundColor }}>
           <button
             onClick={() => setActiveView('stamp')}
             className="py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1"
             style={{
-              backgroundColor: activeView === 'stamp' ? '#1F3A93' : '#FFFFFF',
+              backgroundColor: activeView === 'stamp' ? business.borderColor : '#FFFFFF',
               color: activeView === 'stamp' ? '#FFFFFF' : '#6B7280'
             }}
           >
@@ -422,7 +412,7 @@ function CustomerCard() {
             onClick={() => setActiveView('message')}
             className="py-4 rounded-2xl font-bold text-sm transition flex flex-col items-center justify-center gap-1"
             style={{
-              backgroundColor: activeView === 'message' ? '#FF9F1C' : '#FFFFFF',
+              backgroundColor: activeView === 'message' ? business.accentColor : '#FFFFFF',
               color: activeView === 'message' ? '#FFFFFF' : '#6B7280'
             }}
           >
