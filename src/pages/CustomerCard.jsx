@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Gift, MessageCircle } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode.react';
 
 function CustomerCard() {
   const [loading, setLoading] = useState(true);
@@ -163,7 +163,7 @@ function CustomerCard() {
                   <div className="p-3 bg-white rounded-xl" style={{ 
                     boxShadow: `0 4px 12px ${business.accentColor}40`
                   }}>
-                    <QRCodeSVG 
+                    <QRCode 
                       value={client.token} 
                       size={120}
                       level="H"
