@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Gift, MessageCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 function CustomerCard() {
   const [loading, setLoading] = useState(true);
@@ -153,6 +154,29 @@ function CustomerCard() {
                 <p className="text-gray-600">
                   {business.progressText || 'See your grooming progress and rewards.'}
                 </p>
+              </div>
+
+              {/* QR Code Section */}
+              <div className="bg-white rounded-2xl p-6 mb-6 text-center border-2" style={{ borderColor: business.accentColor }}>
+                <p className="text-sm font-bold text-gray-700 mb-3">Show this to staff</p>
+                <div className="flex justify-center mb-3">
+                  <div className="p-3 bg-white rounded-xl" style={{ 
+                    boxShadow: `0 4px 12px ${business.accentColor}40`
+                  }}>
+                    <QRCodeSVG 
+                      value={client.token} 
+                      size={120}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg py-2 px-4 inline-block">
+                  <p className="text-xs text-gray-500 mb-1">Token</p>
+                  <p className="text-2xl font-mono font-bold tracking-wider" style={{ color: business.accentColor }}>
+                    {client.token}
+                  </p>
+                </div>
               </div>
 
               {/* Stamp Grid */}
