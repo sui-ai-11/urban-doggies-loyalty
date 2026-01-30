@@ -1,3 +1,4 @@
+// Updated with QR scanner - v2.0
 import React, { useState, useEffect, useRef } from 'react';
 import { Scan, CheckCircle, ArrowLeft, Search, X, Camera } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
