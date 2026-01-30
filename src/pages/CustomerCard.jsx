@@ -209,25 +209,28 @@ function CustomerCard() {
               </div>
 
               {/* Ad Space / Dog Photo Section */}
-{business.adImageUrl && (
-  <div 
-    className="relative mb-6 rounded-2xl overflow-hidden" 
-    style={{ 
-      minHeight: '280px',
-      backgroundColor: business.cardBackgroundColor
-    }}
-  >
-    {/* Ad Image - Just the image, clean background */}
-    <div className="relative z-10 flex items-center justify-center p-6">
-      <img 
-        src={`${business.adImageUrl}?t=${Date.now()}`}
-        alt="Promotion" 
-        className="max-h-64 w-auto object-contain drop-shadow-2xl"
-        key={business.adImageUrl}
-      />
-    </div>
-  </div>
-)}
+              {business.adImageUrl && (
+                <div 
+                  className="relative mb-6 rounded-2xl overflow-hidden" 
+                  style={{ 
+                    minHeight: '280px',
+                    backgroundColor: business.cardBackgroundColor
+                  }}
+                >
+                  {/* Ad Image with Accent Color Shadow */}
+                  <div className="relative z-10 flex items-center justify-center p-6">
+                    <img 
+                      src={`${business.adImageUrl}?t=${Date.now()}`} 
+                      alt="Promotion" 
+                      className="max-h-64 w-auto object-contain"
+                      style={{
+                        filter: `drop-shadow(0px 8px 16px ${business.accentColor}80)` // 80 = 50% opacity
+                      }}
+                      key={business.adImageUrl}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Rewards Info */}
               <div className="bg-white rounded-2xl p-4 mb-6">
@@ -376,7 +379,7 @@ function CustomerCard() {
               <path d="M12 12v10"/>
               <path d="M8 16h8"/>
             </svg>
-            Stamp Card
+            {business.navButton1Text || 'Stamp Card'}
           </button>
           
           <button
@@ -388,7 +391,7 @@ function CustomerCard() {
             }}
           >
             <Gift size={24} className="mb-1" />
-            Exclusive Rewards
+            {business.navButton2Text || 'Exclusive Rewards'}
           </button>
           
           <button
@@ -400,7 +403,7 @@ function CustomerCard() {
             }}
           >
             <MessageCircle size={24} className="mb-1" />
-            Message us
+            {business.navButton3Text || 'Message us'}
           </button>
         </div>
       </div>
