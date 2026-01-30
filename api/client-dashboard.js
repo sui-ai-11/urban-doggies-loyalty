@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:J' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:T' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:W' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
     ]);
@@ -93,6 +93,9 @@ module.exports = async (req, res) => {
       borderColor: businessRow?.[17] || '#1F3A93',
       backgroundColor: businessRow?.[18] || '#17BEBB',
       cardBackgroundColor: businessRow?.[19] || '#F5F1E8',
+      navButton1Text: businessRow?.[20] || 'Stamp Card',
+      navButton2Text: businessRow?.[21] || 'Exclusive Rewards',
+      navButton3Text: businessRow?.[22] || 'Message us',
     };
 
     // Count visits
