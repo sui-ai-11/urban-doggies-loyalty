@@ -155,9 +155,9 @@ function CustomerCard() {
                 </p>
               </div>
 
-              {/* QR Code Section - Centered */}
+              {/* QR Code Section - Full Width Like Tagline */}
               <div className="mb-6">
-                <div className="max-w-xs mx-auto bg-white rounded-2xl p-4 border-2" style={{ borderColor: business.accentColor }}>
+                <div className="bg-white rounded-2xl p-4 border-2" style={{ borderColor: business.accentColor }}>
                   <div className="flex items-center gap-4">
                     {/* QR Code */}
                     <div className="flex-shrink-0">
