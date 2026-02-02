@@ -155,30 +155,32 @@ function CustomerCard() {
                 </p>
               </div>
 
-              {/* QR Code Section - Compact Horizontal */}
-              <div className="bg-white rounded-2xl p-4 mb-6 border-2" style={{ borderColor: business.accentColor }}>
-                <div className="flex items-center gap-4">
-                  {/* QR Code */}
-                  <div className="flex-shrink-0">
-                    <div className="p-2 bg-white rounded-xl" style={{ 
-                      boxShadow: `0 2px 8px ${business.accentColor}40`
-                    }}>
-                      <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${client.token}`}
-                        alt="QR Code"
-                        width="80"
-                        height="80"
-                        className="block"
-                      />
+              {/* QR Code Section - Centered */}
+              <div className="max-w-sm mx-auto mb-6">
+                <div className="bg-white rounded-2xl p-4 border-2" style={{ borderColor: business.accentColor }}>
+                  <div className="flex items-center gap-4">
+                    {/* QR Code */}
+                    <div className="flex-shrink-0">
+                      <div className="p-2 bg-white rounded-xl" style={{ 
+                        boxShadow: `0 2px 8px ${business.accentColor}40`
+                      }}>
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${client.token}`}
+                          alt="QR Code"
+                          width="80"
+                          height="80"
+                          className="block"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Token Info */}
-                  <div className="flex-1 text-left">
-                    <p className="text-xs text-gray-500 mb-1 font-semibold">Your Token</p>
-                    <p className="text-2xl font-mono font-bold tracking-wider break-all" style={{ color: business.accentColor }}>
-                      {client.token}
-                    </p>
+                    
+                    {/* Token Info */}
+                    <div className="flex-1 text-left">
+                      <p className="text-xs text-gray-500 mb-1 font-semibold">Your Token</p>
+                      <p className="text-2xl font-mono font-bold tracking-wider break-all" style={{ color: business.accentColor }}>
+                        {client.token}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
