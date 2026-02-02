@@ -11,13 +11,21 @@ function HomePage() {
     // Fetch business info to get logo
     async function fetchBusinessInfo() {
       try {
-        // Use a dummy token just to get business info
-        const response = await fetch('/api/client-dashboard?token=DUMMY');
+        // Try to get any client to extract business info
+        const response = await fetch('/api/get-all-clients');
         if (response.ok) {
           const data = await response.json();
-          if (data.business) {
-            setBusinessLogo(data.business.logo);
-            setBusinessName(data.business.name);
+          if (data.clients && data.clients.length > 0) {
+            // Get business info from first client
+            const firstClient = data.clients[0];
+            const clientResponse = await fetch(`/api/client-dashboard?token=${firstClient.token}`);
+            if (clientResponse.ok) {
+              const clientData = await clientResponse.json();
+              if (clientData.business) {
+                setBusinessLogo(clientData.business.logo);
+                setBusinessName(clientData.business.name);
+              }
+            }
           }
         }
       } catch (error) {
