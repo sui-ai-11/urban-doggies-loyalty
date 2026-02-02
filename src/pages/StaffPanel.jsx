@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CheckCircle, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { CheckCircle, Search, Camera, X } from 'lucide-react';
 import Navigation from '../components/Navigation';
 
 function StaffPanel() {
@@ -8,6 +8,116 @@ function StaffPanel() {
   const [message, setMessage] = useState('');
   const [clientInfo, setClientInfo] = useState(null);
   const [multipleResults, setMultipleResults] = useState(null); // For when multiple customers found
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const scanIntervalRef = useRef(null);
+
+  // Load jsQR library
+  useEffect(() => {
+    if (showScanner && !window.jsQR) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [showScanner]);
+
+  // Start QR Scanner
+  async function startScanner() {
+    setShowScanner(true);
+    setMessage('');
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setScanning(true);
+        scanQRCode();
+      }
+    } catch (err) {
+      setMessage('❌ Camera access denied or not available');
+      setShowScanner(false);
+    }
+  }
+
+  // Scan QR Code from video
+  function scanQRCode() {
+    scanIntervalRef.current = setInterval(() => {
+      if (videoRef.current && canvasRef.current && window.jsQR) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+        
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code) {
+            // Found QR code!
+            stopScanner();
+            setSearchInput(code.data.toUpperCase());
+            searchCustomerByToken(code.data.toUpperCase());
+          }
+        }
+      }
+    }, 300); // Scan every 300ms
+  }
+
+  // Stop Scanner
+  function stopScanner() {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+    }
+    
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+    }
+    
+    setShowScanner(false);
+    setScanning(false);
+  }
+
+  // Search by token (for QR scanner)
+  async function searchCustomerByToken(token) {
+    try {
+      setLoading(true);
+      setMessage('');
+      setClientInfo(null);
+
+      const response = await fetch(`/api/client-dashboard?token=${token}`);
+      
+      if (!response.ok) {
+        throw new Error('Customer not found');
+      }
+
+      const result = await response.json();
+      
+      if (result.client) {
+        setClientInfo({
+          ...result.client,
+          currentVisits: result.loyalty?.totalVisits || 0,
+          requiredVisits: result.business?.requiredVisits || 10
+        });
+        setMultipleResults(null);
+        setMessage('✅ Customer found! Review info and confirm to add stamp.');
+      }
+    } catch (error) {
+      setMessage(`❌ ${error.message}`);
+      setClientInfo(null);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Search for customer by token or name
   async function searchCustomer(e) {
@@ -148,8 +258,48 @@ function StaffPanel() {
           <p className="text-white text-opacity-90">Search by token or customer name</p>
         </div>
 
+        {/* QR Scanner Modal */}
+        {showScanner && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-[#1F3A93]">Scan QR Code</h2>
+                <button
+                  onClick={stopScanner}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <X size={24} className="text-gray-600" />
+                </button>
+              </div>
+              
+              <div className="relative bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '1' }}>
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  playsInline
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {/* Scanning overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="border-4 border-[#17BEBB] rounded-2xl" style={{ width: '70%', height: '70%' }}>
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white"></div>
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white"></div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-center text-gray-600 mt-4 font-semibold">
+                {scanning ? 'Position QR code within frame...' : 'Starting camera...'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Search Form */}
-        {!clientInfo && (
+        {!clientInfo && !showScanner && (
           <div className="bg-[#F5F1E8] rounded-3xl border-8 border-[#1F3A93] shadow-2xl p-8">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-[#17BEBB] rounded-full mb-4 shadow-lg">
@@ -157,6 +307,18 @@ function StaffPanel() {
               </div>
               <h2 className="text-3xl font-bold text-[#1F3A93]">Customer Check-In</h2>
             </div>
+
+            {/* Scan QR Code Button */}
+            <button
+              type="button"
+              onClick={startScanner}
+              className="w-full bg-[#1F3A93] text-white py-5 rounded-2xl font-bold text-xl hover:bg-[#152959] transition flex items-center justify-center gap-3 shadow-xl mb-4"
+            >
+              <Camera size={28} />
+              Scan QR Code
+            </button>
+
+            <div className="text-center text-gray-500 font-bold my-4">OR</div>
 
             {/* Manual Search */}
             <form onSubmit={searchCustomer}>
