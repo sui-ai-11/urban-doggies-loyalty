@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
     const [clientsRes, visitsRes] = await Promise.all([
       sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Clients!A2:J',
+        range: 'Clients!A2:K', // Extended to include birthday month
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
@@ -62,6 +62,9 @@ module.exports = async (req, res) => {
         email: row[5] || '',
         birthday: row[6] || '',
         breed: row[7] || '',
+        dateAdded: row[8] || '',
+        notes: row[9] || '',
+        birthdayMonth: row[10] || '', // New field
         visits: visits,
         requiredVisits: 10, // Default, can be made dynamic
         cardLink: `https://urban-doggies-loyalty.vercel.app/card?token=${row[3]}`
@@ -70,6 +73,13 @@ module.exports = async (req, res) => {
 
     // Get unique breeds for filtering
     const breeds = [...new Set(clients.map(c => c.breed).filter(Boolean))].sort();
+    
+    // Get unique birthday months for filtering
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    const birthdayMonths = months.filter(month => 
+      clients.some(c => c.birthdayMonth === month)
+    );
 
     // Calculate analytics
     const totalClients = clients.length;
@@ -90,6 +100,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       clients,
       breeds,
+      birthdayMonths,
       analytics: {
         totalClients,
         stampsToday,
