@@ -8,12 +8,14 @@ function AdminPanel() {
   const [filteredClients, setFilteredClients] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [breeds, setBreeds] = useState([]);
+  const [birthdayMonths, setBirthdayMonths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   
   // Add client form
@@ -21,7 +23,8 @@ function AdminPanel() {
     name: '',
     mobile: '',
     email: '',
-    breed: ''
+    breed: '',
+    birthdayMonth: ''
   });
 
   // Load all clients
@@ -49,6 +52,11 @@ function AdminPanel() {
       filtered = filtered.filter(c => c.breed === selectedBreed);
     }
     
+    // Birthday month filter
+    if (selectedMonth !== 'all') {
+      filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
+    }
+    
     // Sort
     filtered.sort((a, b) => {
       switch(sortBy) {
@@ -66,7 +74,7 @@ function AdminPanel() {
     });
     
     setFilteredClients(filtered);
-  }, [allClients, searchQuery, selectedBreed, sortBy]);
+  }, [allClients, searchQuery, selectedBreed, selectedMonth, sortBy]);
 
   async function loadAllClients() {
     try {
@@ -77,6 +85,7 @@ function AdminPanel() {
       if (response.ok) {
         setAllClients(data.clients || []);
         setBreeds(data.breeds || []);
+        setBirthdayMonths(data.birthdayMonths || []);
         setAnalytics(data.analytics || {});
       }
     } catch (error) {
@@ -285,7 +294,7 @@ function AdminPanel() {
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                       <Search size={16} className="inline mr-1" />
@@ -329,6 +338,23 @@ function AdminPanel() {
                       <option value="all">All Breeds</option>
                       {breeds.map(breed => (
                         <option key={breed} value={breed}>{breed}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      🎂 Birthday Month
+                    </label>
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
+                    >
+                      <option value="all">All Months</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                        <option key={month} value={month}>{month}</option>
                       ))}
                     </select>
                   </div>
@@ -457,6 +483,23 @@ function AdminPanel() {
                         placeholder="e.g., Shihtzu, Poodle, Golden Retriever"
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        🎂 Birthday Month (Optional)
+                      </label>
+                      <select
+                        value={newClient.birthdayMonth}
+                        onChange={(e) => setNewClient({...newClient, birthdayMonth: e.target.value})}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
+                      >
+                        <option value="">Select month...</option>
+                        {['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                          <option key={month} value={month}>{month}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <button
