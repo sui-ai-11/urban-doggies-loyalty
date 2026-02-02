@@ -416,28 +416,28 @@ function StaffPanel() {
 
             <div className="bg-white rounded-2xl p-6 mb-6 border-4 border-[#17BEBB]">
               <div className="space-y-4">
-                <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                  <span className="text-gray-600 font-semibold">Name:</span>
-                  <span className="font-bold text-[#1F3A93] text-xl">{clientInfo.name}</span>
+                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-3 border-b border-gray-200">
+                  <span className="text-gray-600 font-semibold whitespace-nowrap self-start">Name:</span>
+                  <span className="font-bold text-[#1F3A93] text-xl break-words">{clientInfo.name}</span>
                 </div>
-                <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                  <span className="text-gray-600 font-semibold">Token:</span>
-                  <span className="font-bold text-[#17BEBB] text-xl font-mono">{clientInfo.token}</span>
+                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-3 border-b border-gray-200">
+                  <span className="text-gray-600 font-semibold whitespace-nowrap self-start">Token:</span>
+                  <span className="font-bold text-[#17BEBB] text-xl font-mono break-all">{clientInfo.token}</span>
                 </div>
                 {clientInfo.breed && (
-                  <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                    <span className="text-gray-600 font-semibold">Pet:</span>
+                  <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-3 border-b border-gray-200">
+                    <span className="text-gray-600 font-semibold whitespace-nowrap self-start">Pet:</span>
                     <span className="font-bold text-gray-800">🐕 {clientInfo.breed}</span>
                   </div>
                 )}
                 {clientInfo.mobile && (
-                  <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                    <span className="text-gray-600 font-semibold">Mobile:</span>
+                  <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-3 border-b border-gray-200">
+                    <span className="text-gray-600 font-semibold whitespace-nowrap self-start">Mobile:</span>
                     <span className="font-bold text-gray-800">{clientInfo.mobile}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-gray-600 font-semibold">Current Visits:</span>
+                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-3">
+                  <span className="text-gray-600 font-semibold whitespace-nowrap self-start">Current Visits:</span>
                   <span className="font-bold text-[#17BEBB] text-2xl">
                     {clientInfo.currentVisits || 0}/{clientInfo.requiredVisits || 10}
                   </span>
@@ -455,18 +455,18 @@ function StaffPanel() {
               <button
                 onClick={confirmAddStamp}
                 disabled={loading}
-                className="bg-[#17BEBB] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#15a8a5] transition disabled:bg-gray-300 flex items-center justify-center gap-2"
+                className="bg-[#17BEBB] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#15a8a5] transition disabled:bg-gray-300"
               >
                 {loading ? (
-                  <>
+                  <div className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Adding...
-                  </>
+                    <span>Adding...</span>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex flex-col items-center justify-center gap-1">
                     <CheckCircle size={24} />
-                    Add Stamp
-                  </>
+                    <span>Add Stamp</span>
+                  </div>
                 )}
               </button>
             </div>
@@ -475,7 +475,7 @@ function StaffPanel() {
 
         {/* Success/Error Message */}
         {message && (
-          <div className={`mt-6 p-6 rounded-2xl text-center font-bold text-lg border-4 ${
+          <div className={`mt-6 p-4 rounded-2xl text-center font-bold text-base border-4 ${
             message.includes('🎉') 
               ? 'bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-800 border-[#FF9F1C] shadow-lg' 
               : message.includes('✅') && (message.includes('Stamp added') || message.includes('SUCCESS'))
@@ -484,12 +484,14 @@ function StaffPanel() {
               ? 'bg-blue-50 text-blue-800 border-blue-400'
               : 'bg-red-50 text-red-800 border-red-400'
           }`}>
-            <div className="text-4xl mb-3">
-              {message.includes('🎉') ? '🎉' : 
-               message.includes('✅') && (message.includes('Stamp added') || message.includes('SUCCESS')) ? '✅' :
-               message.includes('✅') ? 'ℹ️' : '❌'}
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">
+                {message.includes('🎉') ? '🎉' : 
+                 message.includes('✅') && (message.includes('Stamp added') || message.includes('SUCCESS')) ? '✅' :
+                 message.includes('✅') ? 'ℹ️' : '❌'}
+              </span>
+              <span className="text-sm sm:text-base">{message}</span>
             </div>
-            {message}
           </div>
         )}
       </div>
