@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Gift, MessageCircle } from 'lucide-react';
-import QRCode from 'qrcode.react';
 
 function CustomerCard() {
   const [loading, setLoading] = useState(true);
@@ -156,18 +155,20 @@ function CustomerCard() {
                 </p>
               </div>
 
-              {/* QR Code Section */}
+              {/* QR Code Section - Using API */}
               <div className="bg-white rounded-2xl p-6 mb-6 text-center border-2" style={{ borderColor: business.accentColor }}>
                 <p className="text-sm font-bold text-gray-700 mb-3">Show this to staff</p>
                 <div className="flex justify-center mb-3">
                   <div className="p-3 bg-white rounded-xl" style={{ 
                     boxShadow: `0 4px 12px ${business.accentColor}40`
                   }}>
-                    <QRCode 
-                      value={client.token} 
-                      size={120}
-                      level="H"
-                      includeMargin={false}
+                    {/* QR Code using API - No package needed! */}
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${client.token}`}
+                      alt="QR Code"
+                      width="120"
+                      height="120"
+                      className="block"
                     />
                   </div>
                 </div>
