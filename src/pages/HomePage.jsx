@@ -1,8 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { Users, Settings } from 'lucide-react';
 
 function HomePage() {
+  const [businessLogo, setBusinessLogo] = useState('');
+  const [businessName, setBusinessName] = useState('Urban Doggies');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch business info to get logo
+    async function fetchBusinessInfo() {
+      try {
+        // Use a dummy token just to get business info
+        const response = await fetch('/api/client-dashboard?token=DUMMY');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.business) {
+            setBusinessLogo(data.business.logo);
+            setBusinessName(data.business.name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching business info:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBusinessInfo();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#17BEBB]">
       <Navigation currentPage="home" />
@@ -10,13 +36,21 @@ function HomePage() {
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <div className="mb-6">
-            <svg width="120" height="80" viewBox="0 0 120 80" className="mx-auto mb-4">
-              <path d="M20 60 Q20 20, 40 20 Q60 20, 60 40" stroke="#1F3A93" strokeWidth="8" fill="none" strokeLinecap="round"/>
-              <path d="M40 60 Q40 30, 60 30 Q80 30, 80 50" stroke="#FF9F1C" strokeWidth="8" fill="none" strokeLinecap="round"/>
-              <path d="M60 60 Q60 40, 80 40 Q100 40, 100 60" stroke="#1F3A93" strokeWidth="8" fill="none" strokeLinecap="round"/>
-            </svg>
+            {!loading && businessLogo ? (
+              <img 
+                src={businessLogo} 
+                alt={businessName}
+                className="h-24 w-auto mx-auto mb-4"
+              />
+            ) : (
+              <svg width="120" height="80" viewBox="0 0 120 80" className="mx-auto mb-4">
+                <path d="M20 60 Q20 20, 40 20 Q60 20, 60 40" stroke="#1F3A93" strokeWidth="8" fill="none" strokeLinecap="round"/>
+                <path d="M40 60 Q40 30, 60 30 Q80 30, 80 50" stroke="#FF9F1C" strokeWidth="8" fill="none" strokeLinecap="round"/>
+                <path d="M60 60 Q60 40, 80 40 Q100 40, 100 60" stroke="#1F3A93" strokeWidth="8" fill="none" strokeLinecap="round"/>
+              </svg>
+            )}
           </div>
-          <h1 className="text-5xl font-bold text-white mb-3">Urban Doggies</h1>
+          <h1 className="text-5xl font-bold text-white mb-3">{businessName}</h1>
           <p className="text-2xl text-white text-opacity-90 font-semibold">Digital Loyalty System</p>
         </div>
 
