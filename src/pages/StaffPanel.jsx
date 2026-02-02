@@ -6,6 +6,7 @@ function StaffPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [clientInfo, setClientInfo] = useState(null);
+  const [multipleResults, setMultipleResults] = useState(null); // For when multiple customers found
 
   // Search for customer by token or name
   async function searchCustomer(e) {
@@ -39,21 +40,28 @@ function StaffPanel() {
       
       // Handle different response formats
       if (result.client) {
+        // Single result from token search
         setClientInfo({
           ...result.client,
           currentVisits: result.loyalty?.totalVisits || 0,
           requiredVisits: result.business?.requiredVisits || 10
         });
+        setMultipleResults(null);
         setMessage('✅ Customer found! Review info and confirm to add stamp.');
-      } else if (result.clients && result.clients.length > 0) {
-        // Multiple results from name search
-        const firstClient = result.clients[0];
+      } else if (result.clients && result.clients.length > 1) {
+        // Multiple results - show selection
+        setMultipleResults(result.clients);
+        setClientInfo(null);
+        setMessage(`✅ Found ${result.clients.length} customers with that name. Please select:`);
+      } else if (result.clients && result.clients.length === 1) {
+        // Only one result
         setClientInfo({
-          ...firstClient,
+          ...result.clients[0],
           currentVisits: 0,
           requiredVisits: 10
         });
-        setMessage(`✅ Found ${result.clients.length} customer(s). Showing: ${firstClient.name}`);
+        setMultipleResults(null);
+        setMessage('✅ Customer found! Review info and confirm to add stamp.');
       } else {
         throw new Error('Customer not found');
       }
@@ -114,6 +122,17 @@ function StaffPanel() {
     setClientInfo(null);
     setSearchInput('');
     setMessage('');
+    setMultipleResults(null);
+  }
+
+  function selectCustomer(customer) {
+    setClientInfo({
+      ...customer,
+      currentVisits: 0,
+      requiredVisits: 10
+    });
+    setMultipleResults(null);
+    setMessage('✅ Customer selected! Review info and confirm to add stamp.');
   }
 
   return (
@@ -209,6 +228,53 @@ function StaffPanel() {
                 )}
               </button>
             </form>
+          </div>
+        )}
+
+        {/* Multiple Results - Customer Selection */}
+        {multipleResults && multipleResults.length > 1 && (
+          <div className="bg-[#F5F1E8] rounded-3xl border-8 border-[#1F3A93] shadow-2xl p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-[#1F3A93]">Select Customer</h2>
+              <p className="text-gray-600 mt-2">Found {multipleResults.length} customers. Click to select:</p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {multipleResults.map((customer, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectCustomer(customer)}
+                  className="w-full bg-white hover:bg-blue-50 border-4 border-[#17BEBB] rounded-2xl p-5 text-left transition"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-xl text-[#1F3A93]">{customer.name}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Token: <span className="font-mono font-bold text-[#17BEBB]">{customer.token}</span>
+                      </p>
+                      {customer.mobile && (
+                        <p className="text-sm text-gray-600">Mobile: {customer.mobile}</p>
+                      )}
+                      {customer.breed && (
+                        <p className="text-sm text-gray-600">Pet: 🐕 {customer.breed}</p>
+                      )}
+                    </div>
+                    <div className="text-[#17BEBB]">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={cancelSearch}
+              className="w-full bg-gray-200 text-gray-700 py-4 rounded-2xl font-bold text-lg hover:bg-gray-300 transition"
+            >
+              Cancel
+            </button>
           </div>
         )}
 
