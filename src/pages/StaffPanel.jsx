@@ -1,79 +1,17 @@
-// Updated with QR scanner - v2.0
-import React, { useState, useEffect, useRef } from 'react';
-import { Scan, CheckCircle, ArrowLeft, Search, X, Camera } from 'lucide-react';
-import { Html5Qrcode } from 'html5-qrcode';
+import React, { useState } from 'react';
+import { CheckCircle, ArrowLeft, Search } from 'lucide-react';
 
 function StaffPanel() {
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [clientInfo, setClientInfo] = useState(null);
-  const [showScanner, setShowScanner] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const scannerRef = useRef(null);
-  const html5QrCodeRef = useRef(null);
-
-  // Start QR Scanner
-  async function startScanner() {
-    setShowScanner(true);
-    setScanning(true);
-    setMessage('');
-    
-    try {
-      // Get list of cameras
-      const devices = await Html5Qrcode.getCameras();
-      
-      if (devices && devices.length) {
-        const html5QrCode = new Html5Qrcode("qr-reader");
-        html5QrCodeRef.current = html5QrCode;
-        
-        // Start scanning - prefer back camera
-        const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-        
-        await html5QrCode.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-          },
-          (decodedText) => {
-            // Successfully scanned!
-            setSearchInput(decodedText.toUpperCase());
-            stopScanner();
-            searchCustomer(decodedText.toUpperCase());
-          },
-          (errorMessage) => {
-            // Scanning... (ignore errors)
-          }
-        );
-      } else {
-        setMessage('❌ No camera found on this device');
-        setShowScanner(false);
-        setScanning(false);
-      }
-    } catch (err) {
-      setMessage('❌ Camera access denied or not available');
-      setShowScanner(false);
-      setScanning(false);
-    }
-  }
-
-  // Stop QR Scanner
-  function stopScanner() {
-    if (html5QrCodeRef.current) {
-      html5QrCodeRef.current.stop().then(() => {
-        html5QrCodeRef.current.clear();
-        setShowScanner(false);
-        setScanning(false);
-      }).catch((err) => {
-        console.error('Error stopping scanner:', err);
-      });
-    }
-  }
 
   // Search for customer by token or name
-  async function searchCustomer(query = searchInput) {
-    if (!query.trim()) {
+  async function searchCustomer(e) {
+    e.preventDefault();
+    
+    if (!searchInput.trim()) {
       setMessage('⚠️ Please enter a token or customer name');
       return;
     }
@@ -83,12 +21,14 @@ function StaffPanel() {
       setMessage('');
       setClientInfo(null);
 
+      const query = searchInput.toUpperCase();
+
       // Try to find by token first
-      let response = await fetch(`/api/client-dashboard?token=${query.toUpperCase()}`);
+      let response = await fetch(`/api/client-dashboard?token=${query}`);
       
       if (!response.ok) {
         // If token fails, try searching by name
-        response = await fetch(`/api/search-client?name=${encodeURIComponent(query)}`);
+        response = await fetch(`/api/search-client?name=${encodeURIComponent(searchInput)}`);
       }
 
       if (!response.ok) {
@@ -107,8 +47,13 @@ function StaffPanel() {
         setMessage('✅ Customer found! Review info and confirm to add stamp.');
       } else if (result.clients && result.clients.length > 0) {
         // Multiple results from name search
-        setClientInfo(result.clients[0]); // Show first result
-        setMessage(`✅ Found ${result.clients.length} customer(s). Showing: ${result.clients[0].name}`);
+        const firstClient = result.clients[0];
+        setClientInfo({
+          ...firstClient,
+          currentVisits: 0,
+          requiredVisits: 10
+        });
+        setMessage(`✅ Found ${result.clients.length} customer(s). Showing: ${firstClient.name}`);
       } else {
         throw new Error('Customer not found');
       }
@@ -171,15 +116,6 @@ function StaffPanel() {
     setMessage('');
   }
 
-  // Cleanup scanner on unmount
-  useEffect(() => {
-    return () => {
-      if (html5QrCodeRef.current) {
-        html5QrCodeRef.current.stop().catch(() => {});
-      }
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#17BEBB]">
       {/* Header */}
@@ -194,7 +130,7 @@ function StaffPanel() {
             </a>
             <div>
               <h1 className="text-3xl font-bold">Staff Check-In</h1>
-              <p className="text-blue-200 text-sm">Scan QR code or search customer</p>
+              <p className="text-blue-200 text-sm">Search by token or customer name</p>
             </div>
           </div>
         </div>
@@ -209,11 +145,11 @@ function StaffPanel() {
           <ol className="space-y-2 text-gray-700">
             <li className="flex items-start gap-3">
               <span className="font-bold text-[#17BEBB] text-xl">1.</span>
-              <span>Scan customer's QR code with camera</span>
+              <span>Ask customer for their token or name</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="font-bold text-[#17BEBB] text-xl">2.</span>
-              <span>Or manually enter token or customer name</span>
+              <span>Enter token (e.g., DOG789) or full name</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="font-bold text-[#17BEBB] text-xl">3.</span>
@@ -226,48 +162,18 @@ function StaffPanel() {
           </ol>
         </div>
 
-        {/* QR Scanner Modal */}
-        {showScanner && (
-          <div className="bg-[#F5F1E8] rounded-3xl border-8 border-[#1F3A93] shadow-2xl p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-[#1F3A93]">Scan QR Code</h2>
-              <button
-                onClick={stopScanner}
-                className="p-2 hover:bg-red-100 rounded-lg transition"
-              >
-                <X size={24} className="text-red-600" />
-              </button>
-            </div>
-            <div id="qr-reader" className="rounded-2xl overflow-hidden"></div>
-            <p className="text-center text-gray-600 mt-4">
-              {scanning ? 'Position QR code within frame...' : 'Starting camera...'}
-            </p>
-          </div>
-        )}
-
         {/* Search Form */}
-        {!showScanner && !clientInfo && (
+        {!clientInfo && (
           <div className="bg-[#F5F1E8] rounded-3xl border-8 border-[#1F3A93] shadow-2xl p-8">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-[#17BEBB] rounded-full mb-4 shadow-lg">
-                <Scan size={40} className="text-white" />
+                <Search size={40} className="text-white" />
               </div>
               <h2 className="text-3xl font-bold text-[#1F3A93]">Customer Check-In</h2>
             </div>
 
-            {/* QR Scan Button */}
-            <button
-              onClick={startScanner}
-              className="w-full bg-[#1F3A93] text-white py-5 rounded-2xl font-bold text-xl hover:bg-[#152959] transition flex items-center justify-center gap-3 shadow-xl mb-4"
-            >
-              <Camera size={28} />
-              Scan QR Code
-            </button>
-
-            <div className="text-center text-gray-500 font-bold my-4">OR</div>
-
             {/* Manual Search */}
-            <form onSubmit={(e) => { e.preventDefault(); searchCustomer(); }}>
+            <form onSubmit={searchCustomer}>
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-700 mb-3 text-center">
                   Enter Token or Customer Name
@@ -281,7 +187,7 @@ function StaffPanel() {
                   autoFocus
                 />
                 <p className="text-xs text-gray-500 mt-3 text-center font-semibold">
-                  Enter customer token or full name
+                  Customer can show you their token or tell you their name
                 </p>
               </div>
 
@@ -321,6 +227,10 @@ function StaffPanel() {
                 <div className="flex justify-between items-center py-3 border-b border-gray-200">
                   <span className="text-gray-600 font-semibold">Name:</span>
                   <span className="font-bold text-[#1F3A93] text-xl">{clientInfo.name}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-gray-600 font-semibold">Token:</span>
+                  <span className="font-bold text-[#17BEBB] text-xl font-mono">{clientInfo.token}</span>
                 </div>
                 {clientInfo.breed && (
                   <div className="flex justify-between items-center py-3 border-b border-gray-200">
@@ -409,11 +319,11 @@ function StaffPanel() {
           <ul className="space-y-2 text-gray-700">
             <li className="flex items-start gap-2">
               <span className="text-[#17BEBB] font-bold">•</span>
-              <span><strong>QR not scanning?</strong> Use manual token entry</span>
+              <span><strong>Token not working?</strong> Ask customer to show their loyalty card</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#17BEBB] font-bold">•</span>
-              <span><strong>Can't find customer?</strong> Try entering full name</span>
+              <span><strong>Can't find customer?</strong> Try entering their full name</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#17BEBB] font-bold">•</span>
