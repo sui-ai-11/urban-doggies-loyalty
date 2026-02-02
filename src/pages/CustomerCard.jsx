@@ -155,10 +155,10 @@ function CustomerCard() {
                 </p>
               </div>
 
-              {/* QR Code Section - More Centered */}
+              {/* QR Code Section - Content Centered */}
               <div className="mb-6 px-6">
                 <div className="max-w-xs mx-auto bg-white rounded-2xl p-4 border-2" style={{ borderColor: business.accentColor }}>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center gap-4">
                     {/* QR Code */}
                     <div className="flex-shrink-0">
                       <div className="p-2 bg-white rounded-xl" style={{ 
@@ -175,7 +175,7 @@ function CustomerCard() {
                     </div>
                     
                     {/* Token Info */}
-                    <div className="flex-1 text-left">
+                    <div className="text-left">
                       <p className="text-xs text-gray-500 mb-1 font-semibold">Your Token</p>
                       <p className="text-xl font-mono font-bold tracking-wider break-all" style={{ color: business.accentColor }}>
                         {client.token}
