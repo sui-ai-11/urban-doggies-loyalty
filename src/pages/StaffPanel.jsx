@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CheckCircle, ArrowLeft, Search } from 'lucide-react';
+import { CheckCircle, Search } from 'lucide-react';
+import Navigation from '../components/Navigation';
 
 function StaffPanel() {
   const [searchInput, setSearchInput] = useState('');
@@ -137,48 +138,14 @@ function StaffPanel() {
 
   return (
     <div className="min-h-screen bg-[#17BEBB]">
-      {/* Header */}
-      <div className="bg-[#1F3A93] text-white px-6 py-6 shadow-lg">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
-            <a 
-              href="/" 
-              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
-            >
-              <ArrowLeft size={24} />
-            </a>
-            <div>
-              <h1 className="text-3xl font-bold">Staff Check-In</h1>
-              <p className="text-blue-200 text-sm">Search by token or customer name</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Navigation currentPage="staff" />
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-6 py-8">
         
-        {/* Instructions */}
-        <div className="bg-blue-50 border-4 border-[#1F3A93] rounded-3xl p-6 mb-6">
-          <h3 className="font-bold text-[#1F3A93] text-lg mb-3">📱 How to use:</h3>
-          <ol className="space-y-2 text-gray-700">
-            <li className="flex items-start gap-3">
-              <span className="font-bold text-[#17BEBB] text-xl">1.</span>
-              <span>Ask customer for their token or name</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="font-bold text-[#17BEBB] text-xl">2.</span>
-              <span>Enter token (e.g., DOG789) or full name</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="font-bold text-[#17BEBB] text-xl">3.</span>
-              <span>Verify customer info and confirm</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="font-bold text-[#FF9F1C] text-xl">🎁</span>
-              <span>System automatically issues rewards at milestones!</span>
-            </li>
-          </ol>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Client Management</h1>
+          <p className="text-white text-opacity-90">Search by token or customer name</p>
         </div>
 
         {/* Search Form */}
@@ -201,13 +168,10 @@ function StaffPanel() {
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="DOG789 or Mau Marasigan"
+                  placeholder=""
                   className="w-full px-6 py-5 text-xl text-center border-4 border-[#17BEBB] rounded-2xl focus:ring-4 focus:ring-[#17BEBB] focus:ring-opacity-30 focus:border-[#1F3A93] bg-white shadow-inner"
                   autoFocus
                 />
-                <p className="text-xs text-gray-500 mt-3 text-center font-semibold">
-                  Customer can show you their token or tell you their name
-                </p>
               </div>
 
               <button
@@ -366,37 +330,6 @@ function StaffPanel() {
             {message}
           </div>
         )}
-
-        {/* Quick Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="bg-[#F5F1E8] border-4 border-[#1F3A93] rounded-2xl p-6 text-center">
-            <p className="text-4xl font-bold text-[#17BEBB] mb-2">-</p>
-            <p className="text-sm text-gray-600 font-bold">Stamps Today</p>
-          </div>
-          <div className="bg-[#F5F1E8] border-4 border-[#FF9F1C] rounded-2xl p-6 text-center">
-            <p className="text-4xl font-bold text-[#FF9F1C] mb-2">-</p>
-            <p className="text-sm text-gray-600 font-bold">Rewards Issued</p>
-          </div>
-        </div>
-
-        {/* Help Section */}
-        <div className="mt-6 bg-white border-4 border-[#1F3A93] rounded-2xl p-6">
-          <h3 className="font-bold text-[#1F3A93] mb-4 text-lg">💡 Need Help?</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li className="flex items-start gap-2">
-              <span className="text-[#17BEBB] font-bold">•</span>
-              <span><strong>Token not working?</strong> Ask customer to show their loyalty card</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#17BEBB] font-bold">•</span>
-              <span><strong>Can't find customer?</strong> Try entering their full name</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-[#17BEBB] font-bold">•</span>
-              <span><strong>Wrong customer?</strong> Click Cancel and search again</span>
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );
