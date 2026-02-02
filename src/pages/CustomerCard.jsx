@@ -119,7 +119,7 @@ function CustomerCard() {
         <div className="p-6 pb-4">
           <div className="flex items-center justify-center gap-3 mb-2">
             {business.logo ? (
-              <img src={business.logo} alt={business.name} className="h-16 w-auto" />
+              <img src={business.logo} alt={business.name} className="h-24 w-auto" />
             ) : (
               <div className="flex flex-col items-center">
                 <svg width="60" height="40" viewBox="0 0 60 40" className="mb-1">
@@ -155,28 +155,31 @@ function CustomerCard() {
                 </p>
               </div>
 
-              {/* QR Code Section - Using API */}
-              <div className="bg-white rounded-2xl p-6 mb-6 text-center border-2" style={{ borderColor: business.accentColor }}>
-                <p className="text-sm font-bold text-gray-700 mb-3">Show this to staff</p>
-                <div className="flex justify-center mb-3">
-                  <div className="p-3 bg-white rounded-xl" style={{ 
-                    boxShadow: `0 4px 12px ${business.accentColor}40`
-                  }}>
-                    {/* QR Code using API - No package needed! */}
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${client.token}`}
-                      alt="QR Code"
-                      width="120"
-                      height="120"
-                      className="block"
-                    />
+              {/* QR Code Section - Compact Horizontal */}
+              <div className="bg-white rounded-2xl p-4 mb-6 border-2" style={{ borderColor: business.accentColor }}>
+                <div className="flex items-center gap-4">
+                  {/* QR Code */}
+                  <div className="flex-shrink-0">
+                    <div className="p-2 bg-white rounded-xl" style={{ 
+                      boxShadow: `0 2px 8px ${business.accentColor}40`
+                    }}>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${client.token}`}
+                        alt="QR Code"
+                        width="80"
+                        height="80"
+                        className="block"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="bg-gray-50 rounded-lg py-2 px-4 inline-block">
-                  <p className="text-xs text-gray-500 mb-1">Token</p>
-                  <p className="text-2xl font-mono font-bold tracking-wider" style={{ color: business.accentColor }}>
-                    {client.token}
-                  </p>
+                  
+                  {/* Token Info */}
+                  <div className="flex-1 text-left">
+                    <p className="text-xs text-gray-500 mb-1 font-semibold">Your Token</p>
+                    <p className="text-2xl font-mono font-bold tracking-wider break-all" style={{ color: business.accentColor }}>
+                      {client.token}
+                    </p>
+                  </div>
                 </div>
               </div>
 
