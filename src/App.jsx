@@ -13,8 +13,7 @@ function App() {
       const path = window.location.pathname;
       const params = new URLSearchParams(window.location.search);
       
-      console.log('Current path:', path); // Debug
-      console.log('Current params:', params.toString()); // Debug
+      console.log('Current path:', path);
       
       if (path === '/admin' || path.startsWith('/admin')) {
         setCurrentView('admin');
@@ -36,7 +35,7 @@ function App() {
     return () => window.removeEventListener('popstate', updateView);
   }, []);
 
-  console.log('Current view:', currentView); // Debug
+  console.log('Current view:', currentView);
   
   // Render appropriate view
   if (currentView === 'admin') {
