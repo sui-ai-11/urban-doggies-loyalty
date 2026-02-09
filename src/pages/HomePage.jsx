@@ -109,7 +109,7 @@ const HomePage = () => {
                 Loyalty Desk
               </h2>
               <p className="text-gray-700">
-                Quick customer check-in and stamp management
+                Search customers and add stamps
               </p>
             </div>
           </Link>
