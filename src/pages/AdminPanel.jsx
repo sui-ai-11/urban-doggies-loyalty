@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter } from 'lucide-react';
+import BrandingTab from '../components/BrandingTab';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette } from 'lucide-react';
 
 function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -113,9 +114,10 @@ function AdminPanel() {
         body: JSON.stringify({
           businessID: 'BIZ_001',
           clientName: newClient.name,
-          clientMobile: newClient.mobile,
-          clientEmail: newClient.email || '',
-          clientBreed: newClient.breed || ''
+          mobile: newClient.mobile,
+          email: newClient.email || '',
+          breed: newClient.breed || '',
+          birthdayMonth: newClient.birthdayMonth || ''
         })
       });
 
@@ -123,7 +125,7 @@ function AdminPanel() {
 
       if (response.ok) {
         setMessage(`✅ Client added! Token: ${result.token}`);
-        setNewClient({ name: '', mobile: '', email: '', breed: '' });
+        setNewClient({ name: '', mobile: '', email: '', breed: '', birthdayMonth: '' });
         loadAllClients();
       } else {
         throw new Error(result.error || 'Failed to add client');
@@ -186,6 +188,17 @@ function AdminPanel() {
             >
               <UserPlus size={20} />
               Add Client
+            </button>
+            <button
+              onClick={() => setActiveTab('branding')}
+              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
+                activeTab === 'branding' 
+                  ? 'bg-[#1F3A93] text-white' 
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Palette size={20} />
+              Branding
             </button>
             <button
               onClick={() => setActiveTab('import')}
@@ -522,6 +535,11 @@ function AdminPanel() {
                   </div>
                 </form>
               </div>
+            )}
+
+            {/* BRANDING TAB - NEW! */}
+            {activeTab === 'branding' && (
+              <BrandingTab />
             )}
 
             {/* IMPORT CSV TAB */}
