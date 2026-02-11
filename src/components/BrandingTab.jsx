@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Palette, Upload, Save, Check } from 'lucide-react';
-import { colorPalettes } from './palettes-data';
+import { colorPalettes } from '../palettes-data';  // ✅ With ../
 
 const BrandingTab = () => {
   const [businessInfo, setBusinessInfo] = useState(null);
