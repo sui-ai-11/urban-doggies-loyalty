@@ -1,5 +1,4 @@
-// api/add-stamp.js
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 
 async function getGoogleSheetsClient() {
   const auth = new google.auth.GoogleAuth({
@@ -19,7 +18,7 @@ function generateID(prefix) {
   return prefix + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -45,11 +44,12 @@ module.exports = async (req, res) => {
     // Get client
     const clientsRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Clients!A2:J',
+      range: 'Clients!A2:K',
     });
 
     const clientRow = clientsRes.data.values?.find(row => row[3] === token);
     if (!clientRow) {
+      console.log('❌ Client not found with token:', token);
       return res.status(404).json({ error: 'Invalid token - client not found' });
     }
 
@@ -60,6 +60,8 @@ module.exports = async (req, res) => {
       mobile: clientRow[4],
       breed: clientRow[7],
     };
+
+    console.log('✅ Client found:', client.name);
 
     // Add visit
     const visitID = generateID('VIS_');
@@ -81,6 +83,8 @@ module.exports = async (req, res) => {
       resource: { values: visitValues },
     });
 
+    console.log('✅ Visit added:', visitID);
+
     // Count total visits
     const visitsRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -94,7 +98,7 @@ module.exports = async (req, res) => {
     // Check if reward should be issued
     const businessesRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:L',
+      range: 'Businesses!A2:W',
     });
 
     const businessRow = businessesRes.data.values?.find(row => row[0] === businessID);
@@ -131,7 +135,11 @@ module.exports = async (req, res) => {
         valueInputOption: 'RAW',
         resource: { values: couponValues },
       });
+
+      console.log('🎉 Reward issued! Coupon:', couponID);
     }
+
+    console.log(`✅ Total visits: ${totalVisits}/${requiredVisits}`);
 
     return res.status(200).json({
       success: true,
@@ -150,7 +158,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('❌ Add stamp error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
