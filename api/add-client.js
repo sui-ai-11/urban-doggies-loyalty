@@ -1,5 +1,4 @@
-// api/add-client.js
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 
 async function getGoogleSheetsClient() {
   const auth = new google.auth.GoogleAuth({
@@ -9,7 +8,6 @@ async function getGoogleSheetsClient() {
     },
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-
   return google.sheets({ version: 'v4', auth });
 }
 
@@ -23,7 +21,7 @@ function generateToken() {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -32,43 +30,46 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { businessID, clientName, mobile, email, breed, birthday } = req.body;
-
+    const { businessID, clientName, mobile, email, breed, birthday, birthdayMonth } = req.body;
+    
     if (!businessID || !clientName) {
       return res.status(400).json({ error: 'BusinessID and ClientName are required' });
     }
 
     const sheets = await getGoogleSheetsClient();
-
     const clientID = generateID('CLI_');
     const token = generateToken();
     const createdAt = new Date().toISOString();
 
+    // Column mapping: A-K (ClientID, BusinessID, Name, Token, Mobile, Email, Birthday, Breed, DateAdded, Notes, BirthdayMonth)
     const values = [[
-      clientID,
-      businessID,
-      clientName,
-      token,
-      mobile || '',
-      email || '',
-      birthday || '',
-      breed || '',
-      createdAt,
-      '' // notes
+      clientID,              // A
+      businessID,            // B
+      clientName,            // C
+      token,                 // D
+      mobile || '',          // E
+      email || '',           // F
+      birthday || '',        // G
+      breed || '',           // H
+      createdAt,             // I
+      '',                    // J (notes)
+      birthdayMonth || ''    // K
     ]];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: 'Clients!A:J',
+      range: 'Clients!A:K',
       valueInputOption: 'RAW',
       resource: { values },
     });
+
+    console.log('✅ Client added:', clientName, 'Token:', token);
 
     return res.status(201).json({
       success: true,
@@ -79,7 +80,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('❌ Add client error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
