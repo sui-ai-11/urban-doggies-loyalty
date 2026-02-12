@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         birthdayMonth: row[10] || '',
         visits: visits,
         requiredVisits: 10,
-        cardLink: `${req.headers.origin || 'https://urban-doggies-loyalty.vercel.app'}/card?token=${row[3]}`
+        cardLink: `${req.headers.origin || 'https://urban-doggies-loyalty.vercel.app'}/#/card?token=${row[3]}`
       };
     });
 
