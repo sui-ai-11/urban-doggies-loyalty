@@ -1,158 +1,187 @@
-// All 17 Happy Hues Palettes - FIXED VERSION
-// Background colors are bold/saturated, Card backgrounds are always light for contrast
+import React, { useState, useEffect } from 'react';
+import { Users, Settings, Home } from 'lucide-react';
 
-export const colorPalettes = [
-  {
-    id: 1,
-    name: "Calm & Serene",
-    description: "Professional and trustworthy",
-    backgroundColor: "#2d4059",
-    accentColor: "#ea5455",
-    borderColor: "#ea5455",
-    cardBackground: "#f8f8f8",
-  },
-  {
-    id: 2,
-    name: "Warm & Inviting",
-    description: "Friendly and approachable",
-    backgroundColor: "#f07167",
-    accentColor: "#0081a7",
-    borderColor: "#0081a7",
-    cardBackground: "#fdfcdc",
-  },
-  {
-    id: 3,
-    name: "Fresh & Modern",
-    description: "Clean and contemporary",
-    backgroundColor: "#07beb8",
-    accentColor: "#68d8d6",
-    borderColor: "#3dccc7",
-    cardBackground: "#ffffff",
-  },
-  {
-    id: 4,
-    name: "Bold & Vibrant",
-    description: "Eye-catching and energetic",
-    backgroundColor: "#f72585",
-    accentColor: "#7209b7",
-    borderColor: "#3a0ca3",
-    cardBackground: "#ffffff",
-  },
-  {
-    id: 5,
-    name: "Earth Tones",
-    description: "Natural and grounded",
-    backgroundColor: "#bc6c25",
-    accentColor: "#dda15e",
-    borderColor: "#606c38",
-    cardBackground: "#fefae0",
-  },
-  {
-    id: 6,
-    name: "Ocean Blues",
-    description: "Calm and reliable",
-    backgroundColor: "#0077b6",
-    accentColor: "#00b4d8",
-    borderColor: "#023e8a",
-    cardBackground: "#f0f9ff",
-  },
-  {
-    id: 7,
-    name: "Sunset Glow",
-    description: "Warm and welcoming",
-    backgroundColor: "#ff6b6b",
-    accentColor: "#ffd93d",
-    borderColor: "#6c5ce7",
-    cardBackground: "#fffbf0",
-  },
-  {
-    id: 8,
-    name: "Forest Green",
-    description: "Fresh and organic",
-    backgroundColor: "#2d6a4f",
-    accentColor: "#95d5b2",
-    borderColor: "#52b788",
-    cardBackground: "#f1faee",
-  },
-  {
-    id: 9,
-    name: "Purple Passion",
-    description: "Creative and luxurious",
-    backgroundColor: "#7209b7",
-    accentColor: "#f72585",
-    borderColor: "#3a0ca3",
-    cardBackground: "#faf5ff",
-  },
-  {
-    id: 10,
-    name: "Coral & Teal",
-    description: "Playful and modern",
-    backgroundColor: "#2a9d8f",
-    accentColor: "#ff6f61",
-    borderColor: "#48a9a6",
-    cardBackground: "#fef9ef",
-  },
-  {
-    id: 11,
-    name: "Midnight Blue",
-    description: "Sophisticated and elegant",
-    backgroundColor: "#14213d",
-    accentColor: "#fca311",
-    borderColor: "#e5e5e5",
-    cardBackground: "#f8f9fa",
-  },
-  {
-    id: 12,
-    name: "Peach & Navy",
-    description: "Balanced and refined",
-    backgroundColor: "#264653",
-    accentColor: "#e76f51",
-    borderColor: "#2a9d8f",
-    cardBackground: "#f4f1de",
-  },
-  {
-    id: 13,
-    name: "Mint Fresh",
-    description: "Light and airy",
-    backgroundColor: "#00d9ff",
-    accentColor: "#06ffa5",
-    borderColor: "#7209b7",
-    cardBackground: "#ffffff",
-  },
-  {
-    id: 14,
-    name: "Retro Vibes",
-    description: "Fun and nostalgic",
-    backgroundColor: "#f4442e",
-    accentColor: "#f9c80e",
-    borderColor: "#662e9b",
-    cardBackground: "#fff9f0",
-  },
-  {
-    id: 15,
-    name: "Professional Gray",
-    description: "Corporate and clean",
-    backgroundColor: "#495057",
-    accentColor: "#0077b6",
-    borderColor: "#343a40",
-    cardBackground: "#f8f9fa",
-  },
-  {
-    id: 16,
-    name: "Lavender Dreams",
-    description: "Soft and calming",
-    backgroundColor: "#9381ad",
-    accentColor: "#ffcce1",
-    borderColor: "#b8a8cc",
-    cardBackground: "#fffbf5",
-  },
-  {
-    id: 17,
-    name: "Citrus Pop",
-    description: "Bright and cheerful",
-    backgroundColor: "#e85d04",
-    accentColor: "#ffba08",
-    borderColor: "#d00000",
-    cardBackground: "#fffcf2",
-  },
-];
+function HomePage() {
+  const [businessInfo, setBusinessInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBusinessInfo = async () => {
+      try {
+        const response = await fetch('/api/get-business-info');
+        const data = await response.json();
+        setBusinessInfo(data);
+      } catch (error) {
+        console.error('Error loading business info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBusinessInfo();
+  }, []);
+
+  const bgColor = businessInfo?.backgroundColor || '#17BEBB';
+  const accentColor = businessInfo?.accentColor || '#17BEBB';
+  const cardBg = businessInfo?.cardBackground || '#F5F1E8';
+  const borderColor = businessInfo?.borderColor || '#1F3A93';
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor }}>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: bgColor }}>
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20 blur-3xl" 
+             style={{ backgroundColor: accentColor }}></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full opacity-20 blur-3xl" 
+             style={{ backgroundColor: borderColor }}></div>
+      </div>
+
+      {/* Glassmorphism Navigation */}
+      <nav className="glass relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center gap-3 animate-fade-in">
+              {businessInfo?.logo ? (
+                <img 
+                  src={businessInfo.logo} 
+                  alt={businessInfo.businessName}
+                  className="h-14 w-14 object-contain rounded-xl glass-card p-2"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+              ) : (
+                <div 
+                  className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  {businessInfo?.businessName?.charAt(0) || 'B'}
+                </div>
+              )}
+              <span className="text-2xl font-bold text-white tracking-tight">
+                {businessInfo?.businessName || 'Business Name'}
+              </span>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="flex gap-2">
+              <a
+                href="/#/"
+                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </a>
+              <a
+                href="/#/staff"
+                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Loyalty Desk
+              </a>
+              <a
+                href="/#/admin"
+                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Client Management
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+        {/* Header */}
+        <div className="text-center mb-20 animate-slide-up">
+          <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight">
+            {businessInfo?.businessName || 'Business Name'}
+          </h1>
+          <p className="text-2xl md:text-3xl text-white font-light tracking-wide opacity-90">
+            {businessInfo?.tagline || 'Digital Loyalty System'}
+          </p>
+        </div>
+
+        {/* Main Cards - Glassmorphism */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+          {/* Staff Card */}
+          <a
+            href="/#/staff"
+            className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
+            style={{ animationDelay: '0.1s' }}
+          >
+            <div 
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Users className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: borderColor }}>
+              Loyalty Desk
+            </h2>
+            <p className="text-gray-600 text-lg font-light leading-relaxed">
+              Search customers and add stamps
+            </p>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: accentColor }}>
+              For Staff 
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+
+          {/* Admin Card */}
+          <a
+            href="/#/admin"
+            className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
+            style={{ animationDelay: '0.2s' }}
+          >
+            <div 
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Settings className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: borderColor }}>
+              Client Management
+            </h2>
+            <p className="text-gray-600 text-lg font-light leading-relaxed">
+              Manage clients, view analytics & more
+            </p>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: accentColor }}>
+              For Admins
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+        </div>
+
+        {/* Info Sections */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="glass rounded-2xl p-6 transition-all hover:bg-white hover:bg-opacity-20 animate-fade-in">
+            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">📋 For Staff</h3>
+            <p className="text-white font-light opacity-90">
+              Quick customer check-in and stamp management
+            </p>
+          </div>
+          <div className="glass rounded-2xl p-6 transition-all hover:bg-white hover:bg-opacity-20 animate-fade-in">
+            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">⚙️ For Admins</h3>
+            <p className="text-white font-light opacity-90">
+              Full system control, analytics and reporting
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default HomePage;
