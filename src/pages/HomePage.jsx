@@ -179,6 +179,8 @@ function HomePage() {
             </p>
           </div>
         </div>
+        {/* Version indicator - remove after confirming deployment */}
+        <p className="text-center text-white text-opacity-30 text-xs mt-12">v1.1.2</p>
       </div>
     </div>
   );
