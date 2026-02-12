@@ -297,11 +297,11 @@ function AdminPanel() {
                               <td className="px-5 py-4 text-sm text-gray-500">{client.mobile || '-'}</td>
                               <td className="px-5 py-4">
                                 <div className="flex gap-1">
-                                  <button onClick={() => copyToClipboard(client.cardLink)}
+                                  <button onClick={() => copyToClipboard(`${window.location.origin}/#/card?token=${client.token}`)}
                                     className="p-1.5 hover:bg-gray-100 rounded-lg transition" title="Copy link">
                                     <Copy size={16} className="text-gray-400" />
                                   </button>
-                                  <a href={client.cardLink?.replace(/^\/card/, '/#/card') || `/#/card?token=${client.token}`}
+                                  <a href={`/#/card?token=${client.token}`}
                                     target="_blank" rel="noopener noreferrer"
                                     className="p-1.5 hover:bg-gray-100 rounded-lg transition" title="View card">
                                     <ExternalLink size={16} className="text-gray-400" />
