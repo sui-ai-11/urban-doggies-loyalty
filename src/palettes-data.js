@@ -1,5 +1,5 @@
-// All 17 Happy Hues Palettes
-// Mapped to our loyalty system colors
+// All 17 Happy Hues Palettes - FIXED VERSION
+// Background colors are bold/saturated, Card backgrounds are always light for contrast
 
 export const colorPalettes = [
   {
@@ -25,9 +25,9 @@ export const colorPalettes = [
     name: "Fresh & Modern",
     description: "Clean and contemporary",
     backgroundColor: "#07beb8",
-    accentColor: "#3dccc7",
-    borderColor: "#68d8d6",
-    cardBackground: "#f4f4f4",
+    accentColor: "#68d8d6",
+    borderColor: "#3dccc7",
+    cardBackground: "#ffffff",
   },
   {
     id: 4,
@@ -36,7 +36,7 @@ export const colorPalettes = [
     backgroundColor: "#f72585",
     accentColor: "#7209b7",
     borderColor: "#3a0ca3",
-    cardBackground: "#f8f9fa",
+    cardBackground: "#ffffff",
   },
   {
     id: 5,
@@ -54,7 +54,7 @@ export const colorPalettes = [
     backgroundColor: "#0077b6",
     accentColor: "#00b4d8",
     borderColor: "#023e8a",
-    cardBackground: "#caf0f8",
+    cardBackground: "#f0f9ff",
   },
   {
     id: 7,
@@ -63,15 +63,15 @@ export const colorPalettes = [
     backgroundColor: "#ff6b6b",
     accentColor: "#ffd93d",
     borderColor: "#6c5ce7",
-    cardBackground: "#fff5e4",
+    cardBackground: "#fffbf0",
   },
   {
     id: 8,
     name: "Forest Green",
     description: "Fresh and organic",
-    backgroundColor: "#52b788",
+    backgroundColor: "#2d6a4f",
     accentColor: "#95d5b2",
-    borderColor: "#2d6a4f",
+    borderColor: "#52b788",
     cardBackground: "#f1faee",
   },
   {
@@ -81,15 +81,15 @@ export const colorPalettes = [
     backgroundColor: "#7209b7",
     accentColor: "#f72585",
     borderColor: "#3a0ca3",
-    cardBackground: "#f8f9fa",
+    cardBackground: "#faf5ff",
   },
   {
     id: 10,
     name: "Coral & Teal",
     description: "Playful and modern",
-    backgroundColor: "#ff6f61",
-    accentColor: "#48a9a6",
-    borderColor: "#2a9d8f",
+    backgroundColor: "#2a9d8f",
+    accentColor: "#ff6f61",
+    borderColor: "#48a9a6",
     cardBackground: "#fef9ef",
   },
   {
@@ -114,8 +114,8 @@ export const colorPalettes = [
     id: 13,
     name: "Mint Fresh",
     description: "Light and airy",
-    backgroundColor: "#06ffa5",
-    accentColor: "#00d9ff",
+    backgroundColor: "#00d9ff",
+    accentColor: "#06ffa5",
     borderColor: "#7209b7",
     cardBackground: "#ffffff",
   },
@@ -126,7 +126,7 @@ export const colorPalettes = [
     backgroundColor: "#f4442e",
     accentColor: "#f9c80e",
     borderColor: "#662e9b",
-    cardBackground: "#f8f7ff",
+    cardBackground: "#fff9f0",
   },
   {
     id: 15,
@@ -141,17 +141,17 @@ export const colorPalettes = [
     id: 16,
     name: "Lavender Dreams",
     description: "Soft and calming",
-    backgroundColor: "#b8a8cc",
+    backgroundColor: "#9381ad",
     accentColor: "#ffcce1",
-    borderColor: "#9381ad",
-    cardBackground: "#fff8f0",
+    borderColor: "#b8a8cc",
+    cardBackground: "#fffbf5",
   },
   {
     id: 17,
     name: "Citrus Pop",
     description: "Bright and cheerful",
-    backgroundColor: "#ffba08",
-    accentColor: "#e85d04",
+    backgroundColor: "#e85d04",
+    accentColor: "#ffba08",
     borderColor: "#d00000",
     cardBackground: "#fffcf2",
   },
