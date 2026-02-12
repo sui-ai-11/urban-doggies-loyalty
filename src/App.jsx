@@ -9,17 +9,19 @@ function App() {
   
   // Update view based on hash OR pathname (for Vercel rewrites)
   const updateView = () => {
-    const hash = window.location.hash;
+    const hash = window.location.hash || '';
     const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     
     // Check hash first (preferred), then fallback to pathname
-    if (hash.startsWith('#/admin') || (!hash && path === '/admin')) {
+    if (hash.startsWith('#/admin') || path === '/admin') {
       setCurrentView('admin');
-    } else if (hash.startsWith('#/staff') || (!hash && path === '/staff')) {
+    } else if (hash.startsWith('#/staff') || path === '/staff') {
       setCurrentView('staff');
-    } else if (hash.startsWith('#/card') || (!hash && path === '/card') || params.has('token')) {
+    } else if (hash.startsWith('#/card') || path === '/card' || params.has('token')) {
       setCurrentView('customer');
+    } else if (hash === '' || hash === '#' || hash === '#/' || path === '/') {
+      setCurrentView('home');
     } else {
       setCurrentView('home');
     }
