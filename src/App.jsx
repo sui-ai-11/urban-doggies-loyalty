@@ -7,18 +7,18 @@ import StaffPanel from './pages/StaffPanel';
 function App() {
   const [currentView, setCurrentView] = useState('home');
   
-  // Update view based on hash
+  // Update view based on hash OR pathname (for Vercel rewrites)
   const updateView = () => {
     const hash = window.location.hash;
+    const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     
-    console.log('Current hash:', hash);
-    
-    if (hash.startsWith('#/admin')) {
+    // Check hash first (preferred), then fallback to pathname
+    if (hash.startsWith('#/admin') || (!hash && path === '/admin')) {
       setCurrentView('admin');
-    } else if (hash.startsWith('#/staff')) {
+    } else if (hash.startsWith('#/staff') || (!hash && path === '/staff')) {
       setCurrentView('staff');
-    } else if (hash.startsWith('#/card') || params.has('token')) {
+    } else if (hash.startsWith('#/card') || (!hash && path === '/card') || params.has('token')) {
       setCurrentView('customer');
     } else {
       setCurrentView('home');
@@ -37,8 +37,6 @@ function App() {
     };
   }, []);
 
-  console.log('Current view:', currentView);
-  
   // Render appropriate view
   if (currentView === 'admin') {
     return <AdminPanel />;
