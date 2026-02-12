@@ -12,68 +12,49 @@ function AdminPanel() {
   const [birthdayMonths, setBirthdayMonths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  
-  // Filters
+  const [businessInfo, setBusinessInfo] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [sortBy, setSortBy] = useState('name');
-  
-  // Add client form
+
   const [newClient, setNewClient] = useState({
-    name: '',
-    mobile: '',
-    email: '',
-    breed: '',
-    birthdayMonth: ''
+    name: '', mobile: '', email: '', breed: '', birthdayMonth: ''
   });
 
-  // Load all clients
+  // Load business info for dynamic colors
   useEffect(() => {
-    if (activeTab === 'dashboard' || activeTab === 'clients') {
-      loadAllClients();
-    }
+    fetch('/api/get-business-info')
+      .then(r => r.json())
+      .then(data => setBusinessInfo(data))
+      .catch(err => console.error('Error loading business info:', err));
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'dashboard' || activeTab === 'clients') loadAllClients();
   }, [activeTab]);
 
-  // Filter and sort clients
   useEffect(() => {
     let filtered = [...allClients];
-    
-    // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(c => 
+      filtered = filtered.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.token.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.mobile.includes(searchQuery)
       );
     }
-    
-    // Breed filter
-    if (selectedBreed !== 'all') {
-      filtered = filtered.filter(c => c.breed === selectedBreed);
-    }
-    
-    // Birthday month filter
-    if (selectedMonth !== 'all') {
-      filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
-    }
-    
-    // Sort
+    if (selectedBreed !== 'all') filtered = filtered.filter(c => c.breed === selectedBreed);
+    if (selectedMonth !== 'all') filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
     filtered.sort((a, b) => {
-      switch(sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'visits-high':
-          return b.visits - a.visits;
-        case 'visits-low':
-          return a.visits - b.visits;
-        case 'breed':
-          return (a.breed || '').localeCompare(b.breed || '');
-        default:
-          return 0;
+      switch (sortBy) {
+        case 'name': return a.name.localeCompare(b.name);
+        case 'visits-high': return b.visits - a.visits;
+        case 'visits-low': return a.visits - b.visits;
+        case 'breed': return (a.breed || '').localeCompare(b.breed || '');
+        default: return 0;
       }
     });
-    
     setFilteredClients(filtered);
   }, [allClients, searchQuery, selectedBreed, selectedMonth, sortBy]);
 
@@ -82,59 +63,33 @@ function AdminPanel() {
       setLoading(true);
       const response = await fetch('/api/get-all-clients');
       const data = await response.json();
-      
       if (response.ok) {
         setAllClients(data.clients || []);
         setBreeds(data.breeds || []);
         setBirthdayMonths(data.birthdayMonths || []);
         setAnalytics(data.analytics || {});
       }
-    } catch (error) {
-      console.error('Error loading clients:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Error loading clients:', error); }
+    finally { setLoading(false); }
   }
 
   async function handleAddClient(e) {
     e.preventDefault();
-    
-    if (!newClient.name || !newClient.mobile) {
-      setMessage('⚠️ Name and mobile are required');
-      return;
-    }
-
+    if (!newClient.name || !newClient.mobile) { setMessage('⚠️ Name and mobile are required'); return; }
     try {
-      setLoading(true);
-      setMessage('');
-
+      setLoading(true); setMessage('');
       const response = await fetch('/api/add-client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessID: 'BIZ_001',
-          clientName: newClient.name,
-          mobile: newClient.mobile,
-          email: newClient.email || '',
-          breed: newClient.breed || '',
-          birthdayMonth: newClient.birthdayMonth || ''
-        })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessID: 'BIZ_001', clientName: newClient.name, mobile: newClient.mobile, email: newClient.email || '', breed: newClient.breed || '', birthdayMonth: newClient.birthdayMonth || '' })
       });
-
       const result = await response.json();
-
       if (response.ok) {
         setMessage(`✅ Client added! Token: ${result.token}`);
         setNewClient({ name: '', mobile: '', email: '', breed: '', birthdayMonth: '' });
         loadAllClients();
-      } else {
-        throw new Error(result.error || 'Failed to add client');
-      }
-    } catch (error) {
-      setMessage(`❌ ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
+      } else throw new Error(result.error || 'Failed to add client');
+    } catch (error) { setMessage(`❌ ${error.message}`); }
+    finally { setLoading(false); }
   }
 
   function copyToClipboard(text) {
@@ -143,232 +98,165 @@ function AdminPanel() {
     setTimeout(() => setMessage(''), 2000);
   }
 
+  // Dynamic colors
+  const bgColor = businessInfo?.backgroundColor || '#17BEBB';
+  const accentColor = businessInfo?.accentColor || '#17BEBB';
+  const borderColor = businessInfo?.borderColor || '#1F3A93';
+  const cardBg = businessInfo?.cardBackground || '#f8f8f8';
+
+  const tabs = [
+    { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { key: 'clients', label: 'All Clients', icon: Users },
+    { key: 'add', label: 'Add Client', icon: UserPlus },
+    { key: 'branding', label: 'Branding', icon: Palette },
+    { key: 'import', label: 'Import CSV', icon: Upload },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#17BEBB]">
+    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       <Navigation currentPage="admin" />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-white text-opacity-90">Manage your loyalty system</p>
+      {/* Decorative blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }} />
+        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }} />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <div className="text-center mb-8 animate-slide-up">
+          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Client Management</h1>
+          <p className="text-white text-opacity-80 font-light text-lg">Manage your loyalty system</p>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
-          <div className="flex border-b border-gray-200 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'dashboard' 
-                  ? 'bg-[#1F3A93] text-white' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <BarChart3 size={20} />
-              Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'clients' 
-                  ? 'bg-[#1F3A93] text-white' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Users size={20} />
-              All Clients
-            </button>
-            <button
-              onClick={() => setActiveTab('add')}
-              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'add' 
-                  ? 'bg-[#1F3A93] text-white' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <UserPlus size={20} />
-              Add Client
-            </button>
-            <button
-              onClick={() => setActiveTab('branding')}
-              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'branding' 
-                  ? 'bg-[#1F3A93] text-white' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Palette size={20} />
-              Branding
-            </button>
-            <button
-              onClick={() => setActiveTab('import')}
-              className={`px-6 py-4 font-bold transition flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'import' 
-                  ? 'bg-[#1F3A93] text-white' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Upload size={20} />
-              Import CSV
-            </button>
+        {/* Glass Tab Container */}
+        <div className="glass-card rounded-3xl shadow-xl mb-6 overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          {/* Tab Bar */}
+          <div className="flex border-b overflow-x-auto" style={{ borderColor: `${borderColor}20` }}>
+            {tabs.map(({ key, label, icon: Icon }) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                className="px-5 py-4 font-semibold transition-all duration-200 flex items-center gap-2 whitespace-nowrap text-sm"
+                style={{
+                  backgroundColor: activeTab === key ? borderColor : 'transparent',
+                  color: activeTab === key ? '#FFFFFF' : '#6B7280',
+                }}>
+                <Icon size={18} /> {label}
+              </button>
+            ))}
           </div>
 
           {/* Tab Content */}
-          <div className="p-6">
-            {/* DASHBOARD TAB */}
+          <div className="p-6 md:p-8">
+
+            {/* ═══ DASHBOARD ═══ */}
             {activeTab === 'dashboard' && analytics && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Analytics Dashboard</h2>
-                
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <Users size={32} />
-                      <p className="text-5xl font-bold">{analytics.totalClients}</p>
+              <div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Analytics Dashboard</h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                  {[
+                    { label: 'Total Clients', value: analytics.totalClients, icon: <Users size={28} />, color: borderColor },
+                    { label: 'Stamps Today', value: analytics.stampsToday, icon: '🏷️', color: accentColor },
+                    { label: 'Rewards Issued', value: analytics.rewardsIssued, icon: '⭐', color: '#F59E0B' },
+                  ].map((card, i) => (
+                    <div key={i} className="rounded-2xl p-6 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                      style={{ background: `linear-gradient(135deg, ${card.color}, ${card.color}CC)` }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-3xl">{typeof card.icon === 'string' ? card.icon : card.icon}</span>
+                        <p className="text-4xl font-black">{card.value}</p>
+                      </div>
+                      <p className="text-white text-opacity-90 font-semibold text-sm">{card.label}</p>
                     </div>
-                    <p className="text-blue-100 font-semibold">Total Clients</p>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="8" r="4"/>
-                        <path d="M12 12v10"/>
-                        <path d="M8 16h8"/>
-                      </svg>
-                      <p className="text-5xl font-bold">{analytics.stampsToday}</p>
-                    </div>
-                    <p className="text-green-100 font-semibold">Stamps Today</p>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                      </svg>
-                      <p className="text-5xl font-bold">{analytics.rewardsIssued}</p>
-                    </div>
-                    <p className="text-orange-100 font-semibold">Rewards Issued</p>
-                  </div>
+                  ))}
                 </div>
 
                 {/* Top Customers */}
-                <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">🏆 Top Customers by Visits</h3>
-                  <div className="space-y-3">
-                    {allClients
-                      .sort((a, b) => b.visits - a.visits)
-                      .slice(0, 10)
-                      .map((client, index) => (
-                        <div key={index} className="flex items-center justify-between bg-white p-4 rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <span className="font-bold text-2xl text-gray-400">{index + 1}</span>
-                            <div>
-                              <p className="font-bold text-gray-800">{client.name}</p>
-                              <p className="text-sm text-gray-500">{client.breed || 'No breed'}</p>
-                            </div>
+                <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: `${bgColor}10` }}>
+                  <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🏆 Top Customers</h3>
+                  <div className="space-y-2">
+                    {allClients.sort((a, b) => b.visits - a.visits).slice(0, 10).map((client, i) => (
+                      <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4 transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-xl text-gray-300 w-8">{i + 1}</span>
+                          <div>
+                            <p className="font-bold text-gray-800">{client.name}</p>
+                            <p className="text-xs text-gray-500">{client.breed || 'No breed'}</p>
                           </div>
-                          <span className="text-2xl font-bold text-[#17BEBB]">
-                            {client.visits}/{client.requiredVisits}
-                          </span>
                         </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Breed Breakdown */}
-                <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">🐕 Breeds Breakdown</h3>
-                  <div className="space-y-3">
-                    {analytics.breedBreakdown.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between bg-white p-4 rounded-xl">
-                        <span className="font-bold text-gray-800">{item.breed || 'No breed specified'}</span>
-                        <span className="text-xl font-bold text-[#FF9F1C]">{item.count} clients</span>
+                        <span className="text-xl font-bold" style={{ color: accentColor }}>{client.visits}/{client.requiredVisits}</span>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Breed Breakdown */}
+                {analytics.breedBreakdown && (
+                  <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
+                    <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🐕 Breeds Breakdown</h3>
+                    <div className="space-y-2">
+                      {analytics.breedBreakdown.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4">
+                          <span className="font-semibold text-gray-800">{item.breed || 'Not specified'}</span>
+                          <span className="font-bold" style={{ color: accentColor }}>{item.count} clients</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* ALL CLIENTS TAB */}
+            {/* ═══ ALL CLIENTS ═══ */}
             {activeTab === 'clients' && (
-              <div>
+              <div className="animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">All Clients ({filteredClients.length})</h2>
-                  <button
-                    onClick={() => setActiveTab('add')}
-                    className="bg-[#17BEBB] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#15a8a5] transition flex items-center gap-2"
-                  >
-                    <UserPlus size={20} />
-                    Add New
+                  <h2 className="text-2xl font-bold tracking-tight" style={{ color: borderColor }}>
+                    All Clients ({filteredClients.length})
+                  </h2>
+                  <button onClick={() => setActiveTab('add')}
+                    className="text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                    style={{ backgroundColor: accentColor }}>
+                    <UserPlus size={18} /> Add New
                   </button>
                 </div>
 
                 {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      <Search size={16} className="inline mr-1" />
-                      Search
-                    </label>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Search</label>
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Name, token, or mobile..."
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                    />
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-200 text-sm"
+                      style={{ borderColor: `${accentColor}40`, focusBorderColor: accentColor }} />
                   </div>
-                  
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      <Filter size={16} className="inline mr-1" />
-                      Sort By
-                    </label>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                    >
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Sort By</label>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: `${accentColor}40` }}>
                       <option value="name">Name (A-Z)</option>
-                      <option value="visits-high">Visits (High to Low)</option>
-                      <option value="visits-low">Visits (Low to High)</option>
+                      <option value="visits-high">Visits (High → Low)</option>
+                      <option value="visits-low">Visits (Low → High)</option>
                       <option value="breed">Breed (A-Z)</option>
                     </select>
                   </div>
-                  
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Filter by Breed
-                    </label>
-                    <select
-                      value={selectedBreed}
-                      onChange={(e) => setSelectedBreed(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                    >
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Breed</label>
+                    <select value={selectedBreed} onChange={(e) => setSelectedBreed(e.target.value)}
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: `${accentColor}40` }}>
                       <option value="all">All Breeds</option>
-                      {breeds.map(breed => (
-                        <option key={breed} value={breed}>{breed}</option>
-                      ))}
+                      {breeds.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
-                  
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      🎂 Birthday Month
-                    </label>
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                    >
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
+                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: `${accentColor}40` }}>
                       <option value="all">All Months</option>
-                      {['January', 'February', 'March', 'April', 'May', 'June', 
-                        'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                        <option key={month} value={month}>{month}</option>
-                      ))}
+                      {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
+                        <option key={m} value={m}>{m}</option>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -376,57 +264,47 @@ function AdminPanel() {
                 {/* Clients Table */}
                 {loading ? (
                   <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#17BEBB] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading clients...</p>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-4 mx-auto mb-3" style={{ borderColor: accentColor }} />
+                    <p className="text-gray-500 text-sm">Loading clients…</p>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl overflow-hidden shadow">
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Name</th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Token</th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Visits</th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Breed</th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Mobile</th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">Card Link</th>
+                        <thead>
+                          <tr style={{ backgroundColor: `${borderColor}08` }}>
+                            {['Name', 'Token', 'Visits', 'Breed', 'Mobile', 'Card'].map(h => (
+                              <th key={h} className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
+                            ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {filteredClients.map((client, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="px-6 py-4">
-                                <p className="font-bold text-gray-800">{client.name}</p>
-                                <p className="text-sm text-gray-500">{client.email || 'No email'}</p>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredClients.map((client, i) => (
+                            <tr key={i} className="hover:bg-gray-50 transition-colors duration-150">
+                              <td className="px-5 py-4">
+                                <p className="font-semibold text-gray-800 text-sm">{client.name}</p>
+                                <p className="text-xs text-gray-400">{client.email || 'No email'}</p>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className="font-mono font-bold text-[#17BEBB]">{client.token}</span>
+                              <td className="px-5 py-4">
+                                <span className="font-mono font-bold text-sm" style={{ color: accentColor }}>{client.token}</span>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className={`font-bold ${client.visits >= client.requiredVisits ? 'text-green-600' : 'text-gray-800'}`}>
+                              <td className="px-5 py-4">
+                                <span className={`font-bold text-sm ${client.visits >= client.requiredVisits ? 'text-green-600' : 'text-gray-700'}`}>
                                   {client.visits}/{client.requiredVisits}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-gray-600">{client.breed || '-'}</td>
-                              <td className="px-6 py-4 text-gray-600">{client.mobile || '-'}</td>
-                              <td className="px-6 py-4">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => copyToClipboard(client.cardLink)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition"
-                                    title="Copy link"
-                                  >
-                                    <Copy size={18} className="text-gray-600" />
+                              <td className="px-5 py-4 text-sm text-gray-500">{client.breed || '-'}</td>
+                              <td className="px-5 py-4 text-sm text-gray-500">{client.mobile || '-'}</td>
+                              <td className="px-5 py-4">
+                                <div className="flex gap-1">
+                                  <button onClick={() => copyToClipboard(client.cardLink)}
+                                    className="p-1.5 hover:bg-gray-100 rounded-lg transition" title="Copy link">
+                                    <Copy size={16} className="text-gray-400" />
                                   </button>
-                                  <a
-                                    href={client.cardLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition"
-                                    title="View card"
-                                  >
-                                    <ExternalLink size={18} className="text-gray-600" />
+                                  <a href={client.cardLink?.replace(/^\/card/, '/#/card') || `/#/card?token=${client.token}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="p-1.5 hover:bg-gray-100 rounded-lg transition" title="View card">
+                                    <ExternalLink size={16} className="text-gray-400" />
                                   </a>
                                 </div>
                               </td>
@@ -440,131 +318,73 @@ function AdminPanel() {
               </div>
             )}
 
-            {/* ADD CLIENT TAB */}
+            {/* ═══ ADD CLIENT ═══ */}
             {activeTab === 'add' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Client</h2>
-                
-                <form onSubmit={handleAddClient} className="max-w-2xl">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Customer Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={newClient.name}
-                        onChange={(e) => setNewClient({...newClient, name: e.target.value})}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                        required
-                      />
+              <div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Add New Client</h2>
+                <form onSubmit={handleAddClient} className="max-w-2xl space-y-5">
+                  {[
+                    { label: 'Customer Name *', key: 'name', type: 'text', required: true },
+                    { label: 'Mobile Number *', key: 'mobile', type: 'tel', required: true },
+                    { label: 'Email', key: 'email', type: 'email' },
+                    { label: 'Pet Breed', key: 'breed', type: 'text', placeholder: 'e.g., Shihtzu, Poodle, Golden Retriever' },
+                  ].map(({ label, key, type, required, placeholder }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">{label}</label>
+                      <input type={type} value={newClient[key]}
+                        onChange={(e) => setNewClient({ ...newClient, [key]: e.target.value })}
+                        placeholder={placeholder || ''} required={required}
+                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
+                        style={{ borderColor: `${accentColor}40` }} />
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Mobile Number *
-                      </label>
-                      <input
-                        type="tel"
-                        value={newClient.mobile}
-                        onChange={(e) => setNewClient({...newClient, mobile: e.target.value})}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Email (Optional)
-                      </label>
-                      <input
-                        type="email"
-                        value={newClient.email}
-                        onChange={(e) => setNewClient({...newClient, email: e.target.value})}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Pet Breed (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={newClient.breed}
-                        onChange={(e) => setNewClient({...newClient, breed: e.target.value})}
-                        placeholder="e.g., Shihtzu, Poodle, Golden Retriever"
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        🎂 Birthday Month (Optional)
-                      </label>
-                      <select
-                        value={newClient.birthdayMonth}
-                        onChange={(e) => setNewClient({...newClient, birthdayMonth: e.target.value})}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#17BEBB] focus:outline-none"
-                      >
-                        <option value="">Select month...</option>
-                        {['January', 'February', 'March', 'April', 'May', 'June', 
-                          'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                          <option key={month} value={month}>{month}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-[#17BEBB] text-white py-4 rounded-lg font-bold text-lg hover:bg-[#15a8a5] transition disabled:bg-gray-300 flex items-center justify-center gap-2"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus size={24} />
-                          Add Client
-                        </>
+                  ))}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
+                    <select value={newClient.birthdayMonth}
+                      onChange={(e) => setNewClient({ ...newClient, birthdayMonth: e.target.value })}
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                      style={{ borderColor: `${accentColor}40` }}>
+                      <option value="">Select month…</option>
+                      {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
+                        <option key={m} value={m}>{m}</option>
                       )}
-                    </button>
+                    </select>
                   </div>
+                  <button type="submit" disabled={loading}
+                    className="w-full text-white py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: accentColor }}>
+                    {loading ? (
+                      <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> Adding…</>
+                    ) : (
+                      <><UserPlus size={20} /> Add Client</>
+                    )}
+                  </button>
                 </form>
               </div>
             )}
 
-            {/* BRANDING TAB - NEW! */}
-            {activeTab === 'branding' && (
-              <BrandingTab />
-            )}
+            {/* ═══ BRANDING ═══ */}
+            {activeTab === 'branding' && <BrandingTab />}
 
-            {/* IMPORT CSV TAB */}
+            {/* ═══ IMPORT CSV ═══ */}
             {activeTab === 'import' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Import Clients from CSV</h2>
-                
+              <div className="animate-fade-in">
+                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Import Clients from CSV</h2>
                 <div className="max-w-2xl">
-                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-                    <h3 className="font-bold text-blue-900 mb-3">📋 CSV Format Required:</h3>
-                    <p className="text-sm text-blue-800 mb-3">Your CSV file should have these columns:</p>
-                    <code className="block bg-white p-3 rounded text-sm font-mono text-gray-800">
-                      Name, Mobile, Email, Breed
-                    </code>
-                    <p className="text-sm text-blue-800 mt-3">Example:</p>
-                    <code className="block bg-white p-3 rounded text-sm font-mono text-gray-800">
+                  <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: `${accentColor}10`, border: `2px solid ${accentColor}30` }}>
+                    <h3 className="font-bold mb-3" style={{ color: borderColor }}>📋 CSV Format Required:</h3>
+                    <p className="text-sm text-gray-600 mb-3">Your CSV file should have these columns:</p>
+                    <code className="block bg-white p-3 rounded-lg text-sm font-mono text-gray-800">Name, Mobile, Email, Breed</code>
+                    <p className="text-sm text-gray-600 mt-3">Example:</p>
+                    <code className="block bg-white p-3 rounded-lg text-sm font-mono text-gray-800">
                       Mau Marasigan, 09328683575, mau@email.com, Shihtzu<br/>
                       Juan Reyes, 09171234567, juan@email.com, Poodle
                     </code>
                   </div>
-
-                  <div className="border-4 border-dashed border-gray-300 rounded-2xl p-12 text-center">
-                    <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 font-bold mb-4">Coming Soon!</p>
-                    <p className="text-sm text-gray-500">CSV import feature will be available in the next update.</p>
+                  <div className="border-4 border-dashed rounded-2xl p-12 text-center" style={{ borderColor: `${accentColor}40` }}>
+                    <Upload size={44} className="mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 font-bold mb-2">Coming Soon!</p>
+                    <p className="text-sm text-gray-400">CSV import feature will be available in the next update.</p>
                   </div>
                 </div>
               </div>
@@ -572,14 +392,12 @@ function AdminPanel() {
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Toast */}
         {message && (
-          <div className={`mt-6 p-4 rounded-xl text-center font-bold ${
-            message.includes('✅') 
-              ? 'bg-green-50 text-green-800 border-2 border-green-200'
-              : message.includes('⚠️')
-              ? 'bg-yellow-50 text-yellow-800 border-2 border-yellow-200'
-              : 'bg-red-50 text-red-800 border-2 border-red-200'
+          <div className={`mt-6 p-4 rounded-2xl text-center font-semibold text-sm animate-slide-up ${
+            message.includes('✅') ? 'bg-green-50 text-green-800 border border-green-200'
+            : message.includes('⚠️') ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+            : 'bg-red-50 text-red-800 border border-red-200'
           }`}>
             {message}
           </div>
