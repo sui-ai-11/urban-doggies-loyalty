@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Save, Check, RefreshCw } from 'lucide-react';
+import { Palette, Save, Check, RefreshCw, Star, Gift, Users } from 'lucide-react';
 import { colorPalettes } from '../palettes-data';
 
 const BrandingTab = () => {
@@ -9,22 +9,11 @@ const BrandingTab = () => {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const fetchBusinessInfo = async () => {
-      try {
-        const response = await fetch('/api/get-business-info');
-        const data = await response.json();
-        setBusinessInfo(data);
-      } catch (error) {
-        console.error('Error loading business info:', error);
-      }
-    };
-    fetchBusinessInfo();
+    fetch('/api/get-business-info')
+      .then(r => r.json())
+      .then(data => setBusinessInfo(data))
+      .catch(err => console.error('Error loading business info:', err));
   }, []);
-
-  const handlePaletteSelect = (palette) => {
-    setSelectedPalette(palette);
-    setSaved(false);
-  };
 
   const handleApplyPalette = async () => {
     if (!selectedPalette) return;
@@ -53,97 +42,136 @@ const BrandingTab = () => {
     }
   };
 
-  const accentColor = businessInfo?.accentColor || '#17BEBB';
-  const borderColor = businessInfo?.borderColor || '#1F3A93';
+  const accentColor = businessInfo?.accentColor || '#7f5af0';
+  const borderColor = businessInfo?.borderColor || '#2cb67d';
 
-  const currentColors = selectedPalette || {
-    backgroundColor: businessInfo?.backgroundColor || '#17BEBB',
-    accentColor: businessInfo?.accentColor || '#17BEBB',
-    borderColor: businessInfo?.borderColor || '#1F3A93',
-    cardBackground: businessInfo?.cardBackground || '#F5F1E8',
-  };
+  const current = selectedPalette || colorPalettes.find(p =>
+    p.backgroundColor === businessInfo?.backgroundColor
+  ) || colorPalettes[0];
 
   return (
     <div className="animate-fade-in">
       <h2 className="text-2xl font-bold mb-2 tracking-tight" style={{ color: borderColor }}>Brand Colors</h2>
-      <p className="text-gray-500 text-sm mb-6">Choose a professional color palette for your loyalty system</p>
+      <p className="text-gray-500 text-sm mb-6">Choose a curated palette — see how it looks in real context</p>
 
-      {/* Live Preview */}
-      <div className="rounded-2xl p-6 mb-8 bg-white border" style={{ borderColor: `${accentColor}20` }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Palette size={20} style={{ color: accentColor }} />
-          <h3 className="text-lg font-bold" style={{ color: borderColor }}>
-            {selectedPalette ? 'Preview' : 'Current Colors'}
-          </h3>
-          {selectedPalette && (
-            <span className="ml-auto text-xs font-bold px-3 py-1 rounded-full text-white" style={{ backgroundColor: accentColor }}>
-              Unsaved
-            </span>
-          )}
+      {/* Live Preview — Happy Hues style */}
+      <div className="rounded-2xl overflow-hidden mb-6 shadow-lg border border-gray-100">
+        {/* Preview Header / Nav */}
+        <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: current.borderColor }}>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm"
+              style={{ backgroundColor: current.accentColor, color: current.buttonText || '#fff' }}>B</div>
+            <span className="font-bold text-sm" style={{ color: current.headline || '#fff' }}>Your Brand</span>
+          </div>
+          <div className="flex gap-1.5">
+            {['Home', 'Staff', 'Admin'].map(t => (
+              <div key={t} className="px-3 py-1 rounded-md text-xs font-semibold"
+                style={{ backgroundColor: `${current.accentColor}30`, color: current.headline || '#fff' }}>{t}</div>
+            ))}
+          </div>
         </div>
 
-        {/* Mini preview card */}
-        <div className="rounded-2xl p-4 mb-4 relative overflow-hidden" style={{ backgroundColor: currentColors.backgroundColor }}>
-          <div className="absolute top-2 right-2 w-16 h-16 rounded-full opacity-20 blur-xl" style={{ backgroundColor: currentColors.accentColor }} />
+        {/* Preview Hero */}
+        <div className="px-6 py-8 relative overflow-hidden" style={{ backgroundColor: current.backgroundColor }}>
+          <div className="absolute top-4 right-4 w-32 h-32 rounded-full opacity-20 blur-2xl"
+            style={{ backgroundColor: current.accentColor }} />
           <div className="relative z-10">
-            <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: currentColors.cardBackground }}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: currentColors.accentColor }} />
-                <div>
-                  <div className="h-2 w-20 rounded" style={{ backgroundColor: currentColors.borderColor }} />
-                  <div className="h-1.5 w-14 rounded mt-1 opacity-40" style={{ backgroundColor: currentColors.borderColor }} />
-                </div>
-              </div>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map(n => (
-                  <div key={n} className="w-6 h-6 rounded-md text-white text-xs flex items-center justify-center font-bold"
-                    style={{ backgroundColor: n <= 3 ? currentColors.accentColor : `${currentColors.accentColor}30` }}>
-                    {n <= 3 ? '✓' : n}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h3 className="text-2xl font-black mb-1 tracking-tight" style={{ color: current.headline || '#fff' }}>
+              {current.name}
+            </h3>
+            <p className="text-sm mb-4" style={{ color: current.paragraph || '#94a1b2' }}>
+              {current.description}
+            </p>
             <div className="flex gap-2">
-              <div className="flex-1 h-8 rounded-lg text-white text-xs flex items-center justify-center font-semibold"
-                style={{ backgroundColor: currentColors.accentColor }}>Button</div>
-              <div className="flex-1 h-8 rounded-lg text-white text-xs flex items-center justify-center font-semibold"
-                style={{ backgroundColor: currentColors.borderColor }}>Nav</div>
+              <div className="px-4 py-2 rounded-lg text-xs font-bold"
+                style={{ backgroundColor: current.accentColor, color: current.buttonText || '#fff' }}>
+                Get Started
+              </div>
+              <div className="px-4 py-2 rounded-lg text-xs font-bold border"
+                style={{ borderColor: current.highlight || current.accentColor, color: current.highlight || current.accentColor }}>
+                Learn More
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Color swatches */}
-        <div className="grid grid-cols-4 gap-3">
+        {/* Preview Cards */}
+        <div className="px-6 py-5 grid grid-cols-3 gap-3" style={{ backgroundColor: current.backgroundColor }}>
           {[
-            { label: 'Background', color: currentColors.backgroundColor },
-            { label: 'Accent', color: currentColors.accentColor },
-            { label: 'Nav/Border', color: currentColors.borderColor },
-            { label: 'Card BG', color: currentColors.cardBackground, hasBorder: true },
-          ].map(({ label, color, hasBorder }) => (
-            <div key={label} className="text-center">
-              <div className={`h-12 rounded-xl mb-1.5 ${hasBorder ? 'border border-gray-200' : ''}`}
-                style={{ backgroundColor: color }} />
-              <p className="text-xs font-semibold text-gray-500">{label}</p>
-              <p className="text-[10px] font-mono text-gray-400">{color}</p>
+            { icon: <Star size={16} />, label: 'Loyalty', count: '248' },
+            { icon: <Users size={16} />, label: 'Clients', count: '52' },
+            { icon: <Gift size={16} />, label: 'Rewards', count: '18' },
+          ].map((item, i) => (
+            <div key={i} className="rounded-xl p-3 text-center"
+              style={{ backgroundColor: current.cardBackground }}>
+              <div className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                style={{ backgroundColor: current.accentColor, color: current.buttonText || '#fff' }}>
+                {item.icon}
+              </div>
+              <p className="text-lg font-black" style={{ color: current.headline || current.borderColor }}>{item.count}</p>
+              <p className="text-xs font-medium" style={{ color: current.paragraph || '#666' }}>{item.label}</p>
             </div>
           ))}
         </div>
 
-        {/* Apply button */}
-        {selectedPalette && (
-          <button onClick={handleApplyPalette} disabled={saving}
-            className="mt-5 w-full text-white py-3.5 rounded-xl font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ backgroundColor: accentColor }}>
-            {saving ? (
-              <><RefreshCw size={18} className="animate-spin" /> Saving…</>
-            ) : saved ? (
-              <><Check size={18} /> Saved! Reload to see changes.</>
-            ) : (
-              <><Save size={18} /> Apply "{selectedPalette.name}"</>
-            )}
-          </button>
-        )}
+        {/* Preview Stamp Card */}
+        <div className="px-6 pb-5" style={{ backgroundColor: current.backgroundColor }}>
+          <div className="rounded-xl p-4" style={{ backgroundColor: current.cardBackground }}>
+            <p className="text-xs font-bold mb-2" style={{ color: current.headline || current.borderColor }}>Stamp Card Preview</p>
+            <div className="flex gap-1.5 mb-2">
+              {[1,2,3,4,5,6,7,8].map(n => (
+                <div key={n} className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold"
+                  style={{
+                    backgroundColor: n <= 5 ? current.accentColor : 'transparent',
+                    color: n <= 5 ? (current.buttonText || '#fff') : (current.paragraph || '#999'),
+                    border: n > 5 ? `2px dashed ${current.accentColor}40` : 'none',
+                  }}>
+                  {n <= 5 ? '✓' : n}
+                </div>
+              ))}
+            </div>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${current.accentColor}20` }}>
+              <div className="h-full rounded-full" style={{ width: '62%', backgroundColor: current.accentColor }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Color Chips */}
+        <div className="px-6 py-4 bg-white border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Palette Colors</p>
+          <div className="grid grid-cols-5 gap-2">
+            {[
+              { label: 'Background', color: current.backgroundColor },
+              { label: 'Accent', color: current.accentColor },
+              { label: 'Nav/Text', color: current.borderColor },
+              { label: 'Card', color: current.cardBackground, border: true },
+              { label: 'Highlight', color: current.highlight || current.accentColor },
+            ].map(({ label, color, border }) => (
+              <div key={label} className="text-center">
+                <div className={`h-8 rounded-lg mb-1 ${border ? 'border border-gray-200' : ''}`}
+                  style={{ backgroundColor: color }} />
+                <p className="text-[9px] font-semibold text-gray-400">{label}</p>
+                <p className="text-[8px] font-mono text-gray-300">{color}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+
+      {/* Apply Button */}
+      {selectedPalette && (
+        <button onClick={handleApplyPalette} disabled={saving}
+          className="w-full text-white py-3.5 rounded-xl font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2 mb-6"
+          style={{ backgroundColor: accentColor }}>
+          {saving ? (
+            <><RefreshCw size={18} className="animate-spin" /> Saving…</>
+          ) : saved ? (
+            <><Check size={18} /> Saved! Reload page to see changes everywhere.</>
+          ) : (
+            <><Save size={18} /> Apply "{selectedPalette.name}" Palette</>
+          )}
+        </button>
+      )}
 
       {/* Palette Grid */}
       <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Choose a Palette</h3>
@@ -155,33 +183,54 @@ const BrandingTab = () => {
             businessInfo?.accentColor === palette.accentColor;
 
           return (
-            <button key={palette.id} onClick={() => handlePaletteSelect(palette)}
-              className={`bg-white rounded-2xl p-4 text-left transition-all duration-200 hover:shadow-lg border-2 ${
+            <button key={palette.id} onClick={() => { setSelectedPalette(palette); setSaved(false); }}
+              className={`rounded-2xl overflow-hidden text-left transition-all duration-200 hover:shadow-lg border-2 ${
                 isSelected ? 'shadow-lg scale-[1.02]' : 'hover:scale-[1.01]'
               }`}
-              style={{ borderColor: isSelected ? accentColor : isCurrentActive ? `${accentColor}60` : 'transparent' }}>
+              style={{ borderColor: isSelected ? accentColor : isCurrentActive ? `${accentColor}60` : '#e5e7eb' }}>
 
-              {/* Color bar preview */}
-              <div className="flex gap-1.5 mb-3">
-                <div className="flex-1 h-10 rounded-lg" style={{ backgroundColor: palette.backgroundColor }} />
-                <div className="flex-1 h-10 rounded-lg" style={{ backgroundColor: palette.accentColor }} />
-                <div className="flex-1 h-10 rounded-lg" style={{ backgroundColor: palette.borderColor }} />
-                <div className="flex-1 h-10 rounded-lg border border-gray-200" style={{ backgroundColor: palette.cardBackground }} />
+              {/* Mini site preview */}
+              <div className="flex h-20">
+                {/* Left: Background preview */}
+                <div className="flex-1 relative p-3 flex flex-col justify-between" style={{ backgroundColor: palette.backgroundColor }}>
+                  <div>
+                    <div className="h-1.5 w-12 rounded mb-1" style={{ backgroundColor: palette.headline || '#fff' }} />
+                    <div className="h-1 w-16 rounded opacity-50" style={{ backgroundColor: palette.paragraph || '#999' }} />
+                  </div>
+                  <div className="flex gap-1">
+                    <div className="h-4 w-10 rounded text-[6px] flex items-center justify-center font-bold"
+                      style={{ backgroundColor: palette.accentColor, color: palette.buttonText || '#fff' }}>•••</div>
+                    <div className="h-4 w-10 rounded text-[6px] flex items-center justify-center font-bold"
+                      style={{ backgroundColor: palette.borderColor, color: palette.headline || '#fff' }}>•••</div>
+                  </div>
+                </div>
+                {/* Right: Card preview */}
+                <div className="w-24 p-2 flex flex-col gap-1 justify-center" style={{ backgroundColor: palette.cardBackground }}>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4].map(n => (
+                      <div key={n} className="w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: n <= 2 ? palette.accentColor : `${palette.accentColor}30` }} />
+                    ))}
+                  </div>
+                  <div className="h-1 w-14 rounded" style={{ backgroundColor: palette.headline || palette.borderColor }} />
+                  <div className="h-0.5 w-10 rounded opacity-40" style={{ backgroundColor: palette.paragraph || '#999' }} />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              {/* Info bar */}
+              <div className="bg-white px-3 py-2.5 flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-gray-800 text-sm">{palette.name}</h4>
                   <p className="text-xs text-gray-400">{palette.description}</p>
                 </div>
                 {isSelected && (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0"
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
                     style={{ backgroundColor: accentColor }}>
-                    <Check size={14} />
+                    <Check size={12} />
                   </div>
                 )}
                 {isCurrentActive && !isSelected && (
-                  <span className="text-[10px] font-bold px-2 py-1 rounded-full text-gray-500 bg-gray-100 shrink-0">Active</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-gray-500 bg-gray-100 shrink-0">Active</span>
                 )}
               </div>
             </button>
