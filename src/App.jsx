@@ -1,58 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import HomePage from './pages/HomePage';
 import CustomerCard from './pages/CustomerCard';
 import AdminPanel from './pages/AdminPanel';
 import StaffPanel from './pages/StaffPanel';
 
 function App() {
-  const [currentView, setCurrentView] = useState('home');
-  
-  // Update view based on hash OR pathname (for Vercel rewrites)
-  const updateView = () => {
+  const getView = useCallback(() => {
+    // Get all parts of the URL
     const hash = window.location.hash || '';
-    const path = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-    
-    // Check hash first (preferred), then fallback to pathname
-    if (hash.startsWith('#/admin') || path === '/admin') {
-      setCurrentView('admin');
-    } else if (hash.startsWith('#/staff') || path === '/staff') {
-      setCurrentView('staff');
-    } else if (hash.startsWith('#/card') || path === '/card' || params.has('token')) {
-      setCurrentView('customer');
-    } else if (hash === '' || hash === '#' || hash === '#/' || path === '/') {
-      setCurrentView('home');
-    } else {
-      setCurrentView('home');
+    const path = window.location.pathname || '/';
+    const search = window.location.search || '';
+    const fullHash = hash.toLowerCase();
+    const fullPath = path.toLowerCase();
+
+    // CARD: check hash, path, and query string for token
+    if (fullHash.includes('card') || fullPath.includes('card') || search.includes('token=')) {
+      return 'customer';
     }
-  };
-
-  useEffect(() => {
-    // Update on mount
-    updateView();
-
-    // Listen for hash changes
-    window.addEventListener('hashchange', updateView);
-    
-    return () => {
-      window.removeEventListener('hashchange', updateView);
-    };
+    // ADMIN: check hash and path
+    if (fullHash.includes('admin') || fullPath.includes('admin')) {
+      return 'admin';
+    }
+    // STAFF: check hash and path
+    if (fullHash.includes('staff') || fullPath.includes('staff')) {
+      return 'staff';
+    }
+    // Default: home
+    return 'home';
   }, []);
 
-  // Render appropriate view
-  if (currentView === 'admin') {
-    return <AdminPanel />;
+  const [currentView, setCurrentView] = useState(getView);
+
+  useEffect(() => {
+    const handleChange = () => setCurrentView(getView());
+    window.addEventListener('hashchange', handleChange);
+    window.addEventListener('popstate', handleChange);
+    return () => {
+      window.removeEventListener('hashchange', handleChange);
+      window.removeEventListener('popstate', handleChange);
+    };
+  }, [getView]);
+
+  switch (currentView) {
+    case 'admin': return <AdminPanel />;
+    case 'staff': return <StaffPanel />;
+    case 'customer': return <CustomerCard />;
+    default: return <HomePage />;
   }
-  
-  if (currentView === 'staff') {
-    return <StaffPanel />;
-  }
-  
-  if (currentView === 'customer') {
-    return <CustomerCard />;
-  }
-  
-  return <HomePage />;
 }
 
 export default App;
