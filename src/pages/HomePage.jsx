@@ -1,209 +1,158 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Settings, Home as HomeIcon } from 'lucide-react';
+// All 17 Happy Hues Palettes - FIXED VERSION
+// Background colors are bold/saturated, Card backgrounds are always light for contrast
 
-const HomePage = () => {
-  const [business, setBusiness] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchBusinessInfo = async () => {
-      try {
-        const response = await fetch('/api/get-business-info');
-        const data = await response.json();
-        console.log('Business data:', data); // Debug
-        setBusiness(data);
-      } catch (error) {
-        console.error('Error fetching business info:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBusinessInfo();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-300 border-t-slate-600 mx-auto mb-4"></div>
-          <div className="text-slate-600 text-lg font-medium">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const accentColor = business?.accentColor || '#17BEBB';
-  const backgroundColor = business?.backgroundColor || '#17BEBB';
-  const borderColor = business?.borderColor || '#1F3A93';
-  const businessName = business?.businessName || 'Business Name';
-  const tagline = business?.tagline || 'Digital Loyalty System';
-  const logoUrl = business?.logo || null;
-
-  console.log('Logo URL:', logoUrl); // Debug
-
-  return (
-    <div 
-      className="min-h-screen"
-      style={{
-        background: `linear-gradient(135deg, ${backgroundColor}f5 0%, ${backgroundColor} 100%)`
-      }}
-    >
-      {/* Navigation - Clean & Professional */}
-      <nav className="backdrop-blur-lg bg-white/20 border-b border-white/30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-16 space-x-3">
-            <a href="/">
-              <button className="flex items-center space-x-2 px-5 py-2 rounded-lg bg-white/30 hover:bg-white/40 backdrop-blur-sm transition-all duration-200 text-white font-medium shadow-sm hover:shadow-md">
-                <HomeIcon className="w-5 h-5" />
-                <span className="hidden sm:inline">Home</span>
-              </button>
-            </a>
-            <a href="/staff">
-              <button className="flex items-center space-x-2 px-5 py-2 rounded-lg bg-white/30 hover:bg-white/40 backdrop-blur-sm transition-all duration-200 text-white font-medium shadow-sm hover:shadow-md">
-                <Users className="w-5 h-5" />
-                <span className="hidden sm:inline">Loyalty Desk</span>
-              </button>
-            </a>
-            <a href="/admin">
-              <button className="flex items-center space-x-2 px-5 py-2 rounded-lg bg-white/30 hover:bg-white/40 backdrop-blur-sm transition-all duration-200 text-white font-medium shadow-sm hover:shadow-md">
-                <Settings className="w-5 h-5" />
-                <span className="hidden sm:inline">Client Management</span>
-              </button>
-            </a>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          {/* Logo */}
-          {logoUrl ? (
-            <div className="mb-8">
-              <img 
-                src={logoUrl} 
-                alt={businessName}
-                className="h-28 mx-auto object-contain drop-shadow-lg"
-                onError={(e) => {
-                  console.error('Logo failed to load:', logoUrl);
-                  e.target.onerror = null;
-                  e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23ddd"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23999" font-family="sans-serif" font-size="12">Logo</text></svg>';
-                }}
-              />
-            </div>
-          ) : (
-            <div className="w-24 h-24 mx-auto mb-8 bg-white/30 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-              <div className="text-4xl font-bold text-white">
-                {businessName.charAt(0)}
-              </div>
-            </div>
-          )}
-          
-          {/* Business Name */}
-          <h1 className="text-5xl sm:text-6xl font-bold text-white mb-3 drop-shadow-md">
-            {businessName}
-          </h1>
-          
-          {/* Tagline - Clean, no decorations */}
-          <p className="text-xl sm:text-2xl text-white/90 font-light">
-            {tagline}
-          </p>
-        </div>
-
-        {/* Feature Cards - Professional & Clean */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
-          {/* Loyalty Desk Card */}
-          <a 
-            href="/staff" 
-            className="group block transform hover:scale-[1.02] transition-all duration-200"
-          >
-            <div 
-              className="rounded-2xl p-8 bg-white shadow-xl border-2 hover:shadow-2xl transition-shadow"
-              style={{ borderColor: `${borderColor}40` }}
-            >
-              {/* Icon */}
-              <div 
-                className="w-16 h-16 rounded-xl flex items-center justify-center mb-5 shadow-md"
-                style={{ backgroundColor: accentColor }}
-              >
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              
-              {/* Content */}
-              <h2 
-                className="text-2xl font-bold mb-2"
-                style={{ color: borderColor }}
-              >
-                Loyalty Desk
-              </h2>
-              <p className="text-gray-600 leading-relaxed">
-                Search customers and add stamps
-              </p>
-            </div>
-          </a>
-
-          {/* Client Management Card */}
-          <a 
-            href="/admin" 
-            className="group block transform hover:scale-[1.02] transition-all duration-200"
-          >
-            <div className="rounded-2xl p-8 bg-white shadow-xl border-2 border-orange-200 hover:shadow-2xl transition-shadow">
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-xl bg-orange-500 flex items-center justify-center mb-5 shadow-md">
-                <Settings className="w-8 h-8 text-white" />
-              </div>
-              
-              {/* Content */}
-              <h2 className="text-2xl font-bold mb-2 text-orange-600">
-                Client Management
-              </h2>
-              <p className="text-gray-600 leading-relaxed">
-                Manage clients, view analytics & more
-              </p>
-            </div>
-          </a>
-        </div>
-
-        {/* Info Cards - Minimal */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* For Staff */}
-          <div className="backdrop-blur-sm bg-white/20 border border-white/30 rounded-xl p-6 shadow-lg">
-            <div className="flex items-start space-x-4">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: accentColor }}
-              >
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">For Staff</h3>
-                <p className="text-white/80 text-sm">
-                  Quick customer check-in and stamp management
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* For Admins */}
-          <div className="backdrop-blur-sm bg-white/20 border border-white/30 rounded-xl p-6 shadow-lg">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
-                <Settings className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">For Admins</h3>
-                <p className="text-white/80 text-sm">
-                  Full system control, analytics and reporting
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default HomePage;
+export const colorPalettes = [
+  {
+    id: 1,
+    name: "Calm & Serene",
+    description: "Professional and trustworthy",
+    backgroundColor: "#2d4059",
+    accentColor: "#ea5455",
+    borderColor: "#ea5455",
+    cardBackground: "#f8f8f8",
+  },
+  {
+    id: 2,
+    name: "Warm & Inviting",
+    description: "Friendly and approachable",
+    backgroundColor: "#f07167",
+    accentColor: "#0081a7",
+    borderColor: "#0081a7",
+    cardBackground: "#fdfcdc",
+  },
+  {
+    id: 3,
+    name: "Fresh & Modern",
+    description: "Clean and contemporary",
+    backgroundColor: "#07beb8",
+    accentColor: "#68d8d6",
+    borderColor: "#3dccc7",
+    cardBackground: "#ffffff",
+  },
+  {
+    id: 4,
+    name: "Bold & Vibrant",
+    description: "Eye-catching and energetic",
+    backgroundColor: "#f72585",
+    accentColor: "#7209b7",
+    borderColor: "#3a0ca3",
+    cardBackground: "#ffffff",
+  },
+  {
+    id: 5,
+    name: "Earth Tones",
+    description: "Natural and grounded",
+    backgroundColor: "#bc6c25",
+    accentColor: "#dda15e",
+    borderColor: "#606c38",
+    cardBackground: "#fefae0",
+  },
+  {
+    id: 6,
+    name: "Ocean Blues",
+    description: "Calm and reliable",
+    backgroundColor: "#0077b6",
+    accentColor: "#00b4d8",
+    borderColor: "#023e8a",
+    cardBackground: "#f0f9ff",
+  },
+  {
+    id: 7,
+    name: "Sunset Glow",
+    description: "Warm and welcoming",
+    backgroundColor: "#ff6b6b",
+    accentColor: "#ffd93d",
+    borderColor: "#6c5ce7",
+    cardBackground: "#fffbf0",
+  },
+  {
+    id: 8,
+    name: "Forest Green",
+    description: "Fresh and organic",
+    backgroundColor: "#2d6a4f",
+    accentColor: "#95d5b2",
+    borderColor: "#52b788",
+    cardBackground: "#f1faee",
+  },
+  {
+    id: 9,
+    name: "Purple Passion",
+    description: "Creative and luxurious",
+    backgroundColor: "#7209b7",
+    accentColor: "#f72585",
+    borderColor: "#3a0ca3",
+    cardBackground: "#faf5ff",
+  },
+  {
+    id: 10,
+    name: "Coral & Teal",
+    description: "Playful and modern",
+    backgroundColor: "#2a9d8f",
+    accentColor: "#ff6f61",
+    borderColor: "#48a9a6",
+    cardBackground: "#fef9ef",
+  },
+  {
+    id: 11,
+    name: "Midnight Blue",
+    description: "Sophisticated and elegant",
+    backgroundColor: "#14213d",
+    accentColor: "#fca311",
+    borderColor: "#e5e5e5",
+    cardBackground: "#f8f9fa",
+  },
+  {
+    id: 12,
+    name: "Peach & Navy",
+    description: "Balanced and refined",
+    backgroundColor: "#264653",
+    accentColor: "#e76f51",
+    borderColor: "#2a9d8f",
+    cardBackground: "#f4f1de",
+  },
+  {
+    id: 13,
+    name: "Mint Fresh",
+    description: "Light and airy",
+    backgroundColor: "#00d9ff",
+    accentColor: "#06ffa5",
+    borderColor: "#7209b7",
+    cardBackground: "#ffffff",
+  },
+  {
+    id: 14,
+    name: "Retro Vibes",
+    description: "Fun and nostalgic",
+    backgroundColor: "#f4442e",
+    accentColor: "#f9c80e",
+    borderColor: "#662e9b",
+    cardBackground: "#fff9f0",
+  },
+  {
+    id: 15,
+    name: "Professional Gray",
+    description: "Corporate and clean",
+    backgroundColor: "#495057",
+    accentColor: "#0077b6",
+    borderColor: "#343a40",
+    cardBackground: "#f8f9fa",
+  },
+  {
+    id: 16,
+    name: "Lavender Dreams",
+    description: "Soft and calming",
+    backgroundColor: "#9381ad",
+    accentColor: "#ffcce1",
+    borderColor: "#b8a8cc",
+    cardBackground: "#fffbf5",
+  },
+  {
+    id: 17,
+    name: "Citrus Pop",
+    description: "Bright and cheerful",
+    backgroundColor: "#e85d04",
+    accentColor: "#ffba08",
+    borderColor: "#d00000",
+    cardBackground: "#fffcf2",
+  },
+];
