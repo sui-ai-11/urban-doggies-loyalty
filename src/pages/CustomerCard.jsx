@@ -318,7 +318,7 @@ function CustomerCard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 823 4849</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
