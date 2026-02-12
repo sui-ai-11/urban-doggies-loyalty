@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, MessageCircle, Star, ChevronRight } from 'lucide-react';
+import { Gift, MessageCircle, Star, ChevronRight, Phone } from 'lucide-react';
+
+// Helper: determine if a hex color is dark
+function isDark(hex) {
+  if (!hex) return false;
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5;
+}
 
 function CustomerCard() {
   const [loading, setLoading] = useState(true);
@@ -7,7 +18,7 @@ function CustomerCard() {
   const [clientData, setClientData] = useState(null);
   const [activeView, setActiveView] = useState('stamp');
 
-  // Support hash route (/#/card?token=X), direct path (/card?token=X), and bare query (?token=X)
+  // Support hash route, direct path, and bare query
   const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
   const queryParams = new URLSearchParams(window.location.search);
   const token = hashParams.get('token') || queryParams.get('token');
@@ -72,13 +83,19 @@ function CustomerCard() {
   const bgColor = business.backgroundColor || '#17BEBB';
   const cardBg = business.cardBackground || '#FFFFFF';
 
+  // Dynamic text colors based on card background brightness
+  const cardIsDark = isDark(cardBg);
+  const headingColor = cardIsDark ? '#FFFFFF' : (borderColor || '#1a1a2e');
+  const textColor = cardIsDark ? '#d1d5db' : '#6b7280';
+  const subtextColor = cardIsDark ? '#9ca3af' : '#9ca3af';
+
   const totalStamps = loyalty?.requiredVisits || business.stampsRequired || 10;
   const currentStamps = loyalty?.currentProgress || 0;
   const totalVisits = loyalty?.totalVisits || 0;
 
   // Nav buttons from business settings
   const navButtons = [
-    { key: 'stamp', label: business.navButton1Text || 'Stamp Card', icon: Star },
+    { key: 'stamp', label: business.navButton1Text || 'Date Stamp', icon: Star },
     { key: 'rewards', label: business.navButton2Text || 'Rewards', icon: Gift },
     { key: 'contact', label: business.navButton3Text || 'Contact', icon: MessageCircle },
   ];
@@ -103,23 +120,23 @@ function CustomerCard() {
                 onError={(e) => (e.target.style.display = 'none')} />
             ) : (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-black tracking-tight" style={{ color: borderColor }}>
+                <span className="text-3xl font-black tracking-tight" style={{ color: headingColor }}>
                   {business.name}
                 </span>
               </div>
             )}
           </div>
-          {business.tagline && <p className="text-center text-gray-500 text-sm font-light">{business.tagline}</p>}
+          {business.tagline && <p className="text-center text-sm font-light" style={{ color: textColor }}>{business.tagline}</p>}
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex mx-6 mb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: `${borderColor}10` }}>
+        <div className="flex mx-6 mb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.1)' : `${borderColor}10` }}>
           {navButtons.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActiveView(key)}
               className="flex-1 py-3 text-xs font-bold transition-all duration-200 flex flex-col items-center gap-1"
               style={{
                 backgroundColor: activeView === key ? accentColor : 'transparent',
-                color: activeView === key ? '#FFFFFF' : '#9CA3AF',
+                color: activeView === key ? '#FFFFFF' : subtextColor,
               }}>
               <Icon size={16} />
               {label}
@@ -132,8 +149,12 @@ function CustomerCard() {
           {activeView === 'stamp' && (
             <div className="animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Hey, {client.name.split(' ')[0]}!</h2>
-                <p className="text-gray-500 text-sm font-light">{business.progressText || 'See your progress and rewards.'}</p>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>
+                  Hey, {client.name.split(' ')[0]}!
+                </h2>
+                <p className="text-sm font-light" style={{ color: textColor }}>
+                  {business.progressText || 'Track your visits and earn rewards!'}
+                </p>
               </div>
 
               {/* QR Code */}
@@ -154,7 +175,7 @@ function CustomerCard() {
               {/* Progress */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-600">Progress</span>
+                  <span className="text-sm font-semibold" style={{ color: textColor }}>Progress</span>
                   <span className="text-sm font-bold" style={{ color: accentColor }}>
                     {currentStamps}/{totalStamps} stamps
                   </span>
@@ -168,7 +189,7 @@ function CustomerCard() {
                     }}
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-2 text-center">
+                <p className="text-xs mt-2 text-center" style={{ color: subtextColor }}>
                   {loyalty?.nextRewardIn > 0
                     ? `${loyalty.nextRewardIn} more visit${loyalty.nextRewardIn > 1 ? 's' : ''} until your next reward!`
                     : '🎉 You earned a reward!'}
@@ -189,7 +210,7 @@ function CustomerCard() {
                       style={{
                         backgroundColor: isFilled ? accentColor : 'transparent',
                         borderColor: isFilled ? 'transparent' : `${accentColor}40`,
-                        color: isFilled ? '#FFFFFF' : `${accentColor}60`,
+                        color: isFilled ? '#FFFFFF' : subtextColor,
                       }}>
                       {isFilled ? (
                         (isMilestone1 || isMilestone2) ? '⭐' : '✓'
@@ -203,23 +224,25 @@ function CustomerCard() {
 
               {/* Milestones */}
               <div className="space-y-2">
-                <div className="flex items-center gap-3 bg-white rounded-xl p-3 border" style={{ borderColor: `${accentColor}20` }}>
+                <div className="flex items-center gap-3 rounded-xl p-3 border"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
                     style={{ backgroundColor: `${accentColor}15` }}>🎁</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: borderColor }}>{business.milestone1Label || '10% OFF'}</p>
-                    <p className="text-xs text-gray-400">{business.milestone1Description || `${Math.floor(totalStamps / 2)} visit reward`}</p>
+                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone1Label || '10% OFF'}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone1Description || `${Math.floor(totalStamps / 2)} visit reward`}</p>
                   </div>
                   {currentStamps >= Math.floor(totalStamps / 2) && (
                     <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 bg-white rounded-xl p-3 border" style={{ borderColor: `${accentColor}20` }}>
+                <div className="flex items-center gap-3 rounded-xl p-3 border"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
                     style={{ backgroundColor: `${accentColor}15` }}>🏆</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: borderColor }}>{business.milestone2Label || 'FREE SERVICE'}</p>
-                    <p className="text-xs text-gray-400">{business.milestone2Description || `${totalStamps} visit reward`}</p>
+                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone2Label || 'FREE SERVICE'}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone2Description || `${totalStamps} visit reward`}</p>
                   </div>
                   {currentStamps >= totalStamps && (
                     <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
@@ -229,7 +252,7 @@ function CustomerCard() {
 
               {/* Total visits */}
               <div className="mt-4 text-center">
-                <p className="text-xs text-gray-400">Total lifetime visits: <span className="font-bold" style={{ color: accentColor }}>{totalVisits}</span></p>
+                <p className="text-xs" style={{ color: subtextColor }}>Total lifetime visits: <span className="font-bold" style={{ color: accentColor }}>{totalVisits}</span></p>
               </div>
             </div>
           )}
@@ -238,28 +261,28 @@ function CustomerCard() {
           {activeView === 'rewards' && (
             <div className="animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Your Rewards</h2>
-                <p className="text-gray-500 text-sm font-light">Active coupons and earned rewards</p>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Your Rewards</h2>
+                <p className="text-sm font-light" style={{ color: textColor }}>Active coupons and earned rewards</p>
               </div>
 
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
                   {coupons.map((coupon, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md"
-                      style={{ borderColor: `${accentColor}30` }}>
+                    <div key={i} className="rounded-2xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md"
+                      style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
                           style={{ backgroundColor: accentColor }}>
                           <Gift size={24} className="text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-800">{coupon.text || 'Reward'}</p>
-                          <p className="text-xs text-gray-400">
+                          <p className="font-bold" style={{ color: headingColor }}>{coupon.text || 'Reward'}</p>
+                          <p className="text-xs" style={{ color: subtextColor }}>
                             {coupon.type && <span className="capitalize">{coupon.type}</span>}
                             {coupon.expiryDate && <span> · Expires {coupon.expiryDate}</span>}
                           </p>
                         </div>
-                        <ChevronRight size={20} className="text-gray-300 shrink-0" />
+                        <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                       </div>
                     </div>
                   ))}
@@ -267,8 +290,8 @@ function CustomerCard() {
               ) : (
                 <div className="text-center py-12">
                   <div className="text-5xl mb-4">🎁</div>
-                  <p className="text-gray-500 font-semibold mb-1">No rewards yet</p>
-                  <p className="text-gray-400 text-sm">Keep collecting stamps to earn rewards!</p>
+                  <p className="font-semibold mb-1" style={{ color: headingColor }}>No rewards yet</p>
+                  <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn rewards!</p>
                 </div>
               )}
             </div>
@@ -278,49 +301,42 @@ function CustomerCard() {
           {activeView === 'contact' && (
             <div className="animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Get in Touch</h2>
-                <p className="text-gray-500 text-sm font-light">{business.supportText || "We'd love to hear from you"}</p>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Get in Touch</h2>
+                <p className="text-sm font-light" style={{ color: textColor }}>
+                  {business.supportText || "We'd love to hear from you"}
+                </p>
               </div>
 
               <div className="space-y-3">
-                {business.chatLink && (
-                  <a href={business.chatLink} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 bg-white rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                    style={{ borderColor: `${accentColor}30` }}>
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                      style={{ backgroundColor: '#25D366' }}>
-                      <MessageCircle size={24} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-800">{business.chatLabel || 'Chat with us'}</p>
-                      <p className="text-xs text-gray-400">Send us a message</p>
-                    </div>
-                    <ChevronRight size={20} className="text-gray-300 shrink-0" />
-                  </a>
-                )}
-
-                {business.termsURL && (
-                  <a href={business.termsURL} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 bg-white rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                    style={{ borderColor: `${accentColor}30` }}>
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm bg-gray-100 shrink-0">
-                      <span className="text-lg">📋</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-800">Terms & Conditions</p>
-                      <p className="text-xs text-gray-400">View our policies</p>
-                    </div>
-                    <ChevronRight size={20} className="text-gray-300 shrink-0" />
-                  </a>
-                )}
-
-                {!business.chatLink && !business.termsURL && (
-                  <div className="text-center py-12">
-                    <div className="text-5xl mb-4">💬</div>
-                    <p className="text-gray-500 font-semibold mb-1">Contact info coming soon</p>
-                    <p className="text-gray-400 text-sm">Check back later for ways to reach us</p>
+                {/* Message via Viber */}
+                <a href="viber://chat?number=%2B638228234849"
+                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
+                    style={{ backgroundColor: '#7360F2' }}>
+                    <MessageCircle size={24} className="text-white" />
                   </div>
-                )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
+                </a>
+
+                {/* Call Us */}
+                <a href="tel:+639228531533"
+                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
+                    style={{ backgroundColor: accentColor }}>
+                    <Phone size={24} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 853 1533</p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
+                </a>
               </div>
 
               {/* Ad Image */}
