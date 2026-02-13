@@ -4,51 +4,52 @@ import CustomerCard from './pages/CustomerCard';
 import AdminPanel from './pages/AdminPanel';
 import StaffPanel from './pages/StaffPanel';
 
-function getRoute(hash) {
-  // Extract the path part from hash: "#/staff" -> "/staff", "#/card?token=X" -> "/card"
-  const stripped = hash.replace(/^#/, '');
-  const path = stripped.split('?')[0].toLowerCase();
-  
-  if (path === '/admin') return 'admin';
-  if (path === '/staff') return 'staff';
-  if (path === '/card') return 'customer';
-  if (path === '/' || path === '') return 'home';
+function getRoute() {
+  const hash = window.location.hash || '';
+  const path = window.location.pathname || '/';
+  const search = window.location.search || '';
+
+  // Extract path from hash: "#/staff" -> "/staff", "#/card?token=X" -> "/card"
+  if (hash && hash.length > 1) {
+    const hashPath = hash.replace(/^#/, '').split('?')[0].toLowerCase();
+    if (hashPath === '/admin') return 'admin';
+    if (hashPath === '/staff') return 'staff';
+    if (hashPath === '/card') return 'customer';
+    return 'home';
+  }
+
+  // Fallback: pathname (for Vercel rewrites)
+  const lowerPath = path.toLowerCase();
+  if (lowerPath === '/admin') return 'admin';
+  if (lowerPath === '/staff') return 'staff';
+  if (lowerPath === '/card') return 'customer';
+
+  // Fallback: token in query
+  if (search.includes('token=')) return 'customer';
+
   return 'home';
 }
 
 function App() {
-  const getView = useCallback(() => {
-    const hash = window.location.hash || '';
-    const path = window.location.pathname || '/';
-    const search = window.location.search || '';
-
-    // If hash routing is present, use it
-    if (hash && hash.length > 1) {
-      return getRoute(hash);
-    }
-
-    // Fallback: check pathname (for Vercel rewrites)
-    if (path === '/admin') return 'admin';
-    if (path === '/staff') return 'staff';
-    if (path === '/card') return 'customer';
-
-    // Fallback: check for token in query string
-    if (search.includes('token=')) return 'customer';
-
-    return 'home';
-  }, []);
-
-  const [currentView, setCurrentView] = useState(getView);
+  const [currentView, setCurrentView] = useState(() => getRoute());
 
   useEffect(() => {
-    const handleChange = () => setCurrentView(getView());
+    const handleChange = () => {
+      const newView = getRoute();
+      setCurrentView(newView);
+    };
+
     window.addEventListener('hashchange', handleChange);
     window.addEventListener('popstate', handleChange);
+
+    // Also re-check on mount in case hash changed before listener was attached
+    handleChange();
+
     return () => {
       window.removeEventListener('hashchange', handleChange);
       window.removeEventListener('popstate', handleChange);
     };
-  }, [getView]);
+  }, []);
 
   switch (currentView) {
     case 'admin': return <AdminPanel />;
