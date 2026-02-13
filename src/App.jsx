@@ -19,32 +19,6 @@ function getView() {
   return 'home';
 }
 
-// Error Boundary to catch crashes
-class ErrorCatcher extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { error: null, errorInfo: null };
-  }
-  componentDidCatch(error, errorInfo) {
-    this.setState({ error: error, errorInfo: errorInfo });
-  }
-  render() {
-    if (this.state.error) {
-      return React.createElement('div', {
-        style: { padding: '40px', backgroundColor: '#1a1a2e', minHeight: '100vh', color: 'white', fontFamily: 'monospace' }
-      },
-        React.createElement('h1', { style: { color: '#ff6b6b', fontSize: '24px', marginBottom: '16px' } }, 
-          'Component Crash Detected'),
-        React.createElement('p', { style: { color: '#ffd93d', marginBottom: '8px' } }, 
-          'Error: ' + String(this.state.error)),
-        React.createElement('pre', { style: { color: '#a0a0a0', fontSize: '12px', whiteSpace: 'pre-wrap', marginTop: '16px' } }, 
-          this.state.errorInfo ? this.state.errorInfo.componentStack : 'No stack available')
-      );
-    }
-    return this.props.children;
-  }
-}
-
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -66,14 +40,16 @@ class App extends React.Component {
     this.setState({ view: v });
   }
   render() {
-    var content;
-    switch (this.state.view) {
-      case 'staff': content = React.createElement(StaffPanel, null); break;
-      case 'admin': content = React.createElement(AdminPanel, null); break;
-      case 'customer': content = React.createElement(CustomerCard, null); break;
-      default: content = React.createElement(HomePage, null);
+    if (this.state.view === 'staff') {
+      return (
+        <div style={{minHeight:'100vh',backgroundColor:'green',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <h1 style={{color:'white',fontSize:'48px'}}>STAFF ROUTE WORKS</h1>
+        </div>
+      );
     }
-    return React.createElement(ErrorCatcher, null, content);
+    if (this.state.view === 'admin') return <AdminPanel />;
+    if (this.state.view === 'customer') return <CustomerCard />;
+    return <HomePage />;
   }
 }
 
