@@ -12,8 +12,8 @@ function Navigation({ currentPage }) {
       .catch(err => console.error('Nav error:', err));
   }, []);
 
-  const accentColor = businessInfo?.accentColor || '#17BEBB';
-  const borderColor = businessInfo?.borderColor || '#1F3A93';
+  const accentColor = businessInfo?.accentColor || '#4a4a5a';
+  const borderColor = businessInfo?.borderColor || '#1a1a2e';
 
   const links = [
     { key: 'home', href: '/#/', label: 'Home', icon: Home },
