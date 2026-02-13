@@ -19,6 +19,34 @@ function getView() {
   return 'home';
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  componentDidCatch(error, info) {
+    this.setState({ error: error });
+    console.error('Component crash:', error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ minHeight: '100vh', backgroundColor: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', maxWidth: '500px', textAlign: 'center' }}>
+            <h1 style={{ color: '#ef4444', fontSize: '24px', fontWeight: '700', marginBottom: '12px' }}>Something went wrong</h1>
+            <p style={{ color: '#6b7280', marginBottom: '16px' }}>{String(this.state.error)}</p>
+            <button onClick={function() { window.location.hash = '#/'; window.location.reload(); }}
+              style={{ padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>
+              Go Home
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -28,28 +56,21 @@ class App extends React.Component {
   componentDidMount() {
     window.addEventListener('hashchange', this.onNav);
     window.addEventListener('popstate', this.onNav);
-    document.title = 'View: ' + this.state.view;
   }
   componentWillUnmount() {
     window.removeEventListener('hashchange', this.onNav);
     window.removeEventListener('popstate', this.onNav);
   }
   onNav() {
-    var v = getView();
-    document.title = 'View: ' + v;
-    this.setState({ view: v });
+    this.setState({ view: getView() });
   }
   render() {
-    if (this.state.view === 'staff') {
-      return (
-        <div style={{minHeight:'100vh',backgroundColor:'green',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <h1 style={{color:'white',fontSize:'48px'}}>STAFF ROUTE WORKS</h1>
-        </div>
-      );
-    }
-    if (this.state.view === 'admin') return <AdminPanel />;
-    if (this.state.view === 'customer') return <CustomerCard />;
-    return <HomePage />;
+    var content;
+    if (this.state.view === 'staff') content = React.createElement(StaffPanel);
+    else if (this.state.view === 'admin') content = React.createElement(AdminPanel);
+    else if (this.state.view === 'customer') content = React.createElement(CustomerCard);
+    else content = React.createElement(HomePage);
+    return React.createElement(ErrorBoundary, null, content);
   }
 }
 
