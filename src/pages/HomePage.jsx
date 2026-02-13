@@ -20,21 +20,21 @@ function HomePage() {
     fetchBusinessInfo();
   }, []);
 
-  const bgColor = businessInfo?.backgroundColor || '#17BEBB';
-  const accentColor = businessInfo?.accentColor || '#17BEBB';
-  const cardBg = businessInfo?.cardBackground || '#F5F1E8';
-  const borderColor = businessInfo?.borderColor || '#1F3A93';
+  const bgColor = businessInfo?.backgroundColor || '#1a1a2e';
+  const accentColor = businessInfo?.accentColor || '#4a4a5a';
+  const cardBg = businessInfo?.cardBackground || '#f8f8f8';
+  const borderColor = businessInfo?.borderColor || '#2a2a3a';
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bgColor }}>
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen relative overflow-hidden animate-fade-in" style={{ backgroundColor: bgColor }}>
       {/* Decorative Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20 blur-3xl" 
