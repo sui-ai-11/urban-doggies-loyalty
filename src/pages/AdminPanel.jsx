@@ -99,10 +99,19 @@ function AdminPanel() {
   }
 
   // Dynamic colors
-  const bgColor = businessInfo?.backgroundColor || '#17BEBB';
-  const accentColor = businessInfo?.accentColor || '#17BEBB';
-  const borderColor = businessInfo?.borderColor || '#1F3A93';
+  const bgColor = businessInfo?.backgroundColor || '#1a1a2e';
+  const accentColor = businessInfo?.accentColor || '#4a4a5a';
+  const borderColor = businessInfo?.borderColor || '#2a2a3a';
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
+
+  // Don't render until we have business colors
+  if (!businessInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-600"></div>
+      </div>
+    );
+  }
 
   const tabs = [
     { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
