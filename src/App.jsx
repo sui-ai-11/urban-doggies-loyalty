@@ -1,62 +1,54 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import CustomerCard from './pages/CustomerCard';
 import AdminPanel from './pages/AdminPanel';
 import StaffPanel from './pages/StaffPanel';
 
-function getRoute() {
-  const hash = window.location.hash || '';
-  const path = window.location.pathname || '/';
-  const search = window.location.search || '';
+function App() {
+  const [view, setView] = useState('loading');
 
-  // Extract path from hash: "#/staff" -> "/staff", "#/card?token=X" -> "/card"
-  if (hash && hash.length > 1) {
-    const hashPath = hash.replace(/^#/, '').split('?')[0].toLowerCase();
-    if (hashPath === '/admin') return 'admin';
-    if (hashPath === '/staff') return 'staff';
-    if (hashPath === '/card') return 'customer';
+  function route() {
+    const h = (window.location.hash || '').toLowerCase();
+    const p = (window.location.pathname || '/').toLowerCase();
+    const s = window.location.search || '';
+
+    // Log for debugging — remove later
+    console.log('ROUTER DEBUG:', { hash: h, path: p, search: s });
+
+    // Hash-based routing (primary)
+    if (h.indexOf('/staff') !== -1) return 'staff';
+    if (h.indexOf('/admin') !== -1) return 'admin';
+    if (h.indexOf('/card') !== -1) return 'customer';
+
+    // Path-based routing (Vercel rewrite fallback)
+    if (p.indexOf('/staff') !== -1) return 'staff';
+    if (p.indexOf('/admin') !== -1) return 'admin';
+    if (p.indexOf('/card') !== -1) return 'customer';
+
+    // Token in query string
+    if (s.indexOf('token=') !== -1) return 'customer';
+
     return 'home';
   }
 
-  // Fallback: pathname (for Vercel rewrites)
-  const lowerPath = path.toLowerCase();
-  if (lowerPath === '/admin') return 'admin';
-  if (lowerPath === '/staff') return 'staff';
-  if (lowerPath === '/card') return 'customer';
-
-  // Fallback: token in query
-  if (search.includes('token=')) return 'customer';
-
-  return 'home';
-}
-
-function App() {
-  const [currentView, setCurrentView] = useState(() => getRoute());
-
   useEffect(() => {
-    const handleChange = () => {
-      const newView = getRoute();
-      setCurrentView(newView);
-    };
+    // Route on mount
+    setView(route());
 
-    window.addEventListener('hashchange', handleChange);
-    window.addEventListener('popstate', handleChange);
-
-    // Also re-check on mount in case hash changed before listener was attached
-    handleChange();
-
+    function onNav() { setView(route()); }
+    window.addEventListener('hashchange', onNav);
+    window.addEventListener('popstate', onNav);
     return () => {
-      window.removeEventListener('hashchange', handleChange);
-      window.removeEventListener('popstate', handleChange);
+      window.removeEventListener('hashchange', onNav);
+      window.removeEventListener('popstate', onNav);
     };
   }, []);
 
-  switch (currentView) {
-    case 'admin': return <AdminPanel />;
-    case 'staff': return <StaffPanel />;
-    case 'customer': return <CustomerCard />;
-    default: return <HomePage />;
-  }
+  if (view === 'loading') return null;
+  if (view === 'staff') return <StaffPanel />;
+  if (view === 'admin') return <AdminPanel />;
+  if (view === 'customer') return <CustomerCard />;
+  return <HomePage />;
 }
 
 export default App;
