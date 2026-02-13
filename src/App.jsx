@@ -4,28 +4,37 @@ import CustomerCard from './pages/CustomerCard';
 import AdminPanel from './pages/AdminPanel';
 import StaffPanel from './pages/StaffPanel';
 
+function getRoute(hash) {
+  // Extract the path part from hash: "#/staff" -> "/staff", "#/card?token=X" -> "/card"
+  const stripped = hash.replace(/^#/, '');
+  const path = stripped.split('?')[0].toLowerCase();
+  
+  if (path === '/admin') return 'admin';
+  if (path === '/staff') return 'staff';
+  if (path === '/card') return 'customer';
+  if (path === '/' || path === '') return 'home';
+  return 'home';
+}
+
 function App() {
   const getView = useCallback(() => {
-    // Get all parts of the URL
     const hash = window.location.hash || '';
     const path = window.location.pathname || '/';
     const search = window.location.search || '';
-    const fullHash = hash.toLowerCase();
-    const fullPath = path.toLowerCase();
 
-    // CARD: check hash, path, and query string for token
-    if (fullHash.includes('card') || fullPath.includes('card') || search.includes('token=')) {
-      return 'customer';
+    // If hash routing is present, use it
+    if (hash && hash.length > 1) {
+      return getRoute(hash);
     }
-    // ADMIN: check hash and path
-    if (fullHash.includes('admin') || fullPath.includes('admin')) {
-      return 'admin';
-    }
-    // STAFF: check hash and path
-    if (fullHash.includes('staff') || fullPath.includes('staff')) {
-      return 'staff';
-    }
-    // Default: home
+
+    // Fallback: check pathname (for Vercel rewrites)
+    if (path === '/admin') return 'admin';
+    if (path === '/staff') return 'staff';
+    if (path === '/card') return 'customer';
+
+    // Fallback: check for token in query string
+    if (search.includes('token=')) return 'customer';
+
     return 'home';
   }, []);
 
