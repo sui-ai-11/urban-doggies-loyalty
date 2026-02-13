@@ -39,7 +39,7 @@ function CustomerCard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#17BEBB' }}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-white mx-auto mb-4" />
           <p className="text-lg font-semibold">Loading…</p>
@@ -50,13 +50,13 @@ function CustomerCard() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#17BEBB' }}>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
         <div className="glass-card rounded-3xl p-8 max-w-md shadow-2xl">
           <h1 className="text-3xl font-black text-gray-800 mb-3 text-center tracking-tight">Digital Loyalty</h1>
           <p className="text-gray-500 mb-8 text-center font-light">Add ?token=YOUR_TOKEN to view your card</p>
           <div className="space-y-3">
             <a href="/#/admin" className="block bg-gray-800 text-white px-6 py-4 rounded-2xl font-semibold text-center hover:bg-gray-700 transition">Admin Panel</a>
-            <a href="/#/staff" className="block text-white px-6 py-4 rounded-2xl font-semibold text-center transition" style={{ backgroundColor: '#17BEBB' }}>Staff Check-In</a>
+            <a href="/#/staff" className="block text-white px-6 py-4 rounded-2xl font-semibold text-center transition bg-gray-700">Staff Check-In</a>
           </div>
         </div>
       </div>
@@ -65,7 +65,7 @@ function CustomerCard() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#17BEBB' }}>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
         <div className="glass-card rounded-3xl p-8 max-w-md text-center shadow-2xl">
           <div className="text-6xl mb-4">😢</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Card Not Found</h1>
@@ -78,9 +78,9 @@ function CustomerCard() {
   if (!clientData) return null;
 
   const { client, business, loyalty, coupons } = clientData;
-  const accentColor = business.accentColor || '#17BEBB';
+  const accentColor = business.accentColor || '#4a4a5a';
   const borderColor = business.borderColor || '#1F3A93';
-  const bgColor = business.backgroundColor || '#17BEBB';
+  const bgColor = business.backgroundColor || '#4a4a5a';
   const cardBg = business.cardBackground || '#FFFFFF';
 
   // Dynamic text colors based on card background brightness
@@ -318,7 +318,7 @@ function CustomerCard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 823 4849</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
