@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Settings, Home } from 'lucide-react';
 
+// Helper: determine if a hex color is dark
+function isDark(hex) {
+  if (!hex) return false;
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+}
+
 function HomePage() {
   const [businessInfo, setBusinessInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +35,18 @@ function HomePage() {
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
   const borderColor = businessInfo?.borderColor || '#2a2a3a';
 
+  // Dynamic text colors based on background brightness
+  const bgIsDark = isDark(bgColor);
+  const heroText = bgIsDark ? '#ffffff' : borderColor;
+  const heroSubtext = bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99`;
+  const navText = bgIsDark ? '#ffffff' : borderColor;
+
+  // Card text (cards are usually light)
+  const cardIsDark = isDark(cardBg);
+  const cardHeading = cardIsDark ? '#ffffff' : borderColor;
+  const cardText = cardIsDark ? '#d1d5db' : '#6b7280';
+  const cardSubtext = cardIsDark ? '#9ca3af' : accentColor;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -43,8 +65,8 @@ function HomePage() {
              style={{ backgroundColor: borderColor }}></div>
       </div>
 
-      {/* Glassmorphism Navigation */}
-      <nav className="glass relative z-10">
+      {/* Navigation */}
+      <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }} className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -53,7 +75,8 @@ function HomePage() {
                 <img 
                   src={businessInfo.logo} 
                   alt={businessInfo.businessName}
-                  className="h-14 w-14 object-contain rounded-xl glass-card p-2"
+                  className="h-14 w-14 object-contain rounded-xl p-2"
+                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
                   onError={(e) => e.target.style.display = 'none'}
                 />
               ) : (
@@ -64,34 +87,28 @@ function HomePage() {
                   {businessInfo?.businessName?.charAt(0) || 'B'}
                 </div>
               )}
-              <span className="text-2xl font-bold text-white tracking-tight">
+              <span className="text-2xl font-bold tracking-tight" style={{ color: navText }}>
                 {businessInfo?.businessName || 'Business Name'}
               </span>
             </div>
 
             {/* Navigation Links */}
             <div className="flex gap-2">
-              <a
-                href="/#/"
-                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </a>
-              <a
-                href="/#/staff"
-                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
-              >
-                <Users className="w-4 h-4" />
-                Loyalty Desk
-              </a>
-              <a
-                href="/#/admin"
-                className="glass px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all hover:scale-105 hover:bg-white hover:bg-opacity-20 flex items-center gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                Client Management
-              </a>
+              {[
+                { href: '/#/', icon: Home, label: 'Home' },
+                { href: '/#/staff', icon: Users, label: 'Loyalty Desk' },
+                { href: '/#/admin', icon: Settings, label: 'Client Management' },
+              ].map(({ href, icon: Icon, label }) => (
+                <a key={href} href={href}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2"
+                  style={{
+                    backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                    color: navText,
+                  }}>
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </a>
+              ))}
             </div>
           </div>
         </div>
@@ -101,21 +118,21 @@ function HomePage() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
         {/* Header */}
         <div className="text-center mb-20 animate-slide-up">
-          <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight">
+          <h1 className="text-6xl md:text-7xl font-black mb-4 tracking-tight" style={{ color: heroText }}>
             {businessInfo?.businessName || 'Business Name'}
           </h1>
-          <p className="text-2xl md:text-3xl text-white font-light tracking-wide opacity-90">
+          <p className="text-2xl md:text-3xl font-light tracking-wide" style={{ color: heroSubtext }}>
             {businessInfo?.tagline || 'Digital Loyalty System'}
           </p>
         </div>
 
-        {/* Main Cards - Glassmorphism */}
+        {/* Main Cards */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
           {/* Staff Card */}
           <a
             href="/#/staff"
             className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
-            style={{ animationDelay: '0.1s' }}
+            style={{ animationDelay: '0.1s', backgroundColor: cardBg }}
           >
             <div 
               className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
@@ -123,13 +140,13 @@ function HomePage() {
             >
               <Users className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: borderColor }}>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
               Loyalty Desk
             </h2>
-            <p className="text-gray-600 text-lg font-light leading-relaxed">
+            <p className="text-lg font-light leading-relaxed" style={{ color: cardText }}>
               Search customers and add stamps
             </p>
-            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: accentColor }}>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
               For Staff 
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -141,7 +158,7 @@ function HomePage() {
           <a
             href="/#/admin"
             className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
-            style={{ animationDelay: '0.2s' }}
+            style={{ animationDelay: '0.2s', backgroundColor: cardBg }}
           >
             <div 
               className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
@@ -149,13 +166,13 @@ function HomePage() {
             >
               <Settings className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: borderColor }}>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
               Client Management
             </h2>
-            <p className="text-gray-600 text-lg font-light leading-relaxed">
+            <p className="text-lg font-light leading-relaxed" style={{ color: cardText }}>
               Manage clients, view analytics & more
             </p>
-            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: accentColor }}>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
               For Admins
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -166,20 +183,23 @@ function HomePage() {
 
         {/* Info Sections */}
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="glass rounded-2xl p-6 transition-all hover:bg-white hover:bg-opacity-20 animate-fade-in">
-            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">📋 For Staff</h3>
-            <p className="text-white font-light opacity-90">
+          <div className="rounded-2xl p-6 transition-all animate-fade-in"
+            style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+            <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: heroText }}>📋 For Staff</h3>
+            <p className="font-light" style={{ color: heroSubtext }}>
               Quick customer check-in and stamp management
             </p>
           </div>
-          <div className="glass rounded-2xl p-6 transition-all hover:bg-white hover:bg-opacity-20 animate-fade-in">
-            <h3 className="text-xl font-bold text-white mb-2 tracking-tight">⚙️ For Admins</h3>
-            <p className="text-white font-light opacity-90">
+          <div className="rounded-2xl p-6 transition-all animate-fade-in"
+            style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+            <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: heroText }}>⚙️ For Admins</h3>
+            <p className="font-light" style={{ color: heroSubtext }}>
               Full system control, analytics and reporting
             </p>
           </div>
         </div>
-        <p className="text-center text-white text-opacity-30 text-xs mt-12">v1.2.1</p>
+
+        <p className="text-center text-xs mt-12" style={{ color: `${heroText}30` }}>v1.2.2</p>
       </div>
     </div>
   );
