@@ -1,358 +1,301 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, MessageCircle, Star, ChevronRight, Phone } from 'lucide-react';
 
-// Helper: determine if a hex color is dark
-function isDark(hex) {
-  if (!hex) return false;
-  const c = hex.replace('#', '');
-  const r = parseInt(c.substring(0, 2), 16);
-  const g = parseInt(c.substring(2, 4), 16);
-  const b = parseInt(c.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance < 0.5;
-}
+function StaffPanel() {
+  const [searchInput, setSearchInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [clientInfo, setClientInfo] = useState(null);
+  const [multipleResults, setMultipleResults] = useState(null);
+  const [businessInfo, setBusinessInfo] = useState(null);
 
-function CustomerCard() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [clientData, setClientData] = useState(null);
-  const [activeView, setActiveView] = useState('stamp');
+  useEffect(function() {
+    fetch('/api/get-business-info')
+      .then(function(r) { return r.json(); })
+      .then(function(data) { setBusinessInfo(data); })
+      .catch(function(err) { console.error('Error loading business info:', err); });
+  }, []);
 
-  // Support hash route, direct path, and bare query
-  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-  const queryParams = new URLSearchParams(window.location.search);
-  const token = hashParams.get('token') || queryParams.get('token');
+  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#1a1a2e';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
+  var borderColor = (businessInfo && businessInfo.borderColor) || '#2cb67d';
 
-  useEffect(() => {
-    if (!token) { setLoading(false); return; }
-    async function loadClientData() {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/client-dashboard?token=${token}`);
-        if (!response.ok) throw new Error('Client not found');
-        setClientData(await response.json());
-      } catch (err) { setError(err.message); }
-      finally { setLoading(false); }
+  function isDark(hex) {
+    if (!hex) return true;
+    var c = hex.replace('#', '');
+    var r = parseInt(c.substring(0, 2), 16);
+    var g = parseInt(c.substring(2, 4), 16);
+    var b = parseInt(c.substring(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+  }
+
+  var bgIsDark = isDark(bgColor);
+  var heroText = bgIsDark ? '#ffffff' : borderColor;
+  var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : borderColor + '90';
+
+  function searchCustomerByToken(token) {
+    setLoading(true);
+    setMessage('');
+    setClientInfo(null);
+    fetch('/api/client-dashboard?token=' + token)
+      .then(function(r) {
+        if (!r.ok) throw new Error('Customer not found');
+        return r.json();
+      })
+      .then(function(result) {
+        if (result.client) {
+          setClientInfo({
+            name: result.client.name,
+            token: result.client.token,
+            breed: result.client.breed,
+            mobile: result.client.mobile,
+            currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
+            requiredVisits: (result.business && result.business.requiredVisits) || 10
+          });
+          setMultipleResults(null);
+          setMessage('Customer found! Review info and confirm to add stamp.');
+        }
+      })
+      .catch(function(error) {
+        setMessage('Error: ' + error.message);
+        setClientInfo(null);
+      })
+      .finally(function() { setLoading(false); });
+  }
+
+  function searchCustomer(e) {
+    e.preventDefault();
+    if (!searchInput.trim()) {
+      setMessage('Please enter a token or customer name');
+      return;
     }
-    loadClientData();
-  }, [token]);
+    setLoading(true);
+    setMessage('');
+    setClientInfo(null);
+    var query = searchInput.toUpperCase();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-white mx-auto mb-4" />
-          <p className="text-lg font-semibold">Loading…</p>
-        </div>
-      </div>
-    );
+    fetch('/api/client-dashboard?token=' + query)
+      .then(function(r) {
+        if (r.ok) return r.json();
+        return fetch('/api/search-client?name=' + encodeURIComponent(searchInput))
+          .then(function(r2) {
+            if (!r2.ok) throw new Error('Customer not found');
+            return r2.json();
+          });
+      })
+      .then(function(result) {
+        if (result.client) {
+          setClientInfo({
+            name: result.client.name,
+            token: result.client.token,
+            breed: result.client.breed,
+            mobile: result.client.mobile,
+            currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
+            requiredVisits: (result.business && result.business.requiredVisits) || 10
+          });
+          setMultipleResults(null);
+          setMessage('Customer found! Review info and confirm to add stamp.');
+        } else if (result.clients && result.clients.length > 1) {
+          setMultipleResults(result.clients);
+          setClientInfo(null);
+          setMessage('Found ' + result.clients.length + ' customers. Please select:');
+        } else if (result.clients && result.clients.length === 1) {
+          var c = result.clients[0];
+          setClientInfo({ name: c.name, token: c.token, breed: c.breed, mobile: c.mobile, currentVisits: 0, requiredVisits: 10 });
+          setMultipleResults(null);
+          setMessage('Customer found! Review info and confirm to add stamp.');
+        } else {
+          throw new Error('Customer not found');
+        }
+      })
+      .catch(function(error) {
+        setMessage('Error: ' + error.message);
+        setClientInfo(null);
+      })
+      .finally(function() { setLoading(false); });
   }
 
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
-        <div className="glass-card rounded-3xl p-8 max-w-md shadow-2xl">
-          <h1 className="text-3xl font-black text-gray-800 mb-3 text-center tracking-tight">Digital Loyalty</h1>
-          <p className="text-gray-500 mb-8 text-center font-light">Add ?token=YOUR_TOKEN to view your card</p>
-          <div className="space-y-3">
-            <a href="/#/admin" className="block bg-gray-800 text-white px-6 py-4 rounded-2xl font-semibold text-center hover:bg-gray-700 transition">Admin Panel</a>
-            <a href="/#/staff" className="block text-white px-6 py-4 rounded-2xl font-semibold text-center transition bg-gray-700">Staff Check-In</a>
-          </div>
-        </div>
-      </div>
-    );
+  function confirmAddStamp() {
+    if (!clientInfo) return;
+    setLoading(true);
+    setMessage('');
+    fetch('/api/add-stamp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', addedBy: 'staff' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.error) throw new Error(result.error);
+        if (result.rewardEarned) {
+          setMessage('SUCCESS! ' + result.client.name + ' earned a reward: "' + result.rewardText + '"');
+        } else {
+          setMessage('Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
+        }
+        setTimeout(function() {
+          setSearchInput('');
+          setClientInfo(null);
+          setMessage('');
+        }, 4000);
+      })
+      .catch(function(error) { setMessage('Error: ' + error.message); })
+      .finally(function() { setLoading(false); });
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
-        <div className="glass-card rounded-3xl p-8 max-w-md text-center shadow-2xl">
-          <div className="text-6xl mb-4">😢</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Card Not Found</h1>
-          <p className="text-gray-500">{error}</p>
-        </div>
-      </div>
-    );
+  function cancelSearch() {
+    setClientInfo(null);
+    setSearchInput('');
+    setMessage('');
+    setMultipleResults(null);
   }
 
-  if (!clientData) return null;
-
-  const { client, business, loyalty, coupons } = clientData;
-  const accentColor = business.accentColor || '#4a4a5a';
-  const borderColor = business.borderColor || '#1F3A93';
-  const bgColor = business.backgroundColor || '#4a4a5a';
-  const cardBg = business.cardBackground || '#FFFFFF';
-
-  // Dynamic text colors based on card background brightness
-  const cardIsDark = isDark(cardBg);
-  const headingColor = cardIsDark ? '#FFFFFF' : (borderColor || '#1a1a2e');
-  const textColor = cardIsDark ? '#d1d5db' : '#6b7280';
-  const subtextColor = cardIsDark ? '#9ca3af' : '#9ca3af';
-
-  const totalStamps = loyalty?.requiredVisits || business.stampsRequired || 10;
-  const currentStamps = loyalty?.currentProgress || 0;
-  const totalVisits = loyalty?.totalVisits || 0;
-
-  // Nav buttons from business settings
-  const navButtons = [
-    { key: 'stamp', label: business.navButton1Text || 'Date Stamp', icon: Star },
-    { key: 'rewards', label: business.navButton2Text || 'Rewards', icon: Gift },
-    { key: 'contact', label: business.navButton3Text || 'Contact', icon: MessageCircle },
-  ];
+  function selectCustomer(customer) {
+    setClientInfo({ name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile, currentVisits: 0, requiredVisits: 10 });
+    setMultipleResults(null);
+    setMessage('Customer selected! Review info and confirm to add stamp.');
+  }
 
   return (
-    <div className="min-h-screen py-6 px-4" style={{ backgroundColor: bgColor }}>
-      {/* Decorative blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-60 h-60 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }} />
-        <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }} />
-      </div>
-
-      {/* Card Container */}
-      <div className="relative z-10 max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
-        style={{ backgroundColor: cardBg, border: `3px solid ${borderColor}20` }}>
-
-        {/* Header */}
-        <div className="p-6 pb-4">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            {business.logo ? (
-              <img src={business.logo} alt={business.name} className="h-20 w-auto"
-                onError={(e) => (e.target.style.display = 'none')} />
-            ) : (
-              <div className="flex flex-col items-center">
-                <span className="text-3xl font-black tracking-tight" style={{ color: headingColor }}>
-                  {business.name}
-                </span>
-              </div>
-            )}
+    <div style={{ minHeight: '100vh', backgroundColor: bgColor }}>
+      {/* Nav */}
+      <nav style={{ backgroundColor: borderColor, padding: '12px 24px' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <a href="/#/" style={{ color: 'white', fontWeight: 'bold', fontSize: '18px', textDecoration: 'none' }}>
+            {(businessInfo && businessInfo.businessName) || 'Business'}
+          </a>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <a href="/#/" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: 'rgba(255,255,255,0.1)' }}>Home</a>
+            <a href="/#/staff" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: accentColor }}>Loyalty Desk</a>
+            <a href="/#/admin" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: 'rgba(255,255,255,0.1)' }}>Admin</a>
           </div>
-          {business.tagline && <p className="text-center text-sm font-light" style={{ color: textColor }}>{business.tagline}</p>}
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ color: heroText, fontSize: '36px', fontWeight: '900', marginBottom: '8px' }}>Loyalty Desk</h1>
+          <p style={{ color: heroSub, fontSize: '16px' }}>Search by token or customer name</p>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex mx-6 mb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.1)' : `${borderColor}10` }}>
-          {navButtons.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setActiveView(key)}
-              className="flex-1 py-3 text-xs font-bold transition-all duration-200 flex flex-col items-center gap-1"
-              style={{
-                backgroundColor: activeView === key ? accentColor : 'transparent',
-                color: activeView === key ? '#FFFFFF' : subtextColor,
-              }}>
-              <Icon size={16} />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="px-6 pb-6">
-          {/* ═══ STAMP VIEW ═══ */}
-          {activeView === 'stamp' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>
-                  Hey, {client.name.split(' ')[0]}!
-                </h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>
-                  {business.progressText || 'Track your visits and earn rewards!'}
-                </p>
+        {/* Search Form */}
+        {!clientInfo && !multipleResults && (
+          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: accentColor, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <span style={{ color: 'white', fontSize: '28px' }}>🔍</span>
               </div>
-
-              {/* QR Code */}
-              <div className="mb-6 px-4">
-                <div className="max-w-xs mx-auto bg-white rounded-2xl p-4 border-2 shadow-sm" style={{ borderColor: `${accentColor}30` }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${client.token}`}
-                    alt="QR Code"
-                    className="w-full rounded-xl"
-                  />
-                  <p className="text-center mt-3 font-mono font-bold text-lg tracking-widest" style={{ color: accentColor }}>
-                    {client.token}
-                  </p>
-                  <p className="text-center text-gray-400 text-xs mt-1">Show this to staff to earn stamps</p>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold" style={{ color: textColor }}>Progress</span>
-                  <span className="text-sm font-bold" style={{ color: accentColor }}>
-                    {currentStamps}/{totalStamps} stamps
-                  </span>
-                </div>
-                <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: `${accentColor}20` }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(currentStamps / totalStamps) * 100}%`,
-                      backgroundColor: accentColor,
-                    }}
-                  />
-                </div>
-                <p className="text-xs mt-2 text-center" style={{ color: subtextColor }}>
-                  {loyalty?.nextRewardIn > 0
-                    ? `${loyalty.nextRewardIn} more visit${loyalty.nextRewardIn > 1 ? 's' : ''} until your next reward!`
-                    : '🎉 You earned a reward!'}
-                </p>
-              </div>
-
-              {/* Stamp Grid */}
-              <div className="grid grid-cols-5 gap-2 mb-6">
-                {Array.from({ length: totalStamps }).map((_, i) => {
-                  const isFilled = i < currentStamps;
-                  const isMilestone1 = i === Math.floor(totalStamps / 2) - 1;
-                  const isMilestone2 = i === totalStamps - 1;
-                  return (
-                    <div key={i}
-                      className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                        isFilled ? 'shadow-md' : 'border-2 border-dashed'
-                      }`}
-                      style={{
-                        backgroundColor: isFilled ? accentColor : 'transparent',
-                        borderColor: isFilled ? 'transparent' : `${accentColor}40`,
-                        color: isFilled ? '#FFFFFF' : subtextColor,
-                      }}>
-                      {isFilled ? (
-                        (isMilestone1 || isMilestone2) ? '⭐' : '✓'
-                      ) : (
-                        isMilestone1 ? '🎁' : isMilestone2 ? '🏆' : (i + 1)
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Milestones */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 rounded-xl p-3 border"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>🎁</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone1Label || '10% OFF'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone1Description || `${Math.floor(totalStamps / 2)} visit reward`}</p>
-                  </div>
-                  {currentStamps >= Math.floor(totalStamps / 2) && (
-                    <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 rounded-xl p-3 border"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>🏆</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone2Label || 'FREE SERVICE'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone2Description || `${totalStamps} visit reward`}</p>
-                  </div>
-                  {currentStamps >= totalStamps && (
-                    <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Total visits */}
-              <div className="mt-4 text-center">
-                <p className="text-xs" style={{ color: subtextColor }}>Total lifetime visits: <span className="font-bold" style={{ color: accentColor }}>{totalVisits}</span></p>
-              </div>
+              <h2 style={{ color: borderColor, fontSize: '22px', fontWeight: '700' }}>Customer Check-In</h2>
             </div>
-          )}
 
-          {/* ═══ REWARDS VIEW ═══ */}
-          {activeView === 'rewards' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Your Rewards</h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>Active coupons and earned rewards</p>
+            <form onSubmit={searchCustomer}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#9ca3af', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+                  Enter Token or Customer Name
+                </label>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={function(e) { setSearchInput(e.target.value); }}
+                  style={{ width: '100%', padding: '16px', fontSize: '18px', textAlign: 'center', border: '3px solid ' + accentColor, borderRadius: '16px', outline: 'none', boxSizing: 'border-box' }}
+                  autoFocus
+                />
               </div>
+              <button
+                type="submit"
+                disabled={loading || !searchInput.trim()}
+                style={{ width: '100%', padding: '16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', opacity: (loading || !searchInput.trim()) ? 0.5 : 1 }}
+              >
+                {loading ? 'Searching...' : '🔍 Search Customer'}
+              </button>
+            </form>
+          </div>
+        )}
 
-              {coupons && coupons.length > 0 ? (
-                <div className="space-y-3">
-                  {coupons.map((coupon, i) => (
-                    <div key={i} className="rounded-2xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md"
-                      style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                          style={{ backgroundColor: accentColor }}>
-                          <Gift size={24} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold" style={{ color: headingColor }}>{coupon.text || 'Reward'}</p>
-                          <p className="text-xs" style={{ color: subtextColor }}>
-                            {coupon.type && <span className="capitalize">{coupon.type}</span>}
-                            {coupon.expiryDate && <span> · Expires {coupon.expiryDate}</span>}
-                          </p>
-                        </div>
-                        <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-5xl mb-4">🎁</div>
-                  <p className="font-semibold mb-1" style={{ color: headingColor }}>No rewards yet</p>
-                  <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn rewards!</p>
+        {/* Multiple Results */}
+        {multipleResults && multipleResults.length > 1 && (
+          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ color: borderColor, fontSize: '22px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' }}>Select Customer</h2>
+            <div>
+              {multipleResults.map(function(customer, i) {
+                return (
+                  <button key={i} onClick={function() { selectCustomer(customer); }}
+                    style={{ width: '100%', backgroundColor: '#f9fafb', border: '2px solid ' + accentColor + '40', borderRadius: '16px', padding: '16px', textAlign: 'left', cursor: 'pointer', marginBottom: '8px', display: 'block' }}>
+                    <p style={{ fontWeight: '700', color: borderColor, fontSize: '16px', margin: 0 }}>{customer.name}</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0' }}>Token: {customer.token}</p>
+                    {customer.mobile && <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>Mobile: {customer.mobile}</p>}
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={cancelSearch} style={{ width: '100%', padding: '14px', backgroundColor: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>Cancel</button>
+          </div>
+        )}
+
+        {/* Customer Info */}
+        {clientInfo && message.indexOf('Stamp added') === -1 && message.indexOf('SUCCESS') === -1 && (
+          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#22c55e', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <span style={{ color: 'white', fontSize: '28px' }}>✓</span>
+              </div>
+              <h2 style={{ color: '#22c55e', fontSize: '22px', fontWeight: '700' }}>Customer Found!</h2>
+            </div>
+
+            <div style={{ backgroundColor: '#f9fafb', borderRadius: '16px', padding: '20px', marginBottom: '24px', border: '2px solid ' + accentColor + '30' }}>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Name</span>
+                <span style={{ fontWeight: '700', color: borderColor, fontSize: '16px' }}>{clientInfo.name}</span>
+              </div>
+              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Token</span>
+                <span style={{ fontWeight: '700', color: accentColor, fontSize: '16px', fontFamily: 'monospace' }}>{clientInfo.token}</span>
+              </div>
+              {clientInfo.breed && (
+                <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Pet</span>
+                  <span style={{ color: '#374151' }}>🐕 {clientInfo.breed}</span>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* ═══ CONTACT VIEW ═══ */}
-          {activeView === 'contact' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Get in Touch</h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>
-                  {business.supportText || "We'd love to hear from you"}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {/* Message via Viber */}
-                <a href="viber://chat?number=%2B638228234849"
-                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                    style={{ backgroundColor: '#7360F2' }}>
-                    <MessageCircle size={24} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
-                  </div>
-                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
-                </a>
-
-                {/* Call Us */}
-                <a href="tel:+639228531533"
-                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                    style={{ backgroundColor: accentColor }}>
-                    <Phone size={24} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 853 1533</p>
-                  </div>
-                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
-                </a>
-              </div>
-
-              {/* Ad Image */}
-              {business.adImageUrl && (
-                <div className="mt-6">
-                  <img src={business.adImageUrl} alt="Promotion"
-                    className="w-full rounded-2xl shadow-sm"
-                    onError={(e) => (e.target.style.display = 'none')} />
+              {clientInfo.mobile && (
+                <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Mobile</span>
+                  <span style={{ color: '#374151' }}>{clientInfo.mobile}</span>
                 </div>
               )}
+              <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Visits</span>
+                <span style={{ fontWeight: '700', color: accentColor, fontSize: '20px' }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
+              </div>
             </div>
-          )}
-        </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button onClick={cancelSearch} style={{ padding: '14px', backgroundColor: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={confirmAddStamp} disabled={loading}
+                style={{ padding: '14px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
+                {loading ? 'Adding...' : '✓ Add Stamp'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Message */}
+        {message && (
+          <div style={{
+            marginTop: '24px',
+            padding: '16px',
+            borderRadius: '16px',
+            textAlign: 'center',
+            fontWeight: '600',
+            fontSize: '14px',
+            backgroundColor: message.indexOf('Error') > -1 ? '#fef2f2' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#f0fdf4' : '#eff6ff',
+            color: message.indexOf('Error') > -1 ? '#991b1b' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#166534' : '#1e40af',
+            border: '1px solid ' + (message.indexOf('Error') > -1 ? '#fecaca' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#bbf7d0' : '#bfdbfe')
+          }}>
+            {message}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default CustomerCard;
+export default StaffPanel;
