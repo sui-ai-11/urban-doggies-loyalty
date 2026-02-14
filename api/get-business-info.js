@@ -28,10 +28,10 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
     const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-    // Fetch business data from Row 2 (get columns A through W)
+    // Fetch business data from Row 2 (get columns A through AB)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:W2',
+      range: 'Businesses!A2:AB2',
     });
 
     const row = response.data.values?.[0];
@@ -65,6 +65,11 @@ export default async function handler(req, res) {
       navButton1Text: row[20] || 'Stamp Card',           // U
       navButton2Text: row[21] || 'Rewards',              // V
       navButton3Text: row[22] || 'Contact',              // W
+      milestone1Position: parseInt(row[23]) || 0,          // X (0 = auto halfway)
+      milestone2Position: parseInt(row[24]) || 0,          // Y (0 = auto last)
+      milestone1Icon: row[25] || '🎁',                    // Z
+      milestone2Icon: row[26] || '🏆',                    // AA
+      stampFilledIcon: row[27] || '✓',                    // AB
     };
 
     console.log('✅ Business loaded:', businessInfo.businessName);
