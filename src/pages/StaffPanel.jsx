@@ -1,41 +1,107 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+function isDark(hex) {
+  if (!hex) return true;
+  var c = hex.replace('#', '');
+  var r = parseInt(c.substring(0, 2), 16);
+  var g = parseInt(c.substring(2, 4), 16);
+  var b = parseInt(c.substring(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+}
 
 function StaffPanel() {
-  const [searchInput, setSearchInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [clientInfo, setClientInfo] = useState(null);
-  const [multipleResults, setMultipleResults] = useState(null);
-  const [businessInfo, setBusinessInfo] = useState(null);
+  var _a = useState(''), searchInput = _a[0], setSearchInput = _a[1];
+  var _b = useState(false), loading = _b[0], setLoading = _b[1];
+  var _c = useState(''), message = _c[0], setMessage = _c[1];
+  var _d = useState(null), clientInfo = _d[0], setClientInfo = _d[1];
+  var _e = useState(null), multipleResults = _e[0], setMultipleResults = _e[1];
+  var _f = useState(false), showScanner = _f[0], setShowScanner = _f[1];
+  var _g = useState(false), scanning = _g[0], setScanning = _g[1];
+  var _h = useState(null), businessInfo = _h[0], setBusinessInfo = _h[1];
+  var videoRef = useRef(null);
+  var canvasRef = useRef(null);
+  var scanIntervalRef = useRef(null);
 
   useEffect(function() {
     fetch('/api/get-business-info')
       .then(function(r) { return r.json(); })
       .then(function(data) { setBusinessInfo(data); })
-      .catch(function(err) { console.error('Error loading business info:', err); });
+      .catch(function(err) { console.error('Error:', err); });
   }, []);
+
+  // Load jsQR when scanner opens
+  useEffect(function() {
+    if (showScanner && !window.jsQR) {
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [showScanner]);
 
   var bgColor = (businessInfo && businessInfo.backgroundColor) || '#1a1a2e';
   var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
   var borderColor = (businessInfo && businessInfo.borderColor) || '#2cb67d';
-
-  function isDark(hex) {
-    if (!hex) return true;
-    var c = hex.replace('#', '');
-    var r = parseInt(c.substring(0, 2), 16);
-    var g = parseInt(c.substring(2, 4), 16);
-    var b = parseInt(c.substring(4, 6), 16);
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
-  }
-
+  var cardBg = (businessInfo && businessInfo.cardBackground) || '#ffffff';
   var bgIsDark = isDark(bgColor);
   var heroText = bgIsDark ? '#ffffff' : borderColor;
-  var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : borderColor + '90';
+  var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
 
-  function searchCustomerByToken(token) {
+  // QR Scanner
+  function startScanner() {
+    setShowScanner(true);
+    setMessage('');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(function(stream) {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          setScanning(true);
+          scanQRCode();
+        }
+      })
+      .catch(function() {
+        setMessage('Camera access denied or not available');
+        setShowScanner(false);
+      });
+  }
+
+  function scanQRCode() {
+    scanIntervalRef.current = setInterval(function() {
+      if (videoRef.current && canvasRef.current && window.jsQR) {
+        var video = videoRef.current;
+        var canvas = canvasRef.current;
+        var ctx = canvas.getContext('2d');
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          var code = window.jsQR(imageData.data, imageData.width, imageData.height);
+          if (code) {
+            stopScanner();
+            setSearchInput(code.data.toUpperCase());
+            searchByToken(code.data.toUpperCase());
+          }
+        }
+      }
+    }, 300);
+  }
+
+  function stopScanner() {
+    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(function(t) { t.stop(); });
+    }
+    setShowScanner(false);
+    setScanning(false);
+  }
+
+  function searchByToken(token) {
     setLoading(true);
     setMessage('');
     setClientInfo(null);
+    setMultipleResults(null);
     fetch('/api/client-dashboard?token=' + token)
       .then(function(r) {
         if (!r.ok) throw new Error('Customer not found');
@@ -51,7 +117,6 @@ function StaffPanel() {
             currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
             requiredVisits: (result.business && result.business.requiredVisits) || 10
           });
-          setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
         }
       })
@@ -71,12 +136,16 @@ function StaffPanel() {
     setLoading(true);
     setMessage('');
     setClientInfo(null);
-    var query = searchInput.toUpperCase();
+    setMultipleResults(null);
+    var query = searchInput.trim();
+    var upperQuery = query.toUpperCase();
 
-    fetch('/api/client-dashboard?token=' + query)
+    // Try token first
+    fetch('/api/client-dashboard?token=' + upperQuery)
       .then(function(r) {
         if (r.ok) return r.json();
-        return fetch('/api/search-client?name=' + encodeURIComponent(searchInput))
+        // Token not found — try name search
+        return fetch('/api/search-client?name=' + encodeURIComponent(query))
           .then(function(r2) {
             if (!r2.ok) throw new Error('Customer not found');
             return r2.json();
@@ -84,6 +153,7 @@ function StaffPanel() {
       })
       .then(function(result) {
         if (result.client) {
+          // Single client from token search
           setClientInfo({
             name: result.client.name,
             token: result.client.token,
@@ -95,12 +165,17 @@ function StaffPanel() {
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
         } else if (result.clients && result.clients.length > 1) {
+          // Multiple matches
           setMultipleResults(result.clients);
           setClientInfo(null);
           setMessage('Found ' + result.clients.length + ' customers. Please select:');
         } else if (result.clients && result.clients.length === 1) {
+          // Single match from name search
           var c = result.clients[0];
-          setClientInfo({ name: c.name, token: c.token, breed: c.breed, mobile: c.mobile, currentVisits: 0, requiredVisits: 10 });
+          setClientInfo({
+            name: c.name, token: c.token, breed: c.breed, mobile: c.mobile,
+            currentVisits: 0, requiredVisits: 10
+          });
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
         } else {
@@ -127,15 +202,11 @@ function StaffPanel() {
       .then(function(result) {
         if (result.error) throw new Error(result.error);
         if (result.rewardEarned) {
-          setMessage('SUCCESS! ' + result.client.name + ' earned a reward: "' + result.rewardText + '"');
+          setMessage('🎉 SUCCESS! ' + result.client.name + ' earned a reward: "' + result.rewardText + '"');
         } else {
-          setMessage('Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
+          setMessage('✅ Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
         }
-        setTimeout(function() {
-          setSearchInput('');
-          setClientInfo(null);
-          setMessage('');
-        }, 4000);
+        setTimeout(function() { setSearchInput(''); setClientInfo(null); setMessage(''); }, 4000);
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
@@ -149,147 +220,229 @@ function StaffPanel() {
   }
 
   function selectCustomer(customer) {
-    setClientInfo({ name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile, currentVisits: 0, requiredVisits: 10 });
+    setClientInfo({
+      name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile,
+      currentVisits: 0, requiredVisits: 10
+    });
     setMultipleResults(null);
     setMessage('Customer selected! Review info and confirm to add stamp.');
   }
 
+  if (!businessInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: bgColor }}>
+    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       {/* Nav */}
-      <nav style={{ backgroundColor: borderColor, padding: '12px 24px' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <a href="/#/" style={{ color: 'white', fontWeight: 'bold', fontSize: '18px', textDecoration: 'none' }}>
-            {(businessInfo && businessInfo.businessName) || 'Business'}
-          </a>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <a href="/#/" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: 'rgba(255,255,255,0.1)' }}>Home</a>
-            <a href="/#/staff" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: accentColor }}>Loyalty Desk</a>
-            <a href="/#/admin" style={{ color: 'white', padding: '6px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', backgroundColor: 'rgba(255,255,255,0.1)' }}>Admin</a>
+      <nav className="relative z-20" style={{ backgroundColor: borderColor }}>
+        <div className="max-w-7xl mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <a href="/#/" className="flex items-center gap-3 no-underline">
+              {businessInfo.logo ? (
+                <img src={businessInfo.logo} alt={businessInfo.businessName}
+                  className="h-12 w-12 object-contain rounded-xl p-1.5"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  onError={function(e) { e.target.style.display = 'none'; }} />
+              ) : (
+                <div className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-lg"
+                  style={{ backgroundColor: accentColor }}>
+                  {(businessInfo.businessName || 'B').charAt(0)}
+                </div>
+              )}
+              <span className="text-xl font-bold text-white tracking-tight hidden sm:inline">
+                {businessInfo.businessName || 'Business'}
+              </span>
+            </a>
+            <div className="flex gap-2">
+              {[
+                { href: '/#/', label: 'Home' },
+                { href: '/#/staff', label: 'Loyalty Desk', active: true },
+                { href: '/#/admin', label: 'Client Management' },
+              ].map(function(link) {
+                return (
+                  <a key={link.href} href={link.href}
+                    className="px-4 py-2.5 rounded-xl font-semibold text-sm text-white no-underline flex items-center gap-2"
+                    style={{ backgroundColor: link.active ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                    {link.label}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </nav>
 
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ color: heroText, fontSize: '36px', fontWeight: '900', marginBottom: '8px' }}>Loyalty Desk</h1>
-          <p style={{ color: heroSub, fontSize: '16px' }}>Search by token or customer name</p>
+      {/* Decorative blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-40 right-20 w-80 h-80 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }}></div>
+        <div className="absolute bottom-20 left-10 w-64 h-64 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }}></div>
+      </div>
+
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-8">
+        <div className="text-center mb-8 animate-slide-up">
+          <h1 className="text-4xl font-black mb-2 tracking-tight" style={{ color: heroText }}>Loyalty Desk</h1>
+          <p className="font-light text-lg" style={{ color: heroSub }}>Search by token or customer name</p>
         </div>
 
-        {/* Search Form */}
-        {!clientInfo && !multipleResults && (
-          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: accentColor, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                <span style={{ color: 'white', fontSize: '28px' }}>🔍</span>
+        {/* QR Scanner Modal */}
+        {showScanner && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="glass-card rounded-3xl p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold" style={{ color: borderColor }}>Scan QR Code</h2>
+                <button onClick={stopScanner} className="p-2 hover:bg-gray-100 rounded-xl transition">
+                  <span style={{ fontSize: '24px', color: '#666' }}>✕</span>
+                </button>
               </div>
-              <h2 style={{ color: borderColor, fontSize: '22px', fontWeight: '700' }}>Customer Check-In</h2>
+              <div className="relative bg-black rounded-2xl overflow-hidden" style={{ aspectRatio: '1' }}>
+                <video ref={videoRef} className="w-full h-full object-cover" playsInline></video>
+                <canvas ref={canvasRef} className="hidden"></canvas>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div style={{ width: '70%', height: '70%', border: '4px solid ' + accentColor, borderRadius: '16px' }}></div>
+                </div>
+              </div>
+              <p className="text-center text-gray-500 mt-4 font-semibold text-sm">
+                {scanning ? 'Position QR code within frame…' : 'Starting camera…'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Search Form */}
+        {!clientInfo && !showScanner && !multipleResults && (
+          <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-18 h-18 rounded-2xl mb-4 shadow-lg p-4"
+                style={{ backgroundColor: accentColor }}>
+                <span style={{ fontSize: '36px' }}>🔍</span>
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight" style={{ color: borderColor }}>Customer Check-In</h2>
             </div>
 
+            <button type="button" onClick={startScanner}
+              className="w-full text-white py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-3 mb-4"
+              style={{ backgroundColor: borderColor }}>
+              📷 Scan QR Code
+            </button>
+
+            <div className="text-center text-gray-400 font-semibold text-sm my-4">OR</div>
+
             <form onSubmit={searchCustomer}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#9ca3af', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider text-center">
                   Enter Token or Customer Name
                 </label>
-                <input
-                  type="text"
-                  value={searchInput}
+                <input type="text" value={searchInput}
                   onChange={function(e) { setSearchInput(e.target.value); }}
-                  style={{ width: '100%', padding: '16px', fontSize: '18px', textAlign: 'center', border: '3px solid ' + accentColor, borderRadius: '16px', outline: 'none', boxSizing: 'border-box' }}
+                  className="w-full px-6 py-5 text-xl text-center rounded-2xl focus:outline-none shadow-inner bg-white"
+                  style={{ border: '3px solid ' + accentColor }}
                   autoFocus
-                />
+                  placeholder="e.g. SMFECQJR or Juan" />
               </div>
-              <button
-                type="submit"
-                disabled={loading || !searchInput.trim()}
-                style={{ width: '100%', padding: '16px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', opacity: (loading || !searchInput.trim()) ? 0.5 : 1 }}
-              >
-                {loading ? 'Searching...' : '🔍 Search Customer'}
+              <button type="submit" disabled={loading || !searchInput.trim()}
+                className="w-full text-white py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-3"
+                style={{ backgroundColor: accentColor }}>
+                {loading ? '⏳ Searching…' : '🔍 Search Customer'}
               </button>
             </form>
           </div>
         )}
 
         {/* Multiple Results */}
-        {multipleResults && multipleResults.length > 1 && (
-          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ color: borderColor, fontSize: '22px', fontWeight: '700', textAlign: 'center', marginBottom: '16px' }}>Select Customer</h2>
-            <div>
+        {multipleResults && multipleResults.length > 0 && (
+          <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold" style={{ color: borderColor }}>Select Customer</h2>
+              <p className="text-gray-500 mt-2 text-sm">Found {multipleResults.length} customers. Click to select:</p>
+            </div>
+            <div className="space-y-3 mb-6">
               {multipleResults.map(function(customer, i) {
                 return (
                   <button key={i} onClick={function() { selectCustomer(customer); }}
-                    style={{ width: '100%', backgroundColor: '#f9fafb', border: '2px solid ' + accentColor + '40', borderRadius: '16px', padding: '16px', textAlign: 'left', cursor: 'pointer', marginBottom: '8px', display: 'block' }}>
-                    <p style={{ fontWeight: '700', color: borderColor, fontSize: '16px', margin: 0 }}>{customer.name}</p>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0' }}>Token: {customer.token}</p>
-                    {customer.mobile && <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>Mobile: {customer.mobile}</p>}
+                    className="w-full bg-white hover:shadow-md rounded-2xl p-5 text-left transition-all duration-200"
+                    style={{ border: '2px solid ' + accentColor + '40', display: 'block', cursor: 'pointer' }}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-lg" style={{ color: borderColor }}>{customer.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">Token: <span className="font-mono font-bold" style={{ color: accentColor }}>{customer.token}</span></p>
+                        {customer.mobile && <p className="text-xs text-gray-500">Mobile: {customer.mobile}</p>}
+                        {customer.breed && <p className="text-xs text-gray-500">Pet: 🐕 {customer.breed}</p>}
+                      </div>
+                      <span style={{ color: accentColor, fontSize: '20px' }}>›</span>
+                    </div>
                   </button>
                 );
               })}
             </div>
-            <button onClick={cancelSearch} style={{ width: '100%', padding: '14px', backgroundColor: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>Cancel</button>
+            <button onClick={cancelSearch} className="w-full bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition">Cancel</button>
           </div>
         )}
 
         {/* Customer Info */}
         {clientInfo && message.indexOf('Stamp added') === -1 && message.indexOf('SUCCESS') === -1 && (
-          <div style={{ backgroundColor: 'white', borderRadius: '24px', padding: '32px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#22c55e', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                <span style={{ color: 'white', fontSize: '28px' }}>✓</span>
+          <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-2xl mb-4 shadow-lg">
+                <span style={{ color: 'white', fontSize: '32px' }}>✓</span>
               </div>
-              <h2 style={{ color: '#22c55e', fontSize: '22px', fontWeight: '700' }}>Customer Found!</h2>
+              <h2 className="text-2xl font-bold text-green-600">Customer Found!</h2>
             </div>
 
-            <div style={{ backgroundColor: '#f9fafb', borderRadius: '16px', padding: '20px', marginBottom: '24px', border: '2px solid ' + accentColor + '30' }}>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Name</span>
-                <span style={{ fontWeight: '700', color: borderColor, fontSize: '16px' }}>{clientInfo.name}</span>
-              </div>
-              <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Token</span>
-                <span style={{ fontWeight: '700', color: accentColor, fontSize: '16px', fontFamily: 'monospace' }}>{clientInfo.token}</span>
-              </div>
-              {clientInfo.breed && (
-                <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Pet</span>
-                  <span style={{ color: '#374151' }}>🐕 {clientInfo.breed}</span>
+            <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '2px solid ' + accentColor + '30' }}>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</span>
+                  <span className="font-bold text-xl" style={{ color: borderColor }}>{clientInfo.name}</span>
                 </div>
-              )}
-              {clientInfo.mobile && (
-                <div style={{ borderBottom: '1px solid #e5e7eb', padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Mobile</span>
-                  <span style={{ color: '#374151' }}>{clientInfo.mobile}</span>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Token</span>
+                  <span className="font-bold text-lg font-mono" style={{ color: accentColor }}>{clientInfo.token}</span>
                 </div>
-              )}
-              <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase' }}>Visits</span>
-                <span style={{ fontWeight: '700', color: accentColor, fontSize: '20px' }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
+                {clientInfo.breed && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pet</span>
+                    <span className="text-gray-700">🐕 {clientInfo.breed}</span>
+                  </div>
+                )}
+                {clientInfo.mobile && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile</span>
+                    <span className="text-gray-700">{clientInfo.mobile}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Visits</span>
+                  <span className="font-bold text-2xl" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button onClick={cancelSearch} style={{ padding: '14px', backgroundColor: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={cancelSearch}
+                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition">Cancel</button>
               <button onClick={confirmAddStamp} disabled={loading}
-                style={{ padding: '14px', backgroundColor: accentColor, color: 'white', border: 'none', borderRadius: '16px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
-                {loading ? 'Adding...' : '✓ Add Stamp'}
+                className="text-white py-4 rounded-2xl font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: accentColor }}>
+                {loading ? '⏳ Adding…' : '✓ Add Stamp'}
               </button>
             </div>
           </div>
         )}
 
-        {/* Message */}
+        {/* Message Toast */}
         {message && (
-          <div style={{
-            marginTop: '24px',
-            padding: '16px',
-            borderRadius: '16px',
-            textAlign: 'center',
-            fontWeight: '600',
-            fontSize: '14px',
-            backgroundColor: message.indexOf('Error') > -1 ? '#fef2f2' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#f0fdf4' : '#eff6ff',
-            color: message.indexOf('Error') > -1 ? '#991b1b' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#166534' : '#1e40af',
-            border: '1px solid ' + (message.indexOf('Error') > -1 ? '#fecaca' : message.indexOf('SUCCESS') > -1 || message.indexOf('Stamp added') > -1 ? '#bbf7d0' : '#bfdbfe')
-          }}>
+          <div className={'mt-6 p-4 rounded-2xl text-center font-semibold text-sm animate-slide-up ' +
+            (message.indexOf('🎉') > -1 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-800 border border-orange-200'
+            : (message.indexOf('✅') > -1 || message.indexOf('Stamp added') > -1 || message.indexOf('SUCCESS') > -1) ? 'bg-green-50 text-green-800 border border-green-200'
+            : message.indexOf('found') > -1 || message.indexOf('selected') > -1 || message.indexOf('Found') > -1 ? 'bg-blue-50 text-blue-800 border border-blue-200'
+            : message.indexOf('Please') > -1 ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+            : 'bg-red-50 text-red-800 border border-red-200')
+          }>
             {message}
           </div>
         )}
