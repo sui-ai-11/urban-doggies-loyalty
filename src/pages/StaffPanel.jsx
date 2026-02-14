@@ -170,14 +170,19 @@ function StaffPanel() {
           setClientInfo(null);
           setMessage('Found ' + result.clients.length + ' customers. Please select:');
         } else if (result.clients && result.clients.length === 1) {
-          // Single match from name search
+          // Single match from name search — fetch full loyalty data
           var c = result.clients[0];
-          setClientInfo({
-            name: c.name, token: c.token, breed: c.breed, mobile: c.mobile,
-            currentVisits: 0, requiredVisits: 10
-          });
-          setMultipleResults(null);
-          setMessage('Customer found! Review info and confirm to add stamp.');
+          fetch('/api/client-dashboard?token=' + c.token)
+            .then(function(r2) { return r2.ok ? r2.json() : null; })
+            .then(function(full) {
+              setClientInfo({
+                name: c.name, token: c.token, breed: c.breed, mobile: c.mobile,
+                currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
+                requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
+              });
+              setMultipleResults(null);
+              setMessage('Customer found! Review info and confirm to add stamp.');
+            });
         } else {
           throw new Error('Customer not found');
         }
@@ -220,12 +225,18 @@ function StaffPanel() {
   }
 
   function selectCustomer(customer) {
-    setClientInfo({
-      name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile,
-      currentVisits: 0, requiredVisits: 10
-    });
-    setMultipleResults(null);
-    setMessage('Customer selected! Review info and confirm to add stamp.');
+    // Fetch full loyalty data for selected customer
+    fetch('/api/client-dashboard?token=' + customer.token)
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(full) {
+        setClientInfo({
+          name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile,
+          currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
+          requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
+        });
+        setMultipleResults(null);
+        setMessage('Customer selected! Review info and confirm to add stamp.');
+      });
   }
 
   if (!businessInfo) {
