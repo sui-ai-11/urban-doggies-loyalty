@@ -1,140 +1,92 @@
 import { google } from 'googleapis';
 
-async function getGoogleSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  });
-
-  return google.sheets({ version: 'v4', auth });
-}
-
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-
 export default async function handler(req, res) {
-  // CORS
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+  
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
-    const { token } = req.query;
+    // Setup Google Sheets auth
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+    const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+
+    // Fetch business data from Row 2 (get columns A through AB)
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: 'Businesses!A2:AB2',
+    });
+
+    const row = response.data.values?.[0];
     
-    if (!token) {
-      return res.status(400).json({ error: 'Token is required' });
-    }
-
-    const sheets = await getGoogleSheetsClient();
-
-    // Fetch all data
-    const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:K' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:W' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
-    ]);
-
-    // Find client
-    const clientRow = clientsRes.data.values?.find(row => row[3] === token);
-    if (!clientRow) {
-      console.log('❌ Client not found with token:', token);
-      return res.status(404).json({ error: 'Client not found' });
-    }
-
-    const client = {
-      clientID: clientRow[0],
-      businessID: clientRow[1],
-      name: clientRow[2],
-      token: clientRow[3],
-      mobile: clientRow[4] || '',
-      email: clientRow[5] || '',
-      birthday: clientRow[6] || '',
-      breed: clientRow[7] || '',
-      dateAdded: clientRow[8] || '',
-      notes: clientRow[9] || '',
-      birthdayMonth: clientRow[10] || '',
-    };
-
-    console.log('✅ Client found:', client.name);
-
-    // Find business
-    const businessRow = businessesRes.data.values?.find(row => row[0] === client.businessID);
-    
-    if (!businessRow) {
-      console.log('❌ Business not found with ID:', client.businessID);
+    if (!row) {
       return res.status(404).json({ error: 'Business not found' });
     }
 
-    const business = {
-      name: businessRow[1] || 'Business Name',
-      tagline: businessRow[2] || 'Digital Loyalty System',
-      accentColor: businessRow[3] || '#17BEBB',
-      logo: businessRow[4] || '',
-      stampsRequired: parseInt(businessRow[5]) || 10,
-      rewardDescription: businessRow[6] || 'Free service',
-      chatLabel: businessRow[7] || '',
-      chatLink: businessRow[8] || '',
-      termsURL: businessRow[9] || '',
-      supportText: businessRow[10] || '',
-      adImageUrl: businessRow[11] || '',
-      progressText: businessRow[12] || 'Track your progress',
-      milestone1Label: businessRow[13] || '10% OFF',
-      milestone2Label: businessRow[14] || 'FREE TREAT',
-      milestone1Description: businessRow[15] || '5th visit reward',
-      milestone2Description: businessRow[16] || '10th visit reward',
-      borderColor: businessRow[17] || '#1F3A93',
-      backgroundColor: businessRow[18] || '#17BEBB',
-      cardBackground: businessRow[19] || '#F5F1E8',
-      navButton1Text: businessRow[20] || 'Stamp Card',
-      navButton2Text: businessRow[21] || 'Rewards',
-      navButton3Text: businessRow[22] || 'Contact',
+    // COMPLETE COLUMN MAPPING
+    const businessInfo = {
+      businessID: row[0] || 'BIZ001',                    // A
+      businessName: row[1] || 'Business Name',           // B
+      tagline: row[2] || 'Digital Loyalty System',       // C
+      accentColor: row[3] || '#17BEBB',                  // D
+      logo: row[4] || '',                                // E
+      stampsRequired: parseInt(row[5]) || 10,            // F
+      rewardDescription: row[6] || 'Free service',       // G
+      chatLabel: row[7] || '',                           // H
+      chatLink: row[8] || '',                            // I
+      termsURL: row[9] || '',                            // J
+      supportText: row[10] || '',                        // K
+      adImageUrl: row[11] || '',                         // L
+      progressText: row[12] || '',                       // M
+      milestone1Label: row[13] || '',                    // N
+      milestone2Label: row[14] || '',                    // O
+      milestone1Description: row[15] || '',              // P
+      milestone2Description: row[16] || '',              // Q
+      borderColor: row[17] || '#1F3A93',                 // R
+      backgroundColor: row[18] || '#17BEBB',             // S
+      cardBackground: row[19] || '#F5F1E8',              // T
+      navButton1Text: row[20] || 'Stamp Card',           // U
+      navButton2Text: row[21] || 'Rewards',              // V
+      navButton3Text: row[22] || 'Contact',              // W
+      milestone1Position: parseInt(row[23]) || 0,          // X (0 = auto halfway)
+      milestone2Position: parseInt(row[24]) || 0,          // Y (0 = auto last)
+      milestone1Icon: row[25] || '🎁',                    // Z
+      milestone2Icon: row[26] || '🏆',                    // AA
+      stampFilledIcon: row[27] || '✓',                    // AB
     };
 
-    console.log('✅ Business found:', business.name);
-
-    // Count visits
-    const visits = visitsRes.data.values?.filter(row => 
-      row[1] === client.clientID && row[2] === client.businessID
-    ) || [];
-    const visitCount = visits.length;
-    const progress = visitCount % business.stampsRequired;
-    const nextRewardIn = business.stampsRequired - progress;
-
-    // Get active coupons
-    const coupons = couponsRes.data.values?.filter(row => 
-      row[2] === client.clientID && row[7] !== 'TRUE'
-    ).map(row => ({
-      id: row[0],
-      type: row[3],
-      text: row[4],
-      issuedAt: row[5],
-      expiryDate: row[6],
-      qrCode: row[11],
-    })) || [];
-
-    console.log(`✅ Loaded ${visitCount} visits, ${coupons.length} active coupons`);
-
-    return res.status(200).json({
-      client,
-      business,
-      loyalty: {
-        totalVisits: visitCount,
-        currentProgress: progress,
-        nextRewardIn,
-        requiredVisits: business.stampsRequired,
-        progressPercentage: Math.floor((progress / business.stampsRequired) * 100),
-      },
-      coupons,
+    console.log('✅ Business loaded:', businessInfo.businessName);
+    console.log('🎨 Colors:', {
+      accent: businessInfo.accentColor,
+      border: businessInfo.borderColor,
+      background: businessInfo.backgroundColor,
+      cardBg: businessInfo.cardBackground
     });
+
+    return res.status(200).json(businessInfo);
 
   } catch (error) {
     console.error('❌ API Error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 }
