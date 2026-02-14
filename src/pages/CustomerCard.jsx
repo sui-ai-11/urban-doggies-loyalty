@@ -200,8 +200,13 @@ function CustomerCard() {
               <div className="grid grid-cols-5 gap-2 mb-6">
                 {Array.from({ length: totalStamps }).map((_, i) => {
                   const isFilled = i < currentStamps;
-                  const isMilestone1 = i === Math.floor(totalStamps / 2) - 1;
-                  const isMilestone2 = i === totalStamps - 1;
+                  const m1Pos = (business.milestone1Position || Math.floor(totalStamps / 2)) - 1;
+                  const m2Pos = (business.milestone2Position || totalStamps) - 1;
+                  const m1Icon = business.milestone1Icon || '🎁';
+                  const m2Icon = business.milestone2Icon || '🏆';
+                  const stampIcon = business.stampFilledIcon || '✓';
+                  const isMilestone1 = i === m1Pos;
+                  const isMilestone2 = i === m2Pos;
                   return (
                     <div key={i}
                       className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
@@ -213,9 +218,9 @@ function CustomerCard() {
                         color: isFilled ? '#FFFFFF' : subtextColor,
                       }}>
                       {isFilled ? (
-                        (isMilestone1 || isMilestone2) ? '⭐' : '✓'
+                        isMilestone1 ? m1Icon : isMilestone2 ? m2Icon : stampIcon
                       ) : (
-                        isMilestone1 ? '🎁' : isMilestone2 ? '🏆' : (i + 1)
+                        isMilestone1 ? m1Icon : isMilestone2 ? m2Icon : (i + 1)
                       )}
                     </div>
                   );
@@ -227,24 +232,24 @@ function CustomerCard() {
                 <div className="flex items-center gap-3 rounded-xl p-3 border"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>🎁</div>
+                    style={{ backgroundColor: `${accentColor}15` }}>{business.milestone1Icon || '🎁'}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone1Label || '10% OFF'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone1Description || `${Math.floor(totalStamps / 2)} visit reward`}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone1Description || `${business.milestone1Position || Math.floor(totalStamps / 2)} visit reward`}</p>
                   </div>
-                  {currentStamps >= Math.floor(totalStamps / 2) && (
+                  {currentStamps >= (business.milestone1Position || Math.floor(totalStamps / 2)) && (
                     <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 rounded-xl p-3 border"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>🏆</div>
+                    style={{ backgroundColor: `${accentColor}15` }}>{business.milestone2Icon || '🏆'}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone2Label || 'FREE SERVICE'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone2Description || `${totalStamps} visit reward`}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone2Description || `${business.milestone2Position || totalStamps} visit reward`}</p>
                   </div>
-                  {currentStamps >= totalStamps && (
+                  {currentStamps >= (business.milestone2Position || totalStamps) && (
                     <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
                   )}
                 </div>
