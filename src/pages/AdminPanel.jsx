@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette } from 'lucide-react';
+import SettingsTab from '../components/SettingsTab';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings } from 'lucide-react';
 
 function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -118,6 +119,7 @@ function AdminPanel() {
     { key: 'clients', label: 'All Clients', icon: Users },
     { key: 'add', label: 'Add Client', icon: UserPlus },
     { key: 'branding', label: 'Branding', icon: Palette },
+    { key: 'settings', label: 'Settings', icon: Settings },
     { key: 'import', label: 'Import CSV', icon: Upload },
   ];
 
@@ -374,6 +376,8 @@ function AdminPanel() {
 
             {/* ═══ BRANDING ═══ */}
             {activeTab === 'branding' && <BrandingTab />}
+
+            {activeTab === 'settings' && <SettingsTab />}
 
             {/* ═══ IMPORT CSV ═══ */}
             {activeTab === 'import' && (
