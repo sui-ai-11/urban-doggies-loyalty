@@ -153,7 +153,7 @@ function CustomerCard() {
             <div className="animate-fade-in">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>
-                  Hey, {client.name.split(' ')[0]}!
+                  Hey, {(client.name || 'there').split(' ')[0]}!
                 </h2>
                 <p className="text-sm font-light" style={{ color: textColor }}>
                   {business.progressText || 'Track your visits and earn rewards!'}
