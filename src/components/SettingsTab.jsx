@@ -5,7 +5,7 @@ function SettingsTab() {
   var _b = useState([]), coupons = _b[0], setCoupons = _b[1];
   var _c = useState(false), saving = _c[0], setSaving = _c[1];
   var _d = useState(''), toast = _d[0], setToast = _d[1];
-  var _e = useState('coupons'), activeSection = _e[0], setActiveSection = _e[1];
+  var _e = useState('rewards'), activeSection = _e[0], setActiveSection = _e[1];
 
   // Editable fields
   var _f = useState({}), fields = _f[0], setFields = _f[1];
@@ -139,10 +139,10 @@ function SettingsTab() {
   var borderColor = (businessInfo && businessInfo.borderColor) || '#1a1a2e';
 
   var sections = [
-    { key: 'coupons', label: '🎁 Coupons' },
-    { key: 'rewards', label: '⭐ Rewards' },
-    { key: 'business', label: '🏢 Business' },
+    { key: 'rewards', label: '⭐ Date Stamp' },
+    { key: 'coupons', label: '🎁 Rewards' },
     { key: 'contact', label: '💬 Contact' },
+    { key: 'business', label: '🏢 Business' },
   ];
 
   function renderInput(label, fieldKey, placeholder, type) {
@@ -228,10 +228,10 @@ function SettingsTab() {
               </div>
             </div>
             <div className="mt-4">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Notes</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Instructions on How to Claim</label>
               <input type="text" value={newCoupon.notes}
                 onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { notes: e.target.value })); }}
-                placeholder="Optional notes"
+                placeholder="e.g. Show this coupon to staff at your next visit"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm" />
             </div>
             <button onClick={addCoupon} disabled={saving}
@@ -298,55 +298,11 @@ function SettingsTab() {
       {/* ═══ REWARDS SECTION ═══ */}
       {activeSection === 'rewards' && (
         <div>
-          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Reward Settings</h3>
+          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Stamp Card Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Required Visits for Reward', 'stampsRequired', '10', 'number')}
             {renderInput('Default Reward Text', 'rewardDescription', 'Free grooming session')}
             {renderInput('Progress Message', 'progressText', 'Track your visits and earn rewards!')}
-
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Milestone 1 (Mid-reward)</h4>
-            {renderInput('Position (visit #, 0 = auto halfway)', 'milestone1Position', '5', 'number')}
-            {renderInput('Label', 'milestone1Label', '10% OFF')}
-            {renderInput('Description', 'milestone1Description', '5th visit reward')}
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Icon</label>
-              <div className="flex gap-2 flex-wrap">
-                {['🎁', '⭐', '🎉', '🔥', '💎', '🌟', '🎯', '🏅', '🎊', '💝', '🐾', '🦴'].map(function(emoji) {
-                  return (
-                    <button key={emoji} onClick={function() { updateField('milestone1Icon', emoji); }}
-                      className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
-                      style={{
-                        backgroundColor: fields.milestone1Icon === emoji ? accentColor + '20' : '#f3f4f6',
-                        border: fields.milestone1Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
-                      }}>
-                      {emoji}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Milestone 2 (Final reward)</h4>
-            {renderInput('Position (visit #, 0 = auto last)', 'milestone2Position', '10', 'number')}
-            {renderInput('Label', 'milestone2Label', 'FREE SERVICE')}
-            {renderInput('Description', 'milestone2Description', '10th visit reward')}
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Icon</label>
-              <div className="flex gap-2 flex-wrap">
-                {['🏆', '👑', '🎁', '💎', '⭐', '🌟', '🎯', '🏅', '🎊', '💝', '🐾', '🦴'].map(function(emoji) {
-                  return (
-                    <button key={emoji} onClick={function() { updateField('milestone2Icon', emoji); }}
-                      className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
-                      style={{
-                        backgroundColor: fields.milestone2Icon === emoji ? accentColor + '20' : '#f3f4f6',
-                        border: fields.milestone2Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
-                      }}>
-                      {emoji}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Stamp Icon (filled)</h4>
             <div className="mb-4">
@@ -366,11 +322,90 @@ function SettingsTab() {
               </div>
             </div>
 
+            <h4 className="font-bold text-sm mt-6 mb-4" style={{ color: borderColor }}>
+              Reward Milestones — place rewards on any stamp (1 to {fields.stampsRequired || 10})
+            </h4>
+            <p className="text-xs text-gray-400 mb-4">Set which stamp positions trigger a reward. Leave label empty to remove a milestone.</p>
+
+            {/* Milestone 1 */}
+            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
+              <h5 className="font-bold text-sm mb-3" style={{ color: borderColor }}>Milestone 1</h5>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stamp Position</label>
+                  <select value={fields.milestone1Position || ''}
+                    onChange={function(e) { updateField('milestone1Position', e.target.value); }}
+                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm bg-white">
+                    <option value="0">Auto (halfway)</option>
+                    {Array.from({length: parseInt(fields.stampsRequired) || 10}, function(_, i) {
+                      return <option key={i+1} value={i+1}>Stamp #{i+1}</option>;
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['🎁', '⭐', '🎉', '🔥', '💎', '🌟', '🎯', '🏅', '🐾', '🦴'].map(function(emoji) {
+                      return (
+                        <button key={emoji} onClick={function() { updateField('milestone1Icon', emoji); }}
+                          className="w-8 h-8 rounded-lg text-base flex items-center justify-center"
+                          style={{
+                            backgroundColor: fields.milestone1Icon === emoji ? accentColor + '20' : '#f3f4f6',
+                            border: fields.milestone1Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
+                          }}>
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {renderInput('Reward Label', 'milestone1Label', '10% OFF')}
+              {renderInput('Description', 'milestone1Description', '5th visit: Get 10% off')}
+            </div>
+
+            {/* Milestone 2 */}
+            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
+              <h5 className="font-bold text-sm mb-3" style={{ color: borderColor }}>Milestone 2</h5>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stamp Position</label>
+                  <select value={fields.milestone2Position || ''}
+                    onChange={function(e) { updateField('milestone2Position', e.target.value); }}
+                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm bg-white">
+                    <option value="0">Auto (last stamp)</option>
+                    {Array.from({length: parseInt(fields.stampsRequired) || 10}, function(_, i) {
+                      return <option key={i+1} value={i+1}>Stamp #{i+1}</option>;
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['🏆', '👑', '🎁', '💎', '⭐', '🌟', '🎯', '🏅', '🐾', '🦴'].map(function(emoji) {
+                      return (
+                        <button key={emoji} onClick={function() { updateField('milestone2Icon', emoji); }}
+                          className="w-8 h-8 rounded-lg text-base flex items-center justify-center"
+                          style={{
+                            backgroundColor: fields.milestone2Icon === emoji ? accentColor + '20' : '#f3f4f6',
+                            border: fields.milestone2Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
+                          }}>
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {renderInput('Reward Label', 'milestone2Label', 'FREE SERVICE')}
+              {renderInput('Description', 'milestone2Description', '10th visit: Free grooming')}
+            </div>
+
             <button onClick={function() { saveSettings(['stampsRequired', 'rewardDescription', 'progressText', 'milestone1Label', 'milestone1Description', 'milestone2Label', 'milestone2Description', 'milestone1Position', 'milestone2Position', 'milestone1Icon', 'milestone2Icon', 'stampFilledIcon']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
-              {saving ? 'Saving...' : 'Save Reward Settings'}
+              {saving ? 'Saving...' : 'Save Stamp Card Settings'}
             </button>
           </div>
         </div>
