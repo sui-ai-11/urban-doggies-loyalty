@@ -77,7 +77,10 @@ function CustomerCard() {
 
   if (!clientData) return null;
 
-  const { client, business, loyalty, coupons } = clientData;
+  const client = clientData.client || {};
+  const business = clientData.business || {};
+  const loyalty = clientData.loyalty || {};
+  const coupons = clientData.coupons || [];
   const accentColor = business.accentColor || '#4a4a5a';
   const borderColor = business.borderColor || '#1F3A93';
   const bgColor = business.backgroundColor || '#4a4a5a';
