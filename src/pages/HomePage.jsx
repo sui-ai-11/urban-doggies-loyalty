@@ -181,25 +181,7 @@ function HomePage() {
           </a>
         </div>
 
-        {/* Info Sections */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="rounded-2xl p-6 transition-all animate-fade-in"
-            style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
-            <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: heroText }}>📋 For Staff</h3>
-            <p className="font-light" style={{ color: heroSubtext }}>
-              Quick customer check-in and stamp management
-            </p>
-          </div>
-          <div className="rounded-2xl p-6 transition-all animate-fade-in"
-            style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
-            <h3 className="text-xl font-bold mb-2 tracking-tight" style={{ color: heroText }}>⚙️ For Admins</h3>
-            <p className="font-light" style={{ color: heroSubtext }}>
-              Full system control, analytics and reporting
-            </p>
-          </div>
-        </div>
-
-        <p className="text-center text-xs mt-12" style={{ color: `${heroText}30` }}>v1.2.2</p>
+        <p className="text-center text-xs mt-12" style={{ color: `${heroText}30` }}>v1.3.0</p>
       </div>
     </div>
   );
