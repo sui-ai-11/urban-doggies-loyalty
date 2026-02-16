@@ -120,6 +120,7 @@ export default async function handler(req, res) {
       text: row[4],
       issuedAt: row[5],
       expiryDate: row[6],
+      notes: row[9] || '',
       qrCode: row[11],
     })) || [];
 
