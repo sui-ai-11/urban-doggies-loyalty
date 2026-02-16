@@ -5,6 +5,9 @@ import SettingsTab from '../components/SettingsTab';
 import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings } from 'lucide-react';
 
 function AdminPanel() {
+  const [isLocked, setIsLocked] = useState(true);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [allClients, setAllClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
@@ -14,6 +17,7 @@ function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [businessInfo, setBusinessInfo] = useState(null);
+  const [couponsList, setCouponsList] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('all');
@@ -30,6 +34,10 @@ function AdminPanel() {
       .then(r => r.json())
       .then(data => setBusinessInfo(data))
       .catch(err => console.error('Error loading business info:', err));
+    fetch('/api/manage-coupons')
+      .then(r => r.json())
+      .then(data => setCouponsList(data.coupons || []))
+      .catch(err => console.error('Error loading coupons:', err));
   }, []);
 
   useEffect(() => {
@@ -45,19 +53,17 @@ function AdminPanel() {
         c.mobile.includes(searchQuery)
       );
     }
-    if (selectedBreed !== 'all') filtered = filtered.filter(c => c.breed === selectedBreed);
     if (selectedMonth !== 'all') filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name': return a.name.localeCompare(b.name);
         case 'visits-high': return b.visits - a.visits;
         case 'visits-low': return a.visits - b.visits;
-        case 'breed': return (a.breed || '').localeCompare(b.breed || '');
         default: return 0;
       }
     });
     setFilteredClients(filtered);
-  }, [allClients, searchQuery, selectedBreed, selectedMonth, sortBy]);
+  }, [allClients, searchQuery, selectedMonth, sortBy]);
 
   async function loadAllClients() {
     try {
@@ -122,6 +128,49 @@ function AdminPanel() {
     { key: 'settings', label: 'Settings', icon: Settings },
     { key: 'import', label: 'Import CSV', icon: Upload },
   ];
+
+  // Default PIN — can be changed via settings later
+  var adminPin = (businessInfo && businessInfo.adminPin) || '1234';
+
+  function checkPin() {
+    if (pinInput === adminPin) {
+      setIsLocked(false);
+      setPinError('');
+    } else {
+      setPinError('Incorrect PIN');
+      setPinInput('');
+    }
+  }
+
+  if (isLocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: bgColor }}>
+        <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+            style={{ backgroundColor: accentColor }}>
+            <span style={{ fontSize: '28px' }}>🔒</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: borderColor }}>Client Management</h2>
+          <p className="text-gray-500 text-sm mb-6">Enter PIN to access</p>
+          <input type="password" value={pinInput}
+            onChange={(e) => { setPinInput(e.target.value); setPinError(''); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') checkPin(); }}
+            placeholder="Enter PIN"
+            className="w-full px-6 py-4 text-2xl text-center tracking-widest rounded-2xl border-3 focus:outline-none mb-4"
+            style={{ borderColor: pinError ? '#ef4444' : accentColor, borderWidth: '3px' }}
+            autoFocus
+            inputMode="numeric"
+          />
+          {pinError && <p className="text-red-500 text-sm font-semibold mb-4">{pinError}</p>}
+          <button onClick={checkPin}
+            className="w-full text-white py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg"
+            style={{ backgroundColor: accentColor }}>
+            Unlock
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
@@ -190,29 +239,51 @@ function AdminPanel() {
                           <span className="font-bold text-xl text-gray-300 w-8">{i + 1}</span>
                           <div>
                             <p className="font-bold text-gray-800">{client.name}</p>
-                            <p className="text-xs text-gray-500">{client.breed || 'No breed'}</p>
+                            <p className="text-xs text-gray-500">Cards completed: {Math.floor(client.visits / (client.requiredVisits || 10))}</p>
                           </div>
                         </div>
-                        <span className="text-xl font-bold" style={{ color: accentColor }}>{client.visits}/{client.requiredVisits}</span>
+                        <div className="text-right">
+                          <span className="text-xl font-bold" style={{ color: accentColor }}>{client.visits}</span>
+                          <p className="text-xs text-gray-400">total visits</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Breed Breakdown */}
-                {analytics.breedBreakdown && (
-                  <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
-                    <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🐕 Breeds Breakdown</h3>
+                {/* Coupons Tracker */}
+                <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
+                  <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🎁 Coupons Issued</h3>
+                  {couponsList && couponsList.length > 0 ? (
                     <div className="space-y-2">
-                      {analytics.breedBreakdown.map((item, i) => (
-                        <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4">
-                          <span className="font-semibold text-gray-800">{item.breed || 'Not specified'}</span>
-                          <span className="font-bold" style={{ color: accentColor }}>{item.count} clients</span>
-                        </div>
-                      ))}
+                      {couponsList.map((c, i) => {
+                        var clientName = '';
+                        for (var j = 0; j < allClients.length; j++) {
+                          if (allClients[j].clientID === c.clientID || allClients[j].token === c.clientID) {
+                            clientName = allClients[j].name; break;
+                          }
+                        }
+                        return (
+                          <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4">
+                            <div>
+                              <p className="font-bold text-sm text-gray-800">{c.text}</p>
+                              <p className="text-xs text-gray-500">{clientName || c.clientID || 'All clients'} · {c.type}</p>
+                            </div>
+                            <span className={'text-xs font-bold px-3 py-1 rounded-full ' +
+                              (c.redeemed === 'TRUE' ? 'bg-gray-100 text-gray-500' :
+                               c.expiryDate && new Date(c.expiryDate) < new Date() ? 'bg-red-50 text-red-600' :
+                               'bg-green-50 text-green-600')}>
+                              {c.redeemed === 'TRUE' ? 'Claimed' :
+                               c.expiryDate && new Date(c.expiryDate) < new Date() ? 'Expired' : 'Active'}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-gray-400 text-sm">No coupons issued yet</p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -247,16 +318,6 @@ function AdminPanel() {
                       <option value="name">Name (A-Z)</option>
                       <option value="visits-high">Visits (High → Low)</option>
                       <option value="visits-low">Visits (Low → High)</option>
-                      <option value="breed">Breed (A-Z)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Breed</label>
-                    <select value={selectedBreed} onChange={(e) => setSelectedBreed(e.target.value)}
-                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                      style={{ borderColor: `${accentColor}40` }}>
-                      <option value="all">All Breeds</option>
-                      {breeds.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                   </div>
                   <div>
