@@ -276,7 +276,7 @@ function CustomerCard() {
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
                   {coupons.map((coupon, i) => (
-                    <div key={i} className="rounded-2xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md"
+                    <div key={i} className="rounded-2xl p-4 border-2 shadow-sm"
                       style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
@@ -289,8 +289,8 @@ function CustomerCard() {
                             {coupon.type && <span className="capitalize">{coupon.type}</span>}
                             {coupon.expiryDate && <span> · Expires {coupon.expiryDate}</span>}
                           </p>
+                          {coupon.notes && <p className="text-xs mt-1" style={{ color: accentColor }}>{coupon.notes}</p>}
                         </div>
-                        <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                       </div>
                     </div>
                   ))}
