@@ -1,3 +1,4 @@
+// v1.6 fix
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
