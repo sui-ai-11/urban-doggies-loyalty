@@ -14,6 +14,9 @@ function SettingsTab() {
   var _g = useState({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '' }),
     newCoupon = _g[0], setNewCoupon = _g[1];
 
+  // Expanded coupon group in manage view
+  var _i = useState(null), expandedGroup = _i[0], setExpandedGroup = _i[1];
+
   // All clients for coupon assignment
   var _h = useState([]), clients = _h[0], setClients = _h[1];
 
@@ -46,6 +49,9 @@ function SettingsTab() {
           milestone1Icon: data.milestone1Icon || '🎁',
           milestone2Icon: data.milestone2Icon || '🏆',
           stampFilledIcon: data.stampFilledIcon || '✓',
+          milestones: (function() {
+            try { return JSON.parse(data.milestonesJson || '[]'); } catch(e) { return []; }
+          })(),
         });
       })
       .catch(function(err) { console.error(err); });
@@ -241,57 +247,96 @@ function SettingsTab() {
             </button>
           </div>
 
-          {/* Active Coupons */}
+          {/* Coupons by Group */}
           <h4 className="font-bold text-sm mb-3" style={{ color: borderColor }}>
-            Active Coupons ({activeCoupons.length})
+            All Coupons ({coupons.length})
           </h4>
-          {activeCoupons.length === 0 ? (
-            <p className="text-gray-400 text-sm mb-6">No active coupons</p>
-          ) : (
-            <div className="space-y-2 mb-6">
-              {activeCoupons.map(function(c) {
-                var clientName = '';
-                for (var i = 0; i < clients.length; i++) {
-                  if (clients[i].clientID === c.clientID || clients[i].token === c.clientID) {
-                    clientName = clients[i].name;
-                    break;
-                  }
+          {coupons.length === 0 ? (
+            <p className="text-gray-400 text-sm mb-6">No coupons yet</p>
+          ) : (function() {
+            // Group coupons by text
+            var grouped = {};
+            coupons.forEach(function(c) {
+              var key = c.text || 'Untitled';
+              if (!grouped[key]) grouped[key] = { text: key, type: c.type, items: [] };
+              var clientName = '';
+              for (var i = 0; i < clients.length; i++) {
+                if (clients[i].clientID === c.clientID || clients[i].token === c.clientID) {
+                  clientName = clients[i].name; break;
                 }
-                return (
-                  <div key={c.rowIndex} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                    <div>
-                      <p className="font-bold text-sm" style={{ color: borderColor }}>{c.text}</p>
-                      <p className="text-xs text-gray-400">
-                        {c.type} · {clientName || c.clientID || 'All clients'}
-                        {c.expiryDate ? ' · Expires ' + c.expiryDate : ''}
-                      </p>
-                    </div>
-                    <button onClick={function() { deleteCoupon(c.rowIndex); }}
-                      className="text-red-400 hover:text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-50 transition">
-                      Remove
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+              }
+              var status = 'active';
+              if (c.redeemed === 'TRUE') status = 'claimed';
+              else if (c.expiryDate && new Date(c.expiryDate) < new Date()) status = 'expired';
+              grouped[key].items.push({
+                rowIndex: c.rowIndex,
+                clientName: clientName || c.clientID || 'All clients',
+                status: status,
+                expiryDate: c.expiryDate,
+                redeemedAt: c.redeemedAt,
+                notes: c.notes,
+              });
+            });
 
-          {/* Redeemed */}
-          {redeemedCoupons.length > 0 && (
-            <div>
-              <h4 className="font-bold text-sm mb-3 text-gray-400">Redeemed ({redeemedCoupons.length})</h4>
-              <div className="space-y-2">
-                {redeemedCoupons.map(function(c) {
+            return (
+              <div className="space-y-3 mb-6">
+                {Object.values(grouped).map(function(g) {
+                  var isExpanded = expandedGroup === g.text;
+                  var activeCount = g.items.filter(function(x) { return x.status === 'active'; }).length;
+                  var claimedCount = g.items.filter(function(x) { return x.status === 'claimed'; }).length;
+                  var expiredCount = g.items.filter(function(x) { return x.status === 'expired'; }).length;
                   return (
-                    <div key={c.rowIndex} className="bg-gray-50 rounded-xl p-4 opacity-60">
-                      <p className="font-bold text-sm text-gray-500 line-through">{c.text}</p>
-                      <p className="text-xs text-gray-400">{c.type} · Redeemed {c.redeemedAt || ''}</p>
+                    <div key={g.text} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                      <button onClick={function() { setExpandedGroup(isExpanded ? null : g.text); }}
+                        className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition">
+                        <div>
+                          <p className="font-bold text-sm" style={{ color: borderColor }}>{g.text}</p>
+                          <div className="flex gap-2 mt-1">
+                            <span className="text-xs font-bold text-green-600">{activeCount} active</span>
+                            <span className="text-xs font-bold text-gray-400">{claimedCount} claimed</span>
+                            {expiredCount > 0 && <span className="text-xs font-bold text-red-500">{expiredCount} expired</span>}
+                          </div>
+                        </div>
+                        <span style={{ color: accentColor, fontSize: '18px', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>›</span>
+                      </button>
+                      {isExpanded && (
+                        <div className="border-t border-gray-100 p-3 space-y-2 bg-gray-50">
+                          {g.items.map(function(item, j) {
+                            return (
+                              <div key={j} className="flex items-center justify-between bg-white rounded-lg p-3">
+                                <div>
+                                  <p className="font-semibold text-sm text-gray-800">{item.clientName}</p>
+                                  {item.notes && <p className="text-xs mt-0.5" style={{ color: accentColor }}>{item.notes}</p>}
+                                  <p className="text-xs text-gray-400">
+                                    {item.expiryDate ? 'Expires ' + item.expiryDate : 'No expiry'}
+                                    {item.redeemedAt ? ' · Claimed ' + item.redeemedAt : ''}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={'text-xs font-bold px-2 py-1 rounded-full ' +
+                                    (item.status === 'claimed' ? 'bg-gray-100 text-gray-500' :
+                                     item.status === 'expired' ? 'bg-red-50 text-red-600' :
+                                     'bg-green-50 text-green-600')}>
+                                    {item.status === 'claimed' ? 'Claimed' : item.status === 'expired' ? 'Expired' : 'Active'}
+                                  </span>
+                                  {item.status === 'active' && (
+                                    <button onClick={function() { deleteCoupon(item.rowIndex); }}
+                                      className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition">
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
@@ -325,83 +370,130 @@ function SettingsTab() {
             <h4 className="font-bold text-sm mt-6 mb-4" style={{ color: borderColor }}>
               Reward Milestones — place rewards on any stamp (1 to {fields.stampsRequired || 10})
             </h4>
-            <p className="text-xs text-gray-400 mb-4">Set which stamp positions trigger a reward. Leave label empty to remove a milestone.</p>
+            <p className="text-xs text-gray-400 mb-4">Add milestones to any stamp position. Customers see the icon and reward when they reach that stamp.</p>
 
-            {/* Milestone 1 */}
-            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
-              <h5 className="font-bold text-sm mb-3" style={{ color: borderColor }}>Milestone 1</h5>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stamp Position</label>
-                  <select value={fields.milestone1Position || ''}
-                    onChange={function(e) { updateField('milestone1Position', e.target.value); }}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm bg-white">
-                    <option value="0">Auto (halfway)</option>
-                    {Array.from({length: parseInt(fields.stampsRequired) || 10}, function(_, i) {
-                      return <option key={i+1} value={i+1}>Stamp #{i+1}</option>;
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {['🎁', '⭐', '🎉', '🔥', '💎', '🌟', '🎯', '🏅', '🐾', '🦴'].map(function(emoji) {
-                      return (
-                        <button key={emoji} onClick={function() { updateField('milestone1Icon', emoji); }}
-                          className="w-8 h-8 rounded-lg text-base flex items-center justify-center"
-                          style={{
-                            backgroundColor: fields.milestone1Icon === emoji ? accentColor + '20' : '#f3f4f6',
-                            border: fields.milestone1Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
-                          }}>
-                          {emoji}
-                        </button>
-                      );
-                    })}
+            <button onClick={function() {
+              var ms = (fields.milestones || []).slice();
+              ms.push({ position: 1, icon: '🎁', label: '', description: '' });
+              updateField('milestones', ms);
+            }}
+              className="mb-4 px-4 py-2 rounded-xl text-sm font-bold transition"
+              style={{ backgroundColor: accentColor + '15', color: accentColor, border: '1px dashed ' + accentColor }}>
+              + Add Milestone
+            </button>
+
+            {(fields.milestones || []).map(function(ms, idx) {
+              var emojiOptions = ['🎁', '⭐', '🎉', '🔥', '💎', '🌟', '🎯', '🏅', '🏆', '👑', '🐾', '🦴', '❤️', '✨', '☕', '🍕'];
+              return (
+                <div key={idx} className="rounded-xl p-4 mb-3" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="font-bold text-sm" style={{ color: borderColor }}>Milestone {idx + 1}</h5>
+                    <button onClick={function() {
+                      var ms2 = (fields.milestones || []).slice();
+                      ms2.splice(idx, 1);
+                      updateField('milestones', ms2);
+                    }} className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition">Remove</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stamp Position</label>
+                      <select value={ms.position || 1}
+                        onChange={function(e) {
+                          var ms2 = (fields.milestones || []).slice();
+                          ms2[idx] = Object.assign({}, ms2[idx], { position: parseInt(e.target.value) });
+                          updateField('milestones', ms2);
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm bg-white">
+                        {Array.from({length: parseInt(fields.stampsRequired) || 10}, function(_, i) {
+                          return <option key={i+1} value={i+1}>Stamp #{i+1}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
+                      <div className="flex gap-1 flex-wrap">
+                        {emojiOptions.map(function(emoji) {
+                          return (
+                            <button key={emoji} onClick={function() {
+                              var ms2 = (fields.milestones || []).slice();
+                              ms2[idx] = Object.assign({}, ms2[idx], { icon: emoji });
+                              updateField('milestones', ms2);
+                            }}
+                              className="w-7 h-7 rounded-md text-sm flex items-center justify-center"
+                              style={{
+                                backgroundColor: ms.icon === emoji ? accentColor + '20' : '#f3f4f6',
+                                border: ms.icon === emoji ? '2px solid ' + accentColor : '1px solid transparent'
+                              }}>
+                              {emoji}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Reward Label</label>
+                      <input type="text" value={ms.label || ''} placeholder="e.g. 10% OFF"
+                        onChange={function(e) {
+                          var ms2 = (fields.milestones || []).slice();
+                          ms2[idx] = Object.assign({}, ms2[idx], { label: e.target.value });
+                          updateField('milestones', ms2);
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Description</label>
+                      <input type="text" value={ms.description || ''} placeholder="e.g. Get 10% off"
+                        onChange={function(e) {
+                          var ms2 = (fields.milestones || []).slice();
+                          ms2[idx] = Object.assign({}, ms2[idx], { description: e.target.value });
+                          updateField('milestones', ms2);
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              {renderInput('Reward Label', 'milestone1Label', '10% OFF')}
-              {renderInput('Description', 'milestone1Description', '5th visit: Get 10% off')}
-            </div>
+              );
+            })}
 
-            {/* Milestone 2 */}
-            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
-              <h5 className="font-bold text-sm mb-3" style={{ color: borderColor }}>Milestone 2</h5>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stamp Position</label>
-                  <select value={fields.milestone2Position || ''}
-                    onChange={function(e) { updateField('milestone2Position', e.target.value); }}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm bg-white">
-                    <option value="0">Auto (last stamp)</option>
-                    {Array.from({length: parseInt(fields.stampsRequired) || 10}, function(_, i) {
-                      return <option key={i+1} value={i+1}>Stamp #{i+1}</option>;
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {['🏆', '👑', '🎁', '💎', '⭐', '🌟', '🎯', '🏅', '🐾', '🦴'].map(function(emoji) {
-                      return (
-                        <button key={emoji} onClick={function() { updateField('milestone2Icon', emoji); }}
-                          className="w-8 h-8 rounded-lg text-base flex items-center justify-center"
-                          style={{
-                            backgroundColor: fields.milestone2Icon === emoji ? accentColor + '20' : '#f3f4f6',
-                            border: fields.milestone2Icon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
-                          }}>
-                          {emoji}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              {renderInput('Reward Label', 'milestone2Label', 'FREE SERVICE')}
-              {renderInput('Description', 'milestone2Description', '10th visit: Free grooming')}
-            </div>
-
-            <button onClick={function() { saveSettings(['stampsRequired', 'rewardDescription', 'progressText', 'milestone1Label', 'milestone1Description', 'milestone2Label', 'milestone2Description', 'milestone1Position', 'milestone2Position', 'milestone1Icon', 'milestone2Icon', 'stampFilledIcon']); }}
+            <button onClick={function() {
+              // Save milestones as JSON + backward compat fields
+              var ms = fields.milestones || [];
+              var toSave = {
+                stampsRequired: fields.stampsRequired,
+                rewardDescription: fields.rewardDescription,
+                progressText: fields.progressText,
+                stampFilledIcon: fields.stampFilledIcon,
+                milestonesJson: JSON.stringify(ms),
+              };
+              // Also save first 2 milestones to legacy columns for backward compat
+              if (ms[0]) {
+                toSave.milestone1Position = ms[0].position || 0;
+                toSave.milestone1Icon = ms[0].icon || '🎁';
+                toSave.milestone1Label = ms[0].label || '';
+                toSave.milestone1Description = ms[0].description || '';
+              }
+              if (ms[1]) {
+                toSave.milestone2Position = ms[1].position || 0;
+                toSave.milestone2Icon = ms[1].icon || '🏆';
+                toSave.milestone2Label = ms[1].label || '';
+                toSave.milestone2Description = ms[1].description || '';
+              }
+              setSaving(true);
+              fetch('/api/update-business-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(toSave),
+              })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  if (data.success) showToast('Settings saved!');
+                  else showToast('Error: ' + (data.error || 'Unknown'));
+                })
+                .catch(function(err) { showToast('Error: ' + err.message); })
+                .finally(function() { setSaving(false); });
+            }}
               disabled={saving}
               className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
@@ -420,16 +512,56 @@ function SettingsTab() {
             {renderInput('Tagline', 'tagline', 'Digital Loyalty System')}
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
+            {renderInput('Custom Field Label (leave empty to hide)', 'customFieldLabel', 'e.g. Dog Breed, Company, Nickname')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Card Navigation Labels</h4>
             {renderInput('Tab 1 Label', 'navButton1Text', 'Date Stamp')}
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
-            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text']); }}
+            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'customFieldLabel']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
               {saving ? 'Saving...' : 'Save Business Profile'}
             </button>
+          </div>
+
+          {/* Registration QR */}
+          <h3 className="text-lg font-bold mt-8 mb-4" style={{ color: borderColor }}>Customer Registration</h3>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+            <p className="text-gray-500 text-sm mb-4">Print this QR code so customers can self-register and get their loyalty card instantly.</p>
+            <div className="inline-block bg-white rounded-2xl p-4 border-2 shadow-sm mb-4" style={{ borderColor: accentColor + '30' }}>
+              <img
+                src={'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(window.location.origin + '/#/register')}
+                alt="Registration QR"
+                className="w-48 h-48 mx-auto"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mb-3">{window.location.origin + '/#/register'}</p>
+            <div className="flex gap-2 justify-center">
+              <button onClick={function() {
+                navigator.clipboard.writeText(window.location.origin + '/#/register');
+                showToast('Link copied!');
+              }}
+                className="px-4 py-2 rounded-xl text-sm font-bold transition"
+                style={{ backgroundColor: accentColor + '15', color: accentColor }}>
+                📋 Copy Link
+              </button>
+              <button onClick={function() {
+                var win = window.open('', '_blank');
+                win.document.write('<html><head><title>Registration QR</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;margin:0;}h1{font-size:28px;margin-bottom:8px;}p{color:#888;margin-bottom:24px;}</style></head><body>');
+                win.document.write('<h1>' + ((businessInfo && businessInfo.businessName) || 'Business') + '</h1>');
+                win.document.write('<p>Scan to join our loyalty program!</p>');
+                win.document.write('<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(window.location.origin + '/#/register') + '" width="300" height="300" />');
+                win.document.write('<p style="margin-top:24px;font-size:12px;color:#aaa;">' + window.location.origin + '/#/register</p>');
+                win.document.write('</body></html>');
+                win.document.close();
+                win.print();
+              }}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white transition"
+                style={{ backgroundColor: accentColor }}>
+                🖨️ Print Poster
+              </button>
+            </div>
           </div>
         </div>
       )}
