@@ -294,10 +294,6 @@ function AdminPanel() {
                   })() : (
                     <p className="text-gray-400 text-sm">No coupons issued yet</p>
                   )}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 text-sm">No coupons issued yet</p>
-                  )}
                 </div>
               </div>
             )}
