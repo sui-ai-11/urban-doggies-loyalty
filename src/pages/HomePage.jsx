@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, MessageCircle, Star, ChevronRight, Phone } from 'lucide-react';
+import { Users, Settings, Home } from 'lucide-react';
 
 // Helper: determine if a hex color is dark
 function isDark(hex) {
@@ -8,379 +8,183 @@ function isDark(hex) {
   const r = parseInt(c.substring(0, 2), 16);
   const g = parseInt(c.substring(2, 4), 16);
   const b = parseInt(c.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance < 0.5;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
 }
 
-function CustomerCard() {
+function HomePage() {
+  const [businessInfo, setBusinessInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [clientData, setClientData] = useState(null);
-  const [activeView, setActiveView] = useState('stamp');
-
-  // Support hash route, direct path, and bare query
-  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-  const queryParams = new URLSearchParams(window.location.search);
-  const token = hashParams.get('token') || queryParams.get('token');
 
   useEffect(() => {
-    if (!token) { setLoading(false); return; }
-    async function loadClientData() {
+    const fetchBusinessInfo = async () => {
       try {
-        setLoading(true);
-        const response = await fetch(`/api/client-dashboard?token=${token}`);
-        if (!response.ok) throw new Error('Client not found');
-        setClientData(await response.json());
-      } catch (err) { setError(err.message); }
-      finally { setLoading(false); }
-    }
-    loadClientData();
-  }, [token]);
+        const response = await fetch('/api/get-business-info');
+        const data = await response.json();
+        setBusinessInfo(data);
+      } catch (error) {
+        console.error('Error loading business info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBusinessInfo();
+  }, []);
+
+  const bgColor = businessInfo?.backgroundColor || '#1a1a2e';
+  const accentColor = businessInfo?.accentColor || '#4a4a5a';
+  const cardBg = businessInfo?.cardBackground || '#f8f8f8';
+  const borderColor = businessInfo?.borderColor || '#2a2a3a';
+
+  // Dynamic text colors based on background brightness
+  const bgIsDark = isDark(bgColor);
+  const heroText = bgIsDark ? '#ffffff' : borderColor;
+  const heroSubtext = bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99`;
+  const navText = bgIsDark ? '#ffffff' : borderColor;
+
+  // Card text (cards are usually light)
+  const cardIsDark = isDark(cardBg);
+  const cardHeading = cardIsDark ? '#ffffff' : borderColor;
+  const cardText = cardIsDark ? '#d1d5db' : '#6b7280';
+  const cardSubtext = cardIsDark ? '#9ca3af' : accentColor;
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-white mx-auto mb-4" />
-          <p className="text-lg font-semibold">Loading…</p>
-        </div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-600"></div>
       </div>
     );
   }
-
-  // Pending approval screen
-  if (clientData && clientData.status === 'pending') {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#0d0221' }}>
-        <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
-          <div className="text-5xl mb-4">⏳</div>
-          <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
-          <p className="text-gray-400 mb-4">Hi {clientData.client.name}! Your registration is being reviewed.</p>
-          <p className="text-gray-500 text-sm">Please ask staff at the counter to approve your card.</p>
-          <button onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-3 rounded-2xl text-white font-bold text-sm transition hover:shadow-lg"
-            style={{ backgroundColor: '#0abdc6' }}>
-            🔄 Check Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
-        <div className="glass-card rounded-3xl p-8 max-w-md shadow-2xl">
-          <h1 className="text-3xl font-black text-gray-800 mb-3 text-center tracking-tight">Digital Loyalty</h1>
-          <p className="text-gray-500 mb-8 text-center font-light">Add ?token=YOUR_TOKEN to view your card</p>
-          <div className="space-y-3">
-            <a href="/#/admin" className="block bg-gray-800 text-white px-6 py-4 rounded-2xl font-semibold text-center hover:bg-gray-700 transition">Admin Panel</a>
-            <a href="/#/staff" className="block text-white px-6 py-4 rounded-2xl font-semibold text-center transition bg-gray-700">Staff Check-In</a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
-        <div className="glass-card rounded-3xl p-8 max-w-md text-center shadow-2xl">
-          <div className="text-6xl mb-4">😢</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Card Not Found</h1>
-          <p className="text-gray-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!clientData) return null;
-
-  const client = clientData.client || {};
-  const business = clientData.business || {};
-  const loyalty = clientData.loyalty || {};
-  const coupons = clientData.coupons || [];
-  const accentColor = business.accentColor || '#4a4a5a';
-  const borderColor = business.borderColor || '#1F3A93';
-  const bgColor = business.backgroundColor || '#4a4a5a';
-  const cardBg = business.cardBackground || '#FFFFFF';
-
-  // Dynamic text colors based on card background brightness
-  const cardIsDark = isDark(cardBg);
-  const headingColor = cardIsDark ? '#FFFFFF' : (borderColor || '#1a1a2e');
-  const textColor = cardIsDark ? '#d1d5db' : '#6b7280';
-  const subtextColor = cardIsDark ? '#9ca3af' : '#9ca3af';
-
-  const totalStamps = loyalty?.requiredVisits || business.stampsRequired || 10;
-  const currentStamps = loyalty?.currentProgress || 0;
-  const totalVisits = loyalty?.totalVisits || 0;
-
-  // Nav buttons from business settings
-  const navButtons = [
-    { key: 'stamp', label: business.navButton1Text || 'Date Stamp', icon: Star },
-    { key: 'rewards', label: business.navButton2Text || 'Rewards', icon: Gift },
-    { key: 'contact', label: business.navButton3Text || 'Contact', icon: MessageCircle },
-  ];
 
   return (
-    <div className="min-h-screen py-6 px-4" style={{ backgroundColor: bgColor }}>
-      {/* Decorative blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-60 h-60 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }} />
-        <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }} />
+    <div className="min-h-screen relative overflow-hidden animate-fade-in" style={{ backgroundColor: bgColor }}>
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20 blur-3xl" 
+             style={{ backgroundColor: accentColor }}></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full opacity-20 blur-3xl" 
+             style={{ backgroundColor: borderColor }}></div>
       </div>
 
-      {/* Card Container */}
-      <div className="relative z-10 max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
-        style={{ backgroundColor: cardBg, border: `3px solid ${borderColor}20` }}>
-
-        {/* Header */}
-        <div className="p-6 pb-4">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            {business.logo ? (
-              <img src={business.logo} alt={business.name} className="h-20 w-auto"
-                onError={(e) => (e.target.style.display = 'none')} />
-            ) : (
-              <div className="flex flex-col items-center">
-                <span className="text-3xl font-black tracking-tight" style={{ color: headingColor }}>
-                  {business.name}
-                </span>
-              </div>
-            )}
-          </div>
-          {business.tagline && <p className="text-center text-sm font-light" style={{ color: textColor }}>{business.tagline}</p>}
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex mx-6 mb-4 rounded-2xl overflow-hidden" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.1)' : `${borderColor}10` }}>
-          {navButtons.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setActiveView(key)}
-              className="flex-1 py-3 text-xs font-bold transition-all duration-200 flex flex-col items-center gap-1"
-              style={{
-                backgroundColor: activeView === key ? accentColor : 'transparent',
-                color: activeView === key ? '#FFFFFF' : subtextColor,
-              }}>
-              <Icon size={16} />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="px-6 pb-6">
-          {/* ═══ STAMP VIEW ═══ */}
-          {activeView === 'stamp' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>
-                  Hey, {(client.name || 'there').split(' ')[0]}!
-                </h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>
-                  {business.progressText || 'Track your visits and earn rewards!'}
-                </p>
-              </div>
-
-              {/* QR Code */}
-              <div className="mb-6 px-4">
-                <div className="max-w-xs mx-auto bg-white rounded-2xl p-4 border-2 shadow-sm" style={{ borderColor: `${accentColor}30` }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${client.token}`}
-                    alt="QR Code"
-                    className="w-full rounded-xl"
-                  />
-                  <p className="text-center mt-3 font-mono font-bold text-lg tracking-widest" style={{ color: accentColor }}>
-                    {client.token}
-                  </p>
-                  <p className="text-center text-gray-400 text-xs mt-1">Show this to staff to earn stamps</p>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold" style={{ color: textColor }}>Progress</span>
-                  <span className="text-sm font-bold" style={{ color: accentColor }}>
-                    {currentStamps}/{totalStamps} stamps
-                  </span>
-                </div>
-                <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: `${accentColor}20` }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(currentStamps / totalStamps) * 100}%`,
-                      backgroundColor: accentColor,
-                    }}
-                  />
-                </div>
-                <p className="text-xs mt-2 text-center" style={{ color: subtextColor }}>
-                  {loyalty?.nextRewardIn > 0
-                    ? `${loyalty.nextRewardIn} more visit${loyalty.nextRewardIn > 1 ? 's' : ''} until your next reward!`
-                    : '🎉 You earned a reward!'}
-                </p>
-              </div>
-
-              {/* Stamp Grid */}
-              {(() => {
-                // Parse milestones — use JSON if available, fallback to legacy
-                let milestones = [];
-                try { milestones = JSON.parse(business.milestonesJson || '[]'); } catch(e) {}
-                if (milestones.length === 0) {
-                  // Fallback to legacy milestone fields
-                  milestones = [
-                    { position: business.milestone1Position || Math.floor(totalStamps / 2), icon: business.milestone1Icon || '🎁', label: business.milestone1Label || '10% OFF', description: business.milestone1Description || '' },
-                    { position: business.milestone2Position || totalStamps, icon: business.milestone2Icon || '🏆', label: business.milestone2Label || 'FREE SERVICE', description: business.milestone2Description || '' },
-                  ];
-                }
-                const milestoneMap = {};
-                milestones.forEach(m => { milestoneMap[m.position] = m; });
-                const stampIcon = business.stampFilledIcon || '✓';
-
-                return (
-                  <>
-                    <div className="grid grid-cols-5 gap-2 mb-6">
-                      {Array.from({ length: totalStamps }).map((_, i) => {
-                        const pos = i + 1;
-                        const isFilled = i < currentStamps;
-                        const ms = milestoneMap[pos];
-                        return (
-                          <div key={i}
-                            className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                              isFilled ? 'shadow-md' : 'border-2 border-dashed'
-                            }`}
-                            style={{
-                              backgroundColor: isFilled ? accentColor : 'transparent',
-                              borderColor: isFilled ? 'transparent' : `${accentColor}40`,
-                              color: isFilled ? '#FFFFFF' : subtextColor,
-                            }}>
-                            {ms ? ms.icon : (isFilled ? stampIcon : pos)}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Milestone Info Cards */}
-                    <div className="space-y-2">
-                      {milestones.filter(m => m.label).map((m, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-xl p-3 border"
-                          style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                            style={{ backgroundColor: `${accentColor}15` }}>{m.icon}</div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm" style={{ color: headingColor }}>{m.label}</p>
-                            <p className="text-xs" style={{ color: subtextColor }}>{m.description || `Visit ${m.position} reward`}</p>
-                          </div>
-                          {currentStamps >= m.position && (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                );
-              })()}
-
-              {/* Total visits */}
-              <div className="mt-4 text-center">
-                <p className="text-xs" style={{ color: subtextColor }}>Total lifetime visits: <span className="font-bold" style={{ color: accentColor }}>{totalVisits}</span></p>
-              </div>
-            </div>
-          )}
-
-          {/* ═══ REWARDS VIEW ═══ */}
-          {activeView === 'rewards' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Your Rewards</h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>Active coupons and earned rewards</p>
-              </div>
-
-              {coupons && coupons.length > 0 ? (
-                <div className="space-y-3">
-                  {coupons.map((coupon, i) => (
-                    <div key={i} className="rounded-2xl p-4 border-2 shadow-sm"
-                      style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                          style={{ backgroundColor: accentColor }}>
-                          <Gift size={24} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold" style={{ color: headingColor }}>{coupon.text || 'Reward'}</p>
-                          <p className="text-xs" style={{ color: subtextColor }}>
-                            {coupon.type && <span className="capitalize">{coupon.type}</span>}
-                            {coupon.expiryDate && <span> · Expires {coupon.expiryDate}</span>}
-                          </p>
-                          {coupon.notes && <p className="text-xs mt-1" style={{ color: accentColor }}>{coupon.notes}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      {/* Navigation */}
+      <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}` }} className="relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center gap-3 animate-fade-in">
+              {businessInfo?.logo ? (
+                <img 
+                  src={businessInfo.logo} 
+                  alt={businessInfo.businessName}
+                  className="h-14 w-14 object-contain rounded-xl p-2"
+                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                  onError={(e) => e.target.style.display = 'none'}
+                />
               ) : (
-                <div className="text-center py-12">
-                  <div className="text-5xl mb-4">🎁</div>
-                  <p className="font-semibold mb-1" style={{ color: headingColor }}>No rewards yet</p>
-                  <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn rewards!</p>
+                <div 
+                  className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  {businessInfo?.businessName?.charAt(0) || 'B'}
                 </div>
               )}
+              <span className="text-2xl font-bold tracking-tight" style={{ color: navText }}>
+                {businessInfo?.businessName || 'Business Name'}
+              </span>
             </div>
-          )}
 
-          {/* ═══ CONTACT VIEW ═══ */}
-          {activeView === 'contact' && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Get in Touch</h2>
-                <p className="text-sm font-light" style={{ color: textColor }}>
-                  {business.supportText || "We'd love to hear from you"}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {/* Message via Viber */}
-                <a href="viber://chat?number=%2B638228234849"
-                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                    style={{ backgroundColor: '#7360F2' }}>
-                    <MessageCircle size={24} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
-                  </div>
-                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
+            {/* Navigation Links */}
+            <div className="flex gap-2">
+              {[
+                { href: '/#/', icon: Home, label: 'Home' },
+                { href: '/#/staff', icon: Users, label: 'Loyalty Desk' },
+                { href: '/#/admin', icon: Settings, label: 'Client Management' },
+              ].map(({ href, icon: Icon, label }) => (
+                <a key={href} href={href}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2"
+                  style={{
+                    backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                    color: navText,
+                  }}>
+                  <Icon className="w-4 h-4" />
+                  {label}
                 </a>
-
-                {/* Call Us */}
-                <a href="tel:+639228531533"
-                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                    style={{ backgroundColor: accentColor }}>
-                    <Phone size={24} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 853 1533</p>
-                  </div>
-                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
-                </a>
-              </div>
-
-              {/* Ad Image */}
-              {business.adImageUrl && (
-                <div className="mt-6">
-                  <img src={business.adImageUrl} alt="Promotion"
-                    className="w-full rounded-2xl shadow-sm"
-                    onError={(e) => (e.target.style.display = 'none')} />
-                </div>
-              )}
+              ))}
             </div>
-          )}
+          </div>
         </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+        {/* Header */}
+        <div className="text-center mb-20 animate-slide-up">
+          <h1 className="text-6xl md:text-7xl font-black mb-4 tracking-tight" style={{ color: heroText }}>
+            {businessInfo?.businessName || 'Business Name'}
+          </h1>
+          <p className="text-2xl md:text-3xl font-light tracking-wide" style={{ color: heroSubtext }}>
+            {businessInfo?.tagline || 'Digital Loyalty System'}
+          </p>
+        </div>
+
+        {/* Main Cards */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+          {/* Staff Card */}
+          <a
+            href="/#/staff"
+            className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
+            style={{ animationDelay: '0.1s', backgroundColor: cardBg }}
+          >
+            <div 
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Users className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
+              Loyalty Desk
+            </h2>
+            <p className="text-lg font-light leading-relaxed" style={{ color: cardText }}>
+              Search customers and add stamps
+            </p>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+              For Staff 
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+
+          {/* Admin Card */}
+          <a
+            href="/#/admin"
+            className="glass-card group rounded-3xl p-10 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-slide-up"
+            style={{ animationDelay: '0.2s', backgroundColor: cardBg }}
+          >
+            <div 
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Settings className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
+              Client Management
+            </h2>
+            <p className="text-lg font-light leading-relaxed" style={{ color: cardText }}>
+              Manage clients, view analytics & more
+            </p>
+            <div className="mt-8 inline-flex items-center text-sm font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+              For Admins
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+        </div>
+
+        <p className="text-center text-xs mt-12" style={{ color: `${heroText}30` }}>v1.3.0</p>
       </div>
     </div>
   );
 }
 
-export default CustomerCard;
+export default HomePage;
