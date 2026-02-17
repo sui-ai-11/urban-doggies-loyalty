@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     const [clientsRes, visitsRes] = await Promise.all([
       sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Clients!A2:K',
+        range: 'Clients!A2:L',
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
@@ -43,8 +43,14 @@ export default async function handler(req, res) {
     const clientRows = clientsRes.data.values || [];
     const visitRows = visitsRes.data.values || [];
 
+    // Filter out rejected clients, keep approved and no-status (legacy)
+    const activeRows = clientRows.filter(row => {
+      var status = (row[11] || '').toLowerCase();
+      return status !== 'rejected' && status !== 'pending';
+    });
+
     // Process clients with visit counts
-    const clients = clientRows.map(row => {
+    const clients = activeRows.map(row => {
       const clientID = row[0];
       const businessID = row[1];
       
