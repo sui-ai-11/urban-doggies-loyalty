@@ -50,6 +50,8 @@ export default async function handler(req, res) {
       milestone1Icon: 'Z2',
       milestone2Icon: 'AA2',
       stampFilledIcon: 'AB2',
+      milestonesJson: 'AC2',
+      customFieldLabel: 'AD2',
     };
 
     var updates = [];
