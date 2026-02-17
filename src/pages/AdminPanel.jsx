@@ -251,34 +251,49 @@ function AdminPanel() {
                   </div>
                 </div>
 
-                {/* Coupons Tracker */}
+                {/* Coupons Summary */}
                 <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
-                  <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🎁 Coupons Issued</h3>
-                  {couponsList && couponsList.length > 0 ? (
-                    <div className="space-y-2">
-                      {couponsList.map((c, i) => {
-                        var clientName = '';
-                        for (var j = 0; j < allClients.length; j++) {
-                          if (allClients[j].clientID === c.clientID || allClients[j].token === c.clientID) {
-                            clientName = allClients[j].name; break;
-                          }
-                        }
-                        return (
-                          <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4">
-                            <div>
-                              <p className="font-bold text-sm text-gray-800">{c.text}</p>
-                              <p className="text-xs text-gray-500">{clientName || c.clientID || 'All clients'} · {c.type}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold" style={{ color: borderColor }}>🎁 Coupons Overview</h3>
+                    <button onClick={() => setActiveTab('settings')}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg transition"
+                      style={{ color: accentColor, backgroundColor: accentColor + '15' }}>
+                      Manage →
+                    </button>
+                  </div>
+                  {couponsList && couponsList.length > 0 ? (() => {
+                    // Group coupons by text
+                    var grouped = {};
+                    couponsList.forEach(c => {
+                      var key = c.text || 'Untitled';
+                      if (!grouped[key]) grouped[key] = { text: key, type: c.type, active: 0, claimed: 0, expired: 0, total: 0 };
+                      grouped[key].total++;
+                      if (c.redeemed === 'TRUE') grouped[key].claimed++;
+                      else if (c.expiryDate && new Date(c.expiryDate) < new Date()) grouped[key].expired++;
+                      else grouped[key].active++;
+                    });
+                    return (
+                      <div className="space-y-2">
+                        {Object.values(grouped).map((g, i) => (
+                          <div key={i} className="bg-white rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-bold text-sm text-gray-800">{g.text}</p>
+                                <p className="text-xs text-gray-400">{g.type} · {g.total} issued</p>
+                              </div>
                             </div>
-                            <span className={'text-xs font-bold px-3 py-1 rounded-full ' +
-                              (c.redeemed === 'TRUE' ? 'bg-gray-100 text-gray-500' :
-                               c.expiryDate && new Date(c.expiryDate) < new Date() ? 'bg-red-50 text-red-600' :
-                               'bg-green-50 text-green-600')}>
-                              {c.redeemed === 'TRUE' ? 'Claimed' :
-                               c.expiryDate && new Date(c.expiryDate) < new Date() ? 'Expired' : 'Active'}
-                            </span>
+                            <div className="flex gap-3 text-xs">
+                              <span className="font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">{g.active} active</span>
+                              <span className="font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{g.claimed} claimed</span>
+                              {g.expired > 0 && <span className="font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg">{g.expired} expired</span>}
+                            </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                    );
+                  })() : (
+                    <p className="text-gray-400 text-sm">No coupons issued yet</p>
+                  )}
                     </div>
                   ) : (
                     <p className="text-gray-400 text-sm">No coupons issued yet</p>
