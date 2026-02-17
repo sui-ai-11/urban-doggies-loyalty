@@ -34,8 +34,8 @@ export default async function handler(req, res) {
 
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:K' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AB' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:L' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AC' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
     ]);
@@ -59,7 +59,21 @@ export default async function handler(req, res) {
       dateAdded: clientRow[8] || '',
       notes: clientRow[9] || '',
       birthdayMonth: clientRow[10] || '',
+      status: clientRow[11] || 'approved',
     };
+
+    // Check if pending
+    if (client.status === 'pending') {
+      return res.status(200).json({
+        client: client,
+        status: 'pending',
+        message: 'Your registration is pending approval. Please ask staff to confirm.',
+      });
+    }
+
+    if (client.status === 'rejected') {
+      return res.status(403).json({ error: 'This registration was not approved.' });
+    }
 
     console.log('✅ Client found:', client.name);
 
@@ -99,6 +113,7 @@ export default async function handler(req, res) {
       milestone1Icon: businessRow[25] || '🎁',
       milestone2Icon: businessRow[26] || '🏆',
       stampFilledIcon: businessRow[27] || '✓',
+      milestonesJson: businessRow[28] || '',
     };
 
     console.log('✅ Business found:', business.name);
