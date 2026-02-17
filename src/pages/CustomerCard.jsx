@@ -48,6 +48,25 @@ function CustomerCard() {
     );
   }
 
+  // Pending approval screen
+  if (clientData && clientData.status === 'pending') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#0d0221' }}>
+        <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
+          <p className="text-gray-400 mb-4">Hi {clientData.client.name}! Your registration is being reviewed.</p>
+          <p className="text-gray-500 text-sm">Please ask staff at the counter to approve your card.</p>
+          <button onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-3 rounded-2xl text-white font-bold text-sm transition hover:shadow-lg"
+            style={{ backgroundColor: '#0abdc6' }}>
+            🔄 Check Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-900">
@@ -200,63 +219,64 @@ function CustomerCard() {
               </div>
 
               {/* Stamp Grid */}
-              <div className="grid grid-cols-5 gap-2 mb-6">
-                {Array.from({ length: totalStamps }).map((_, i) => {
-                  const isFilled = i < currentStamps;
-                  const m1Pos = (business.milestone1Position || Math.floor(totalStamps / 2)) - 1;
-                  const m2Pos = (business.milestone2Position || totalStamps) - 1;
-                  const m1Icon = business.milestone1Icon || '🎁';
-                  const m2Icon = business.milestone2Icon || '🏆';
-                  const stampIcon = business.stampFilledIcon || '✓';
-                  const isMilestone1 = i === m1Pos;
-                  const isMilestone2 = i === m2Pos;
-                  return (
-                    <div key={i}
-                      className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                        isFilled ? 'shadow-md' : 'border-2 border-dashed'
-                      }`}
-                      style={{
-                        backgroundColor: isFilled ? accentColor : 'transparent',
-                        borderColor: isFilled ? 'transparent' : `${accentColor}40`,
-                        color: isFilled ? '#FFFFFF' : subtextColor,
-                      }}>
-                      {isFilled ? (
-                        isMilestone1 ? m1Icon : isMilestone2 ? m2Icon : stampIcon
-                      ) : (
-                        isMilestone1 ? m1Icon : isMilestone2 ? m2Icon : (i + 1)
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              {(() => {
+                // Parse milestones — use JSON if available, fallback to legacy
+                let milestones = [];
+                try { milestones = JSON.parse(business.milestonesJson || '[]'); } catch(e) {}
+                if (milestones.length === 0) {
+                  // Fallback to legacy milestone fields
+                  milestones = [
+                    { position: business.milestone1Position || Math.floor(totalStamps / 2), icon: business.milestone1Icon || '🎁', label: business.milestone1Label || '10% OFF', description: business.milestone1Description || '' },
+                    { position: business.milestone2Position || totalStamps, icon: business.milestone2Icon || '🏆', label: business.milestone2Label || 'FREE SERVICE', description: business.milestone2Description || '' },
+                  ];
+                }
+                const milestoneMap = {};
+                milestones.forEach(m => { milestoneMap[m.position] = m; });
+                const stampIcon = business.stampFilledIcon || '✓';
 
-              {/* Milestones */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 rounded-xl p-3 border"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>{business.milestone1Icon || '🎁'}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone1Label || '10% OFF'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone1Description || `${business.milestone1Position || Math.floor(totalStamps / 2)} visit reward`}</p>
-                  </div>
-                  {currentStamps >= (business.milestone1Position || Math.floor(totalStamps / 2)) && (
-                    <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 rounded-xl p-3 border"
-                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${accentColor}15` }}>{business.milestone2Icon || '🏆'}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm" style={{ color: headingColor }}>{business.milestone2Label || 'FREE SERVICE'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.milestone2Description || `${business.milestone2Position || totalStamps} visit reward`}</p>
-                  </div>
-                  {currentStamps >= (business.milestone2Position || totalStamps) && (
-                    <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
-                  )}
-                </div>
-              </div>
+                return (
+                  <>
+                    <div className="grid grid-cols-5 gap-2 mb-6">
+                      {Array.from({ length: totalStamps }).map((_, i) => {
+                        const pos = i + 1;
+                        const isFilled = i < currentStamps;
+                        const ms = milestoneMap[pos];
+                        return (
+                          <div key={i}
+                            className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                              isFilled ? 'shadow-md' : 'border-2 border-dashed'
+                            }`}
+                            style={{
+                              backgroundColor: isFilled ? accentColor : 'transparent',
+                              borderColor: isFilled ? 'transparent' : `${accentColor}40`,
+                              color: isFilled ? '#FFFFFF' : subtextColor,
+                            }}>
+                            {ms ? ms.icon : (isFilled ? stampIcon : pos)}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Milestone Info Cards */}
+                    <div className="space-y-2">
+                      {milestones.filter(m => m.label).map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 rounded-xl p-3 border"
+                          style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                            style={{ backgroundColor: `${accentColor}15` }}>{m.icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm" style={{ color: headingColor }}>{m.label}</p>
+                            <p className="text-xs" style={{ color: subtextColor }}>{m.description || `Visit ${m.position} reward`}</p>
+                          </div>
+                          {currentStamps >= m.position && (
+                            <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Total visits */}
               <div className="mt-4 text-center">
