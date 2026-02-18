@@ -226,6 +226,26 @@ function StaffPanel() {
       .finally(function() { setLoading(false); });
   }
 
+  function voidLastStamp() {
+    if (!clientInfo) return;
+    if (!confirm('Void last stamp for ' + clientInfo.name + '? This action will be logged.')) return;
+    setLoading(true);
+    setMessage('');
+    fetch('/api/void-stamp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', voidedBy: 'staff' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.error) throw new Error(result.error);
+        setMessage('⚠️ Last stamp voided for ' + clientInfo.name + '. Now has ' + result.remainingVisits + ' visits.');
+        setTimeout(function() { setSearchInput(''); setClientInfo(null); setMessage(''); }, 4000);
+      })
+      .catch(function(error) { setMessage('Error: ' + error.message); })
+      .finally(function() { setLoading(false); });
+  }
+
   function cancelSearch() {
     setClientInfo(null);
     setSearchInput('');
@@ -494,12 +514,6 @@ function StaffPanel() {
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Token</span>
                   <span className="font-bold text-lg font-mono" style={{ color: accentColor }}>{clientInfo.token}</span>
                 </div>
-                {clientInfo.mobile && (
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile</span>
-                    <span className="text-gray-700">{clientInfo.mobile}</span>
-                  </div>
-                )}
                 <div className="flex justify-between items-center py-2">
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Visits</span>
                   <span className="font-bold text-2xl" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
@@ -509,27 +523,41 @@ function StaffPanel() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <a href={'/#/card?token=' + clientInfo.token}
+              <a href={window.location.origin + '/#/card?token=' + clientInfo.token}
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition text-center no-underline">
                 👁️ View Card
               </a>
-              {clientInfo.mobile && (
-                <a href={'viber://forward?text=' + encodeURIComponent('Here is your loyalty card link: ' + window.location.origin + '/#/card?token=' + clientInfo.token)}
-                  className="flex items-center justify-center gap-2 text-white py-3 rounded-2xl font-semibold text-sm hover:shadow-md transition text-center no-underline"
-                  style={{ backgroundColor: '#7360F2' }}>
-                  💬 Send via Viber
-                </a>
-              )}
+              <button onClick={function() {
+                fetch('/api/send-card-link', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: clientInfo.token }),
+                })
+                  .then(function(r) { return r.json(); })
+                  .then(function(data) {
+                    if (data.success) setMessage('✅ Card link sent to client\'s email!');
+                    else setMessage('❌ ' + (data.error || 'Failed to send'));
+                  })
+                  .catch(function() { setMessage('❌ Failed to send email'); });
+              }}
+                className="flex items-center justify-center gap-2 text-white py-3 rounded-2xl font-semibold text-sm hover:shadow-md transition"
+                style={{ backgroundColor: accentColor }}>
+                📧 Send Card Link
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button onClick={cancelSearch}
-                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition">Cancel</button>
+                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition text-sm">Cancel</button>
+              <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
+                className="bg-red-50 text-red-600 py-4 rounded-2xl font-bold transition hover:bg-red-100 disabled:opacity-30 text-sm">
+                ↩ Void Stamp
+              </button>
               <button onClick={confirmAddStamp} disabled={loading}
-                className="text-white py-4 rounded-2xl font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="text-white py-4 rounded-2xl font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                 style={{ backgroundColor: accentColor }}>
-                {loading ? '⏳ Adding…' : '✓ Add Stamp'}
+                {loading ? '⏳' : '✓ Add Stamp'}
               </button>
             </div>
           </div>
