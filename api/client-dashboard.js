@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:L' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AC' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AE' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:L' }),
     ]);
@@ -114,6 +114,7 @@ export default async function handler(req, res) {
       milestone2Icon: businessRow[26] || '🏆',
       stampFilledIcon: businessRow[27] || '✓',
       milestonesJson: businessRow[28] || '',
+      contactEmail: businessRow[30] || '',
     };
 
     console.log('✅ Business found:', business.name);
