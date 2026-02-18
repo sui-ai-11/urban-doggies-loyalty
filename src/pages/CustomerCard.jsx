@@ -49,22 +49,26 @@ function CustomerCard() {
   }
 
   // Auto-poll when pending — check every 5 seconds
+  const [isPending, setIsPending] = useState(false);
   useEffect(() => {
-    if (!clientData || clientData.status !== 'pending') return;
+    if (clientData && clientData.status === 'pending') setIsPending(true);
+  }, [clientData]);
+  useEffect(() => {
+    if (!isPending || !token) return;
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`/api/client-dashboard?token=${token}`);
         if (response.ok) {
           const data = await response.json();
           if (data.status !== 'pending') {
+            setIsPending(false);
             setClientData(data);
-            clearInterval(interval);
           }
         }
       } catch (e) {}
     }, 5000);
     return () => clearInterval(interval);
-  }, [clientData, token]);
+  }, [isPending, token]);
 
   // Pending approval screen
   if (clientData && clientData.status === 'pending') {
@@ -379,6 +383,21 @@ function CustomerCard() {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
                     <p className="text-xs" style={{ color: subtextColor }}>+63 922 853 1533</p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
+                </a>
+
+                {/* Send Feedback */}
+                <a href={'mailto:' + (business.contactEmail || '') + '?subject=Feedback from ' + (client.name || 'Customer')}
+                  className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
+                    style={{ backgroundColor: '#10b981' }}>
+                    <span style={{ fontSize: '20px' }}>📝</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold" style={{ color: headingColor }}>Send Feedback</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>We value your thoughts</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
