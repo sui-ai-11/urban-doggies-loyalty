@@ -93,8 +93,11 @@ function RegisterPage() {
               <p className="font-mono font-bold text-2xl tracking-widest" style={{ color: accentColor }}>{result.client.token}</p>
             </div>
 
-            <p className="text-xs text-gray-400">Once approved, you can access your loyalty card at:</p>
-            <p className="text-xs font-mono mt-1 break-all" style={{ color: accentColor }}>{window.location.origin + '/#/card?token=' + result.client.token}</p>
+            <p className="text-xs text-gray-400">Once approved, you can access your loyalty card anytime at:</p>
+            <a href="/#/portal" className="inline-block mt-2 px-4 py-2 rounded-xl text-sm font-bold no-underline"
+              style={{ backgroundColor: accentColor + '15', color: accentColor }}>
+              💳 Customer Portal
+            </a>
           </div>
         </div>
       </div>
@@ -162,12 +165,13 @@ function RegisterPage() {
 
             {/* Email */}
             <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
-              <input type="email" value={form.email}
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email *</label>
+              <input type="email" value={form.email} required
                 onChange={function(e) { updateForm('email', e.target.value); }}
                 placeholder="your@email.com"
                 className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
                 style={{ borderColor: accentColor + '40' }} />
+              <p className="text-xs mt-1.5" style={{ color: accentColor }}>📧 Your loyalty card link will be sent to this email</p>
             </div>
 
             {/* Birthday Month */}
