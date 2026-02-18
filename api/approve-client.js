@@ -61,13 +61,49 @@ export default async function handler(req, res) {
       }
 
       if (action === 'approve') {
+        // Update status to approved
         await sheets.spreadsheets.values.update({
           spreadsheetId: SHEET_ID,
           range: 'Clients!L' + rowIndex,
           valueInputOption: 'RAW',
           resource: { values: [['approved']] },
         });
-        return res.status(200).json({ success: true, message: 'Client approved' });
+
+        // Get client data from this row
+        var clientRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Clients!A' + rowIndex + ':L' + rowIndex,
+        });
+        var cRow = (clientRes.data.values || [])[0] || [];
+        var clientName = cRow[2] || '';
+        var clientToken = cRow[3] || '';
+        var clientEmail = cRow[5] || '';
+
+        // Get business name
+        var bizRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Businesses!C2',
+        });
+        var businessName = ((bizRes.data.values || [])[0] || [])[0] || 'Loyalty';
+
+        // Auto-queue welcome email if client has email
+        if (clientEmail) {
+          var origin = req.headers.origin || req.headers.referer || 'https://loyaltyv1.vercel.app';
+          origin = origin.replace(/\/$/, '');
+          var cardLink = origin + '/#/card?token=' + clientToken;
+          var now = new Date().toISOString();
+
+          await sheets.spreadsheets.values.append({
+            spreadsheetId: SHEET_ID,
+            range: 'EmailQueue!A2:G',
+            valueInputOption: 'RAW',
+            resource: {
+              values: [[clientEmail, clientName, businessName, cardLink, 'pending', now, clientToken]],
+            },
+          });
+        }
+
+        return res.status(200).json({ success: true, message: 'Client approved' + (clientEmail ? ' — email queued' : '') });
       }
 
       if (action === 'reject') {
