@@ -4,32 +4,64 @@ import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
 import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings } from 'lucide-react';
 
-function CouponsOverview({ couponsList }) {
+function CouponsOverview({ couponsList, allClients }) {
+  var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
   var grouped = {};
   couponsList.forEach(function(c) {
     var key = c.text || 'Untitled';
-    if (!grouped[key]) grouped[key] = { text: key, type: c.type, active: 0, claimed: 0, expired: 0, total: 0 };
-    grouped[key].total++;
-    if (c.redeemed === 'TRUE') grouped[key].claimed++;
-    else if (c.expiryDate && new Date(c.expiryDate) < new Date()) grouped[key].expired++;
-    else grouped[key].active++;
+    if (!grouped[key]) grouped[key] = { text: key, type: c.type, items: [] };
+    var clientName = '';
+    for (var i = 0; i < (allClients || []).length; i++) {
+      if ((allClients[i].clientID === c.clientID) || (allClients[i].token === c.clientID)) {
+        clientName = allClients[i].name; break;
+      }
+    }
+    var status = 'active';
+    if (c.redeemed === 'TRUE') status = 'claimed';
+    else if (c.expiryDate && new Date(c.expiryDate) < new Date()) status = 'expired';
+    grouped[key].items.push({ clientName: clientName || c.clientID || 'All clients', status: status, expiryDate: c.expiryDate, redeemedAt: c.redeemedAt });
   });
   return (
     <div className="space-y-2">
-      {Object.values(grouped).map(function(g, i) {
+      {Object.values(grouped).map(function(g) {
+        var isExpanded = expandedGroup === g.text;
+        var activeCount = g.items.filter(function(x) { return x.status === 'active'; }).length;
+        var claimedCount = g.items.filter(function(x) { return x.status === 'claimed'; }).length;
+        var expiredCount = g.items.filter(function(x) { return x.status === 'expired'; }).length;
         return (
-          <div key={i} className="bg-white rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
+          <div key={g.text} className="bg-white rounded-xl overflow-hidden">
+            <button onClick={function() { setExpandedGroup(isExpanded ? null : g.text); }}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition">
               <div>
                 <p className="font-bold text-sm text-gray-800">{g.text}</p>
-                <p className="text-xs text-gray-400">{g.type} · {g.total} issued</p>
+                <div className="flex gap-2 mt-1">
+                  <span className="text-xs font-bold text-green-600">{activeCount} active</span>
+                  <span className="text-xs font-bold text-gray-400">{claimedCount} claimed</span>
+                  {expiredCount > 0 && <span className="text-xs font-bold text-red-500">{expiredCount} expired</span>}
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3 text-xs">
-              <span className="font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">{g.active} active</span>
-              <span className="font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{g.claimed} claimed</span>
-              {g.expired > 0 && <span className="font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg">{g.expired} expired</span>}
-            </div>
+              <span style={{ fontSize: '16px', color: '#9ca3af', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>›</span>
+            </button>
+            {isExpanded && (
+              <div className="border-t border-gray-100 p-3 space-y-1 bg-gray-50">
+                {g.items.map(function(item, j) {
+                  return (
+                    <div key={j} className="flex items-center justify-between bg-white rounded-lg p-2.5 text-sm">
+                      <div>
+                        <p className="font-semibold text-gray-800 text-xs">{item.clientName}</p>
+                        <p className="text-xs text-gray-400">{item.expiryDate ? 'Exp: ' + item.expiryDate : 'No expiry'}{item.redeemedAt ? ' · Claimed ' + item.redeemedAt : ''}</p>
+                      </div>
+                      <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' +
+                        (item.status === 'claimed' ? 'bg-gray-100 text-gray-500' :
+                         item.status === 'expired' ? 'bg-red-50 text-red-600' :
+                         'bg-green-50 text-green-600')}>
+                        {item.status === 'claimed' ? 'Claimed' : item.status === 'expired' ? 'Expired' : 'Active'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
@@ -295,7 +327,7 @@ function AdminPanel() {
                     </button>
                   </div>
                   {couponsList && couponsList.length > 0 ? (
-                    <CouponsOverview couponsList={couponsList} />
+                    <CouponsOverview couponsList={couponsList} allClients={allClients} />
                   ) : (
                     <p className="text-gray-400 text-sm">No coupons issued yet</p>
                   )}
@@ -361,7 +393,7 @@ function AdminPanel() {
                       <table className="w-full">
                         <thead>
                           <tr style={{ backgroundColor: `${borderColor}08` }}>
-                            {['Name', 'Token', 'Visits', 'Breed', 'Mobile', 'Card'].map(h => (
+                            {['Name', 'Token', 'Visits', 'Mobile', 'Card'].map(h => (
                               <th key={h} className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -381,7 +413,6 @@ function AdminPanel() {
                                   {client.visits}/{client.requiredVisits}
                                 </span>
                               </td>
-                              <td className="px-5 py-4 text-sm text-gray-500">{client.breed || '-'}</td>
                               <td className="px-5 py-4 text-sm text-gray-500">{client.mobile || '-'}</td>
                               <td className="px-5 py-4">
                                 <div className="flex gap-1">
@@ -415,7 +446,6 @@ function AdminPanel() {
                     { label: 'Customer Name *', key: 'name', type: 'text', required: true },
                     { label: 'Mobile Number *', key: 'mobile', type: 'tel', required: true },
                     { label: 'Email', key: 'email', type: 'email' },
-                    { label: 'Pet Breed', key: 'breed', type: 'text', placeholder: 'e.g., Shihtzu, Poodle, Golden Retriever' },
                   ].map(({ label, key, type, required, placeholder }) => (
                     <div key={key}>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">{label}</label>
