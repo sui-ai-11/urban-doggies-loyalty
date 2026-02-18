@@ -48,6 +48,24 @@ function CustomerCard() {
     );
   }
 
+  // Auto-poll when pending — check every 5 seconds
+  useEffect(() => {
+    if (!clientData || clientData.status !== 'pending') return;
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/client-dashboard?token=${token}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status !== 'pending') {
+            setClientData(data);
+            clearInterval(interval);
+          }
+        }
+      } catch (e) {}
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [clientData, token]);
+
   // Pending approval screen
   if (clientData && clientData.status === 'pending') {
     return (
@@ -56,12 +74,11 @@ function CustomerCard() {
           <div className="text-5xl mb-4">⏳</div>
           <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
           <p className="text-gray-400 mb-4">Hi {clientData.client.name}! Your registration is being reviewed.</p>
-          <p className="text-gray-500 text-sm">Please ask staff at the counter to approve your card.</p>
-          <button onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-3 rounded-2xl text-white font-bold text-sm transition hover:shadow-lg"
-            style={{ backgroundColor: '#0abdc6' }}>
-            🔄 Check Again
-          </button>
+          <p className="text-gray-500 text-sm">Please show this to the staff at the counter.</p>
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <p className="text-gray-500 text-xs">Checking automatically…</p>
+          </div>
         </div>
       </div>
     );
