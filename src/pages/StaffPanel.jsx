@@ -494,12 +494,6 @@ function StaffPanel() {
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Token</span>
                   <span className="font-bold text-lg font-mono" style={{ color: accentColor }}>{clientInfo.token}</span>
                 </div>
-                {clientInfo.breed && (
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pet</span>
-                    <span className="text-gray-700">🐕 {clientInfo.breed}</span>
-                  </div>
-                )}
                 {clientInfo.mobile && (
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile</span>
@@ -511,6 +505,22 @@ function StaffPanel() {
                   <span className="font-bold text-2xl" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <a href={'/#/card?token=' + clientInfo.token}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition text-center no-underline">
+                👁️ View Card
+              </a>
+              {clientInfo.mobile && (
+                <a href={'viber://forward?text=' + encodeURIComponent('Here is your loyalty card link: ' + window.location.origin + '/#/card?token=' + clientInfo.token)}
+                  className="flex items-center justify-center gap-2 text-white py-3 rounded-2xl font-semibold text-sm hover:shadow-md transition text-center no-underline"
+                  style={{ backgroundColor: '#7360F2' }}>
+                  💬 Send via Viber
+                </a>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
