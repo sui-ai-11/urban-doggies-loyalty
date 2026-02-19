@@ -14,6 +14,7 @@ function StaffPanel() {
   var _b = useState(false), loading = _b[0], setLoading = _b[1];
   var _c = useState(''), message = _c[0], setMessage = _c[1];
   var _d = useState(null), clientInfo = _d[0], setClientInfo = _d[1];
+  var _d2 = useState([]), clientCoupons = _d2[0], setClientCoupons = _d2[1];
   var _e = useState(null), multipleResults = _e[0], setMultipleResults = _e[1];
   var _f = useState(false), showScanner = _f[0], setShowScanner = _f[1];
   var _g = useState(false), scanning = _g[0], setScanning = _g[1];
@@ -126,6 +127,7 @@ function StaffPanel() {
             currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
             requiredVisits: (result.business && result.business.requiredVisits) || 10
           });
+          setClientCoupons(result.coupons || []);
           setMessage('Customer found! Review info and confirm to add stamp.');
         }
       })
@@ -171,6 +173,7 @@ function StaffPanel() {
             currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
             requiredVisits: (result.business && result.business.requiredVisits) || 10
           });
+          setClientCoupons(result.coupons || []);
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
         } else if (result.clients && result.clients.length > 1) {
@@ -264,6 +267,7 @@ function StaffPanel() {
           currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
           requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
         });
+        setClientCoupons(full ? (full.coupons || []) : []);
         setMultipleResults(null);
         setMessage('Customer selected! Review info and confirm to add stamp.');
       });
@@ -523,7 +527,11 @@ function StaffPanel() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <button onClick={function() { window.open(window.location.origin + '/#/card?token=' + clientInfo.token, '_blank'); }}
+              <button onClick={function() {
+                var cardUrl = window.location.origin + '/#/card?token=' + clientInfo.token;
+                var w = window.open('', '_blank');
+                if (w) { w.location.href = cardUrl; }
+              }}
                 className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition">
                 👁️ View Card
               </button>
@@ -546,6 +554,53 @@ function StaffPanel() {
               </button>
             </div>
 
+            {/* Active Coupons */}
+            {clientCoupons.length > 0 && (
+              <div className="mt-4 mb-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Active Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length})</p>
+                <div className="space-y-2">
+                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).map(function(coupon, idx) {
+                    return (
+                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl p-3 border border-gray-100">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm truncate" style={{ color: borderColor }}>{coupon.text || 'Coupon'}</p>
+                          <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · Exp: ' + coupon.expiryDate : ''}</p>
+                        </div>
+                        <button onClick={function() {
+                          if (!confirm('Mark "' + (coupon.text || 'coupon') + '" as claimed?')) return;
+                          fetch('/api/manage-coupons', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'redeem', couponID: coupon.couponID }),
+                          })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                              if (data.success) {
+                                setMessage('✅ Coupon claimed: ' + (coupon.text || 'Coupon'));
+                                setClientCoupons(clientCoupons.map(function(c) {
+                                  if (c.couponID === coupon.couponID) return Object.assign({}, c, { redeemed: 'TRUE' });
+                                  return c;
+                                }));
+                              } else {
+                                setMessage('❌ ' + (data.error || 'Failed'));
+                              }
+                            })
+                            .catch(function() { setMessage('❌ Failed to redeem'); });
+                        }}
+                          className="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white shrink-0 transition hover:shadow-md"
+                          style={{ backgroundColor: '#10b981' }}>
+                          ✓ Claimed
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-2">All coupons have been claimed</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-3">
               <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
                 className="bg-red-50 text-red-600 py-4 rounded-2xl font-bold transition hover:bg-red-100 disabled:opacity-30 text-sm">
@@ -556,7 +611,7 @@ function StaffPanel() {
                 style={{ backgroundColor: accentColor }}>
                 {loading ? '⏳' : '✓ Add Stamp'}
               </button>
-              <button onClick={function() { setClientInfo(null); setMessage(''); setSearchInput(''); }}
+              <button onClick={function() { setClientInfo(null); setClientCoupons([]); setMessage(''); setSearchInput(''); }}
                 className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition text-sm">
                 ← Back
               </button>
