@@ -209,18 +209,51 @@ function AdminPanel() {
   }
 
   if (isLocked) {
+    var bgIsDark = true;
+    try {
+      var c = bgColor.replace('#','');
+      bgIsDark = (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 < 0.5;
+    } catch(e) {}
+    var navText = bgIsDark ? '#ffffff' : borderColor;
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: bgColor }}>
-        <div className="fixed top-4 left-4 flex gap-2 z-20">
-          <a href="/#/" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
-            ← Home
-          </a>
-          <a href="/#/staff" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
-            💳 Loyalty Desk
-          </a>
-        </div>
+      <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+        <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', borderBottom: '1px solid ' + (bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') }} className="relative z-10">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {businessInfo && businessInfo.logo ? (
+                  <img src={businessInfo.logo} alt={businessInfo.businessName || ''}
+                    className="h-14 w-14 object-contain rounded-xl p-2"
+                    style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                    onError={function(e) { e.target.style.display = 'none'; }} />
+                ) : (
+                  <div className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+                    style={{ backgroundColor: accentColor }}>
+                    {businessInfo && businessInfo.businessName ? businessInfo.businessName.charAt(0) : 'B'}
+                  </div>
+                )}
+                <span className="text-2xl font-bold tracking-tight" style={{ color: navText }}>
+                  {(businessInfo && businessInfo.businessName) || 'Business'}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <a href="/#/" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
+                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', color: navText }}>
+                  Home
+                </a>
+                <a href="/#/staff" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
+                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', color: navText }}>
+                  Loyalty Desk
+                </a>
+                <a href="/#/admin" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
+                  style={{ backgroundColor: accentColor, color: '#ffffff' }}>
+                  Client Management
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <div className="flex items-center justify-center p-6" style={{ minHeight: 'calc(100vh - 80px)' }}>
         <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             style={{ backgroundColor: accentColor }}>
@@ -243,6 +276,7 @@ function AdminPanel() {
             style={{ backgroundColor: accentColor }}>
             Unlock
           </button>
+        </div>
         </div>
       </div>
     );
