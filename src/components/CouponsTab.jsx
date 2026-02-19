@@ -80,7 +80,7 @@ function CouponsTab() {
     var status = 'active';
     if (c.redeemed === 'TRUE') status = 'claimed';
     else if (c.expiryDate && new Date(c.expiryDate) < new Date()) status = 'expired';
-    return Object.assign({}, c, { clientName: clientName || c.clientID || 'All clients', status: status });
+    return Object.assign({}, c, { clientName: clientName || (c.clientID ? c.clientID : '🌐 Global'), status: status });
   });
 
   var activeCoupons = processedCoupons.filter(function(c) { return c.status === 'active'; });
@@ -227,7 +227,7 @@ function CouponsTab() {
                      'bg-green-50 text-green-600')}>
                     {c.status === 'claimed' ? 'Claimed' : c.status === 'expired' ? 'Expired' : 'Active'}
                   </span>
-                  {c.status === 'active' && (
+                  {c.status === 'active' && c.clientID && (
                     <button onClick={function() { redeemCoupon(c.couponID, c.text); }}
                       className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
                       style={{ backgroundColor: '#10b981' }}>
