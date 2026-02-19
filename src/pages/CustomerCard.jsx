@@ -139,7 +139,7 @@ function CustomerCard() {
   // Nav buttons from business settings
   const navButtons = [
     { key: 'stamp', label: business.navButton1Text || 'Date Stamp', icon: Star },
-    { key: 'rewards', label: business.navButton2Text || 'Rewards', icon: Gift },
+    { key: 'rewards', label: business.navButton2Text || 'Coupons', icon: Gift },
     { key: 'contact', label: business.navButton3Text || 'Contact', icon: MessageCircle },
   ];
 
@@ -310,7 +310,7 @@ function CustomerCard() {
           {activeView === 'rewards' && (
             <div className="animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Your Rewards</h2>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Your Coupons</h2>
                 <p className="text-sm font-light" style={{ color: textColor }}>Active coupons and earned rewards</p>
               </div>
 
@@ -339,8 +339,8 @@ function CustomerCard() {
               ) : (
                 <div className="text-center py-12">
                   <div className="text-5xl mb-4">🎁</div>
-                  <p className="font-semibold mb-1" style={{ color: headingColor }}>No rewards yet</p>
-                  <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn rewards!</p>
+                  <p className="font-semibold mb-1" style={{ color: headingColor }}>No coupons yet</p>
+                  <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn coupons!</p>
                 </div>
               )}
             </div>
