@@ -52,6 +52,7 @@ export default async function handler(req, res) {
       stampFilledIcon: 'AB2',
       milestonesJson: 'AC2',
       customFieldLabel: 'AD2',
+      contactEmail: 'AE2',
     };
 
     var updates = [];
