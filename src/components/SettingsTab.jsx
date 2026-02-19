@@ -236,7 +236,6 @@ function SettingsTab() {
                   </select>
                 </div>
               )}
-              </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Coupon Text</label>
                 <input type="text" value={newCoupon.text}
