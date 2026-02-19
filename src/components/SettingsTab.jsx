@@ -363,7 +363,6 @@ function SettingsTab() {
           <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Stamp Card Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Required Visits for Reward', 'stampsRequired', '10', 'number')}
-            {renderInput('Default Reward Text', 'rewardDescription', 'Free grooming session')}
             {renderInput('Progress Message', 'progressText', 'Track your visits and earn rewards!')}
 
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Stamp Icon (filled)</h4>
