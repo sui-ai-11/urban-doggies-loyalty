@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings } from 'lucide-react';
+import CouponsTab from '../components/CouponsTab';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift } from 'lucide-react';
 
 function CouponsOverview({ couponsList, allClients }) {
   var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
@@ -189,9 +190,9 @@ function AdminPanel() {
     { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { key: 'clients', label: 'All Clients', icon: Users },
     { key: 'add', label: 'Add Client', icon: UserPlus },
+    { key: 'coupons', label: 'Coupons', icon: Gift },
     { key: 'branding', label: 'Branding', icon: Palette },
     { key: 'settings', label: 'Settings', icon: Settings },
-    { key: 'import', label: 'Import CSV', icon: Upload },
   ];
 
   // Default PIN — can be changed via settings later
@@ -210,6 +211,16 @@ function AdminPanel() {
   if (isLocked) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: bgColor }}>
+        <div className="fixed top-4 left-4 flex gap-2 z-20">
+          <a href="/#/" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
+            ← Home
+          </a>
+          <a href="/#/staff" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
+            💳 Loyalty Desk
+          </a>
+        </div>
         <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             style={{ backgroundColor: accentColor }}>
@@ -248,20 +259,6 @@ function AdminPanel() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {/* Top Navigation */}
-        <div className="flex items-center justify-between mb-4 animate-slide-up">
-          <div className="flex gap-2">
-            <a href="/#/" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
-              ← Home
-            </a>
-            <a href="/#/staff" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
-              💳 Loyalty Desk
-            </a>
-          </div>
-        </div>
-
         <div className="text-center mb-8 animate-slide-up">
           <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Client Management</h1>
           <p className="text-white text-opacity-80 font-light text-lg">Manage your loyalty system</p>
@@ -332,19 +329,17 @@ function AdminPanel() {
 
                 {/* Coupons Summary */}
                 <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold" style={{ color: borderColor }}>🎁 Coupons Overview</h3>
-                    <button onClick={() => setActiveTab('settings')}
-                      className="text-xs font-bold px-3 py-1.5 rounded-lg transition"
-                      style={{ color: accentColor, backgroundColor: accentColor + '15' }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold" style={{ color: borderColor }}>🎁 Coupons</h3>
+                      <p className="text-sm text-gray-400 mt-1">{couponsList ? couponsList.length : 0} total coupons issued</p>
+                    </div>
+                    <button onClick={() => setActiveTab('coupons')}
+                      className="text-sm font-bold px-4 py-2 rounded-xl transition"
+                      style={{ color: '#fff', backgroundColor: accentColor }}>
                       Manage →
                     </button>
                   </div>
-                  {couponsList && couponsList.length > 0 ? (
-                    <CouponsOverview couponsList={couponsList} allClients={allClients} />
-                  ) : (
-                    <p className="text-gray-400 text-sm">No coupons issued yet</p>
-                  )}
                 </div>
               </div>
             )}
@@ -538,29 +533,8 @@ function AdminPanel() {
 
             {activeTab === 'settings' && <SettingsTab />}
 
-            {/* ═══ IMPORT CSV ═══ */}
-            {activeTab === 'import' && (
-              <div className="animate-fade-in">
-                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Import Clients from CSV</h2>
-                <div className="max-w-2xl">
-                  <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: `${accentColor}10`, border: `2px solid ${accentColor}30` }}>
-                    <h3 className="font-bold mb-3" style={{ color: borderColor }}>📋 CSV Format Required:</h3>
-                    <p className="text-sm text-gray-600 mb-3">Your CSV file should have these columns:</p>
-                    <code className="block bg-white p-3 rounded-lg text-sm font-mono text-gray-800">Name, Mobile, Email, Breed</code>
-                    <p className="text-sm text-gray-600 mt-3">Example:</p>
-                    <code className="block bg-white p-3 rounded-lg text-sm font-mono text-gray-800">
-                      Mau Marasigan, 09328683575, mau@email.com, Shihtzu<br/>
-                      Juan Reyes, 09171234567, juan@email.com, Poodle
-                    </code>
-                  </div>
-                  <div className="border-4 border-dashed rounded-2xl p-12 text-center" style={{ borderColor: `${accentColor}40` }}>
-                    <Upload size={44} className="mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500 font-bold mb-2">Coming Soon!</p>
-                    <p className="text-sm text-gray-400">CSV import feature will be available in the next update.</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* ═══ COUPONS ═══ */}
+            {activeTab === 'coupons' && <CouponsTab />}
           </div>
         </div>
 
