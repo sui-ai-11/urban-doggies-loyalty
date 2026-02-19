@@ -53,14 +53,73 @@ export default async function handler(req, res) {
     // POST: Add a new coupon
     if (req.method === 'POST') {
       var body = req.body || {};
+      var targetClientID = body.clientID || '';
 
-      // Generate coupon ID
+      // Check if this is a birthday promo for multiple clients
+      if (targetClientID.indexOf('bday_') === 0) {
+        var bdayMonth = targetClientID.replace('bday_', '');
+
+        // Get all clients and find celebrants
+        var clientsRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Clients!A2:L',
+        });
+        var clientRows = clientsRes.data.values || [];
+        var celebrants = [];
+        for (var c = 0; c < clientRows.length; c++) {
+          var status = (clientRows[c][11] || '').toLowerCase();
+          if (status === 'rejected' || status === 'pending') continue;
+          var cMonth = (clientRows[c][10] || '').toLowerCase();
+          if (cMonth === bdayMonth.toLowerCase()) {
+            celebrants.push(clientRows[c][0]); // clientID
+          }
+        }
+
+        if (celebrants.length === 0) {
+          return res.status(400).json({ error: 'No celebrants found for ' + bdayMonth });
+        }
+
+        // Create a coupon for each celebrant
+        var newRows = [];
+        for (var b = 0; b < celebrants.length; b++) {
+          var couponID = 'CPN_' + Date.now().toString(36).toUpperCase() + '_' + b;
+          newRows.push([
+            couponID,
+            body.businessID || 'BIZ_001',
+            celebrants[b],
+            body.type || 'birthday',
+            body.text || '',
+            new Date().toISOString().split('T')[0],
+            body.expiryDate || '',
+            'FALSE',
+            '',
+            body.notes || '',
+            body.createdBy || 'admin',
+            '',
+          ]);
+        }
+
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A2:L',
+          valueInputOption: 'RAW',
+          resource: { values: newRows },
+        });
+
+        return res.status(200).json({
+          success: true,
+          count: celebrants.length,
+          message: celebrants.length + ' birthday coupons issued for ' + bdayMonth,
+        });
+      }
+
+      // Single client or global coupon
       var couponID = 'CPN_' + Date.now().toString(36).toUpperCase();
 
       var newRow = [
         couponID,
         body.businessID || 'BIZ_001',
-        body.clientID || '',
+        targetClientID,
         body.type || 'reward',
         body.text || '',
         new Date().toISOString().split('T')[0],
