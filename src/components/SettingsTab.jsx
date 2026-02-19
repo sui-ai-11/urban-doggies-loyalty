@@ -49,6 +49,8 @@ function SettingsTab() {
           milestone1Icon: data.milestone1Icon || '🎁',
           milestone2Icon: data.milestone2Icon || '🏆',
           stampFilledIcon: data.stampFilledIcon || '✓',
+          termsURL: data.termsURL || '',
+          contactEmail: data.contactEmail || '',
           milestones: (function() {
             try { return JSON.parse(data.milestonesJson || '[]'); } catch(e) { return []; }
           })(),
@@ -418,10 +420,12 @@ function SettingsTab() {
         <div>
           <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Contact Info</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            {renderInput('Chat Label', 'chatLabel', 'Message via Viber')}
-            {renderInput('Chat Link / Number', 'chatLink', 'viber://chat?number=%2B6312345678')}
             {renderInput('Support Text', 'supportText', "We'd love to hear from you")}
-            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText']); }}
+            {renderInput('Chat Label', 'chatLabel', 'Message us via Viber')}
+            {renderInput('Chat Link / Number', 'chatLink', 'viber://chat?number=%2B6312345678')}
+            {renderInput('Phone Number (Call Us)', 'termsURL', '+63 2 1234 5678')}
+            {renderInput('Contact Email (Send Feedback)', 'contactEmail', 'info@yourbusiness.com')}
+            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
