@@ -500,71 +500,47 @@ function StaffPanel() {
 
         {/* Customer Info */}
         {clientInfo && (
-          <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-2xl mb-4 shadow-lg">
-                <span style={{ color: 'white', fontSize: '32px' }}>✓</span>
-              </div>
-              <h2 className="text-2xl font-bold text-green-600">Customer Found!</h2>
-            </div>
+          <div className="glass-card rounded-3xl shadow-xl p-6 animate-slide-up">
 
-            <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '2px solid ' + accentColor + '30' }}>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</span>
-                  <span className="font-bold text-xl" style={{ color: borderColor }}>{clientInfo.name}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Token</span>
-                  <span className="font-bold text-lg font-mono" style={{ color: accentColor }}>{clientInfo.token}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Visits</span>
-                  <span className="font-bold text-2xl" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</span>
-                </div>
+            {/* Header: Name + Visits */}
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold" style={{ color: borderColor }}>{clientInfo.name}</h2>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">{clientInfo.token}</p>
+              </div>
+              <div className="text-center px-4 py-2 rounded-2xl" style={{ backgroundColor: accentColor + '15' }}>
+                <p className="text-2xl font-black" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
+                <p className="text-xs text-gray-400">visits</p>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <button onClick={function() {
-                var cardUrl = window.location.origin + '/#/card?token=' + clientInfo.token;
-                var w = window.open('', '_blank');
-                if (w) { w.location.href = cardUrl; }
-              }}
-                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition">
-                👁️ View Card
-              </button>
-              <button onClick={function() {
-                fetch('/api/send-card-link', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: clientInfo.token }),
-                })
-                  .then(function(r) { return r.json(); })
-                  .then(function(data) {
-                    if (data.success) setMessage('✅ Card link sent to client\'s email!');
-                    else setMessage('❌ ' + (data.error || 'Failed to send'));
-                  })
-                  .catch(function() { setMessage('❌ Failed to send email'); });
-              }}
-                className="flex items-center justify-center gap-2 text-white py-3 rounded-2xl font-semibold text-sm hover:shadow-md transition"
+            {/* Primary Actions */}
+            <div className="flex gap-2 mb-4">
+              <button onClick={confirmAddStamp} disabled={loading}
+                className="flex-1 text-white py-3.5 rounded-2xl font-bold transition-all hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 text-sm"
                 style={{ backgroundColor: accentColor }}>
-                📧 Send Card Link
+                {loading ? '⏳' : '✓ Add Stamp'}
+              </button>
+              <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
+                className="px-4 py-3.5 rounded-2xl font-bold transition hover:bg-red-100 disabled:opacity-30 text-sm"
+                style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}>
+                ↩ Void
               </button>
             </div>
 
             {/* Active Coupons */}
-            {clientCoupons.length > 0 && (
-              <div className="mt-4 mb-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Active Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length})</p>
+            {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length})
+                </p>
                 <div className="space-y-2">
                   {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).map(function(coupon, idx) {
                     return (
-                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl p-3 border border-gray-100">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm truncate" style={{ color: borderColor }}>{coupon.text || 'Coupon'}</p>
-                          <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · Exp: ' + coupon.expiryDate : ''}</p>
+                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100">
+                        <div className="flex-1 min-w-0 mr-2">
+                          <p className="font-semibold text-sm truncate" style={{ color: borderColor }}>{coupon.text || 'Coupon'}</p>
+                          <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · ' + coupon.expiryDate : ''}</p>
                         </div>
                         <button onClick={function() {
                           if (!confirm('Mark "' + (coupon.text || 'coupon') + '" as claimed?')) return;
@@ -587,32 +563,43 @@ function StaffPanel() {
                             })
                             .catch(function() { setMessage('❌ Failed to redeem'); });
                         }}
-                          className="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white shrink-0 transition hover:shadow-md"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white shrink-0"
                           style={{ backgroundColor: '#10b981' }}>
-                          ✓ Claimed
+                          Claim
                         </button>
                       </div>
                     );
                   })}
-                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-2">All coupons have been claimed</p>
-                  )}
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-3">
-              <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
-                className="bg-red-50 text-red-600 py-4 rounded-2xl font-bold transition hover:bg-red-100 disabled:opacity-30 text-sm">
-                ↩ Void Stamp
+            {/* Secondary Actions */}
+            <div className="flex gap-2 pt-3" style={{ borderTop: '1px solid #e5e7eb' }}>
+              <button onClick={function() {
+                window.open(window.location.origin + '/#/card?token=' + clientInfo.token, '_blank');
+              }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
+                👁️ View Card
               </button>
-              <button onClick={confirmAddStamp} disabled={loading}
-                className="text-white py-4 rounded-2xl font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                style={{ backgroundColor: accentColor }}>
-                {loading ? '⏳' : '✓ Add Stamp'}
+              <button onClick={function() {
+                fetch('/api/send-card-link', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: clientInfo.token }),
+                })
+                  .then(function(r) { return r.json(); })
+                  .then(function(data) {
+                    if (data.success) setMessage('✅ Card link emailed!');
+                    else setMessage('❌ ' + (data.error || 'Failed'));
+                  })
+                  .catch(function() { setMessage('❌ Failed to send'); });
+              }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
+                📧 Email Link
               </button>
               <button onClick={function() { setClientInfo(null); setClientCoupons([]); setMessage(''); setSearchInput(''); }}
-                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition text-sm">
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
                 ← Back
               </button>
             </div>
