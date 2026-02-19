@@ -53,6 +53,31 @@ export default async function handler(req, res) {
     // POST: Add a new coupon
     if (req.method === 'POST') {
       var body = req.body || {};
+
+      // Redeem a coupon
+      if (body.action === 'redeem' && body.couponID) {
+        var allCouponsRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A2:L',
+        });
+        var allCoupons = allCouponsRes.data.values || [];
+        var couponRowIdx = -1;
+        for (var r = 0; r < allCoupons.length; r++) {
+          if (allCoupons[r][0] === body.couponID) { couponRowIdx = r; break; }
+        }
+        if (couponRowIdx === -1) return res.status(404).json({ error: 'Coupon not found' });
+
+        var sheetRow = couponRowIdx + 2;
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!H' + sheetRow + ':I' + sheetRow,
+          valueInputOption: 'RAW',
+          resource: { values: [['TRUE', new Date().toISOString().split('T')[0]]] },
+        });
+
+        return res.status(200).json({ success: true, message: 'Coupon redeemed' });
+      }
+
       var targetClientID = body.clientID || '';
 
       // Check if this is a birthday promo for multiple clients
