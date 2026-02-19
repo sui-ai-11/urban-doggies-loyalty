@@ -11,7 +11,7 @@ function SettingsTab() {
   var _f = useState({}), fields = _f[0], setFields = _f[1];
 
   // New coupon form
-  var _g = useState({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '' }),
+  var _g = useState({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '', birthdayMonth: '' }),
     newCoupon = _g[0], setNewCoupon = _g[1];
 
   // Expanded coupon group in manage view
@@ -117,7 +117,7 @@ function SettingsTab() {
       .then(function(data) {
         if (data.success) {
           showToast('Coupon created!');
-          setNewCoupon({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '' });
+          setNewCoupon({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '', birthdayMonth: '' });
           // Reload coupons
           return fetch('/api/manage-coupons').then(function(r) { return r.json(); });
         }
@@ -146,7 +146,7 @@ function SettingsTab() {
 
   var sections = [
     { key: 'rewards', label: '⭐ Date Stamp' },
-    { key: 'coupons', label: '🎁 Rewards' },
+    { key: 'coupons', label: '🎁 Coupons' },
     { key: 'contact', label: '💬 Contact' },
     { key: 'business', label: '🏢 Business' },
   ];
@@ -203,6 +203,9 @@ function SettingsTab() {
                   onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { clientID: e.target.value })); }}
                   className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
                   <option value="">All clients (global)</option>
+                  {newCoupon.type === 'birthday' && newCoupon.birthdayMonth && (
+                    <option value={'bday_' + newCoupon.birthdayMonth}>🎂 All {newCoupon.birthdayMonth} Celebrants ({clients.filter(function(c) { return (c.birthdayMonth || '').toLowerCase() === newCoupon.birthdayMonth.toLowerCase(); }).length})</option>
+                  )}
                   {clients.map(function(c) {
                     return <option key={c.token} value={c.clientID || c.token}>{c.name} ({c.token})</option>;
                   })}
@@ -211,13 +214,28 @@ function SettingsTab() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Type</label>
                 <select value={newCoupon.type}
-                  onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { type: e.target.value })); }}
+                  onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { type: e.target.value, birthdayMonth: '' })); }}
                   className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
                   <option value="reward">Reward</option>
                   <option value="discount">Discount</option>
                   <option value="freebie">Freebie</option>
                   <option value="promo">Promo</option>
+                  <option value="birthday">Birthday Promo</option>
                 </select>
+              </div>
+              {newCoupon.type === 'birthday' && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
+                  <select value={newCoupon.birthdayMonth}
+                    onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { birthdayMonth: e.target.value })); }}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
+                    <option value="">Select month...</option>
+                    {['January','February','March','April','May','June','July','August','September','October','November','December'].map(function(m) {
+                      return <option key={m} value={m}>{m}</option>;
+                    })}
+                  </select>
+                </div>
+              )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Coupon Text</label>
