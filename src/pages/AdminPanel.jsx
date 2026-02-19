@@ -248,6 +248,20 @@ function AdminPanel() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        {/* Top Navigation */}
+        <div className="flex items-center justify-between mb-4 animate-slide-up">
+          <div className="flex gap-2">
+            <a href="/#/" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
+              ← Home
+            </a>
+            <a href="/#/staff" className="px-4 py-2 rounded-xl text-sm font-bold no-underline transition hover:shadow-md"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff' }}>
+              💳 Loyalty Desk
+            </a>
+          </div>
+        </div>
+
         <div className="text-center mb-8 animate-slide-up">
           <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Client Management</h1>
           <p className="text-white text-opacity-80 font-light text-lg">Manage your loyalty system</p>
