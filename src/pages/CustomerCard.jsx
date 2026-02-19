@@ -391,7 +391,6 @@ function CustomerCard() {
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
                 )}
-                </a>
 
                 {/* Send Feedback */}
                 {business.contactEmail && (
