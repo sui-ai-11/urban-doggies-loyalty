@@ -3,19 +3,18 @@ import HomePage from './pages/HomePage';
 import CustomerCard from './pages/CustomerCard';
 import AdminPanel from './pages/AdminPanel';
 import StaffPanel from './pages/StaffPanel';
-import RegisterPage from './pages/RegisterPage';
 import PortalPage from './pages/PortalPage';
 
 function getView() {
   var hash = window.location.hash || '';
   if (hash.indexOf('portal') > -1) return 'portal';
-  if (hash.indexOf('register') > -1) return 'register';
+  if (hash.indexOf('register') > -1) return 'portal';
   if (hash.indexOf('staff') > -1) return 'staff';
   if (hash.indexOf('admin') > -1) return 'admin';
   if (hash.indexOf('card') > -1) return 'customer';
   if (hash.indexOf('token') > -1) return 'customer';
   var path = window.location.pathname || '/';
-  if (path.indexOf('register') > -1) return 'register';
+  if (path.indexOf('register') > -1) return 'portal';
   if (path.indexOf('staff') > -1) return 'staff';
   if (path.indexOf('admin') > -1) return 'admin';
   if (path.indexOf('card') > -1) return 'customer';
@@ -75,7 +74,6 @@ class App extends React.Component {
     else if (this.state.view === 'admin') content = React.createElement(AdminPanel);
     else if (this.state.view === 'customer') content = React.createElement(CustomerCard);
     else if (this.state.view === 'portal') content = React.createElement(PortalPage);
-    else if (this.state.view === 'register') content = React.createElement(RegisterPage);
     else content = React.createElement(HomePage);
     return React.createElement(ErrorBoundary, null, content);
   }
