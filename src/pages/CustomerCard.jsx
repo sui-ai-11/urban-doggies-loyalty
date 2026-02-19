@@ -376,7 +376,8 @@ function CustomerCard() {
                 </a>
 
                 {/* Call Us */}
-                <a href="tel:+639228531533"
+                {business.termsURL && (
+                <a href={'tel:' + business.termsURL.replace(/\s/g, '')}
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
@@ -385,13 +386,16 @@ function CustomerCard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 922 853 1533</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.termsURL}</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
+                )}
+                </a>
 
                 {/* Send Feedback */}
-                <a href={'mailto:' + (business.contactEmail || '') + '?subject=Feedback from ' + (client.name || 'Customer')}
+                {business.contactEmail && (
+                <a href={'mailto:' + business.contactEmail + '?subject=Feedback from ' + (client.name || 'Customer')}
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
@@ -400,10 +404,11 @@ function CustomerCard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>Send Feedback</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>We value your thoughts</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.contactEmail}</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
+                )}
               </div>
 
               {/* Ad Image */}
