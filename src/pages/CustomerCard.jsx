@@ -37,6 +37,31 @@ function CustomerCard() {
     loadClientData();
   }, [token]);
 
+  // Auto-poll when pending — check every 5 seconds
+  const pendingRef = React.useRef(false);
+  useEffect(() => {
+    if (!clientData || clientData.status !== 'pending' || !token) {
+      pendingRef.current = false;
+      return;
+    }
+    if (pendingRef.current) return; // already polling
+    pendingRef.current = true;
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/client-dashboard?token=${token}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status !== 'pending') {
+            pendingRef.current = false;
+            clearInterval(interval);
+            setClientData(data);
+          }
+        }
+      } catch (e) {}
+    }, 5000);
+    return () => { clearInterval(interval); pendingRef.current = false; };
+  }, [clientData && clientData.status, token]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -47,28 +72,6 @@ function CustomerCard() {
       </div>
     );
   }
-
-  // Auto-poll when pending — check every 5 seconds
-  const [isPending, setIsPending] = useState(false);
-  useEffect(() => {
-    if (clientData && clientData.status === 'pending') setIsPending(true);
-  }, [clientData]);
-  useEffect(() => {
-    if (!isPending || !token) return;
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/client-dashboard?token=${token}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status !== 'pending') {
-            setIsPending(false);
-            setClientData(data);
-          }
-        }
-      } catch (e) {}
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isPending, token]);
 
   // Pending approval screen
   if (clientData && clientData.status === 'pending') {
