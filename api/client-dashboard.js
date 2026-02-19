@@ -119,9 +119,9 @@ export default async function handler(req, res) {
 
     console.log('✅ Business found:', business.name);
 
-    // Count visits
+    // Count visits (exclude voided)
     const visits = ((visitsRes.data.values) || []).filter(row => 
-      row[1] === client.clientID && row[2] === client.businessID
+      row[1] === client.clientID && row[2] === client.businessID && (row[5] || '').indexOf('VOIDED') === -1
     ) || [];
     const visitCount = visits.length;
     const progress = visitCount % business.stampsRequired;
