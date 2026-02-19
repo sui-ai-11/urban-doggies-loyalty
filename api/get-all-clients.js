@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       
       // Count visits for this client
       const visits = visitRows.filter(visit => 
-        visit[1] === clientID && visit[2] === businessID
+        visit[1] === clientID && visit[2] === businessID && (visit[5] || '').indexOf('VOIDED') === -1
       ).length;
 
       return {
