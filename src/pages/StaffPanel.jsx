@@ -121,8 +121,8 @@ function StaffPanel() {
           setClientInfo({
             name: result.client.name,
             token: result.client.token,
-            breed: result.client.breed,
-            mobile: result.client.mobile,
+            email: result.client.email,
+            
             currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
             requiredVisits: (result.business && result.business.requiredVisits) || 10
           });
@@ -166,8 +166,8 @@ function StaffPanel() {
           setClientInfo({
             name: result.client.name,
             token: result.client.token,
-            breed: result.client.breed,
-            mobile: result.client.mobile,
+            email: result.client.email,
+            
             currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
             requiredVisits: (result.business && result.business.requiredVisits) || 10
           });
@@ -220,7 +220,8 @@ function StaffPanel() {
         } else {
           setMessage('✅ Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
         }
-        setTimeout(function() { setSearchInput(''); setClientInfo(null); setMessage(''); }, 4000);
+        // Update visits count on screen
+        setClientInfo(Object.assign({}, clientInfo, { currentVisits: result.totalVisits }));
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
@@ -259,7 +260,7 @@ function StaffPanel() {
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(full) {
         setClientInfo({
-          name: customer.name, token: customer.token, breed: customer.breed, mobile: customer.mobile,
+          name: customer.name, token: customer.token, email: customer.email,
           currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
           requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
         });
@@ -481,8 +482,7 @@ function StaffPanel() {
                       <div>
                         <p className="font-bold text-lg" style={{ color: borderColor }}>{customer.name}</p>
                         <p className="text-xs text-gray-500 mt-1">Token: <span className="font-mono font-bold" style={{ color: accentColor }}>{customer.token}</span></p>
-                        {customer.mobile && <p className="text-xs text-gray-500">Mobile: {customer.mobile}</p>}
-                        {customer.breed && <p className="text-xs text-gray-500">Pet: 🐕 {customer.breed}</p>}
+                        {customer.email && <p className="text-xs text-gray-500">Email: {customer.email}</p>}
                       </div>
                       <span style={{ color: accentColor, fontSize: '20px' }}>›</span>
                     </div>
@@ -495,7 +495,7 @@ function StaffPanel() {
         )}
 
         {/* Customer Info */}
-        {clientInfo && message.indexOf('Stamp added') === -1 && message.indexOf('SUCCESS') === -1 && (
+        {clientInfo && (
           <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up">
             <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-2xl mb-4 shadow-lg">
@@ -523,11 +523,10 @@ function StaffPanel() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <a href={window.location.origin + '/#/card?token=' + clientInfo.token}
-                target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition text-center no-underline">
+              <button onClick={function() { window.open(window.location.origin + '/#/card?token=' + clientInfo.token, '_blank'); }}
+                className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition">
                 👁️ View Card
-              </a>
+              </button>
               <button onClick={function() {
                 fetch('/api/send-card-link', {
                   method: 'POST',
@@ -548,8 +547,6 @@ function StaffPanel() {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={cancelSearch}
-                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition text-sm">Cancel</button>
               <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
                 className="bg-red-50 text-red-600 py-4 rounded-2xl font-bold transition hover:bg-red-100 disabled:opacity-30 text-sm">
                 ↩ Void Stamp
@@ -558,6 +555,10 @@ function StaffPanel() {
                 className="text-white py-4 rounded-2xl font-bold transition-all duration-200 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                 style={{ backgroundColor: accentColor }}>
                 {loading ? '⏳' : '✓ Add Stamp'}
+              </button>
+              <button onClick={function() { setClientInfo(null); setMessage(''); setSearchInput(''); }}
+                className="bg-gray-100 text-gray-600 py-4 rounded-2xl font-semibold hover:bg-gray-200 transition text-sm">
+                ← Back
               </button>
             </div>
           </div>
