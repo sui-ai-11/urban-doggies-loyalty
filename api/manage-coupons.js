@@ -41,8 +41,8 @@ export default async function handler(req, res) {
           expiryDate: row[6] || '',
           redeemed: row[7] || 'FALSE',
           redeemedAt: row[8] || '',
-          notes: row[9] || '',
-          createdBy: row[10] || '',
+          redeemedBy: row[9] || '',
+          notes: row[10] || '',
           qrCode: row[11] || '',
         });
       }
@@ -56,9 +56,28 @@ export default async function handler(req, res) {
 
       // Redeem a coupon
       if (body.action === 'redeem' && body.couponID) {
+        // Read headers to find correct column positions
+        var headerRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A1:Z1',
+        });
+        var headers = (headerRes.data.values || [[]])[0].map(function(h) { return (h || '').toLowerCase().trim(); });
+        var redeemedCol = -1;
+        var redeemedAtCol = -1;
+        for (var h = 0; h < headers.length; h++) {
+          var hdr = headers[h].replace(/\s/g, '');
+          if (hdr === 'redeemed' || hdr === 'isredeemed' || hdr === 'claimed' || hdr === 'isclaimed') redeemedCol = h;
+          if (hdr === 'redeemedat' || hdr === 'redeemeddate' || hdr === 'claimeddate' || hdr === 'claimedat' || hdr === 'redeemedAt') redeemedAtCol = h;
+        }
+        // Fallback to columns H and I if headers not found
+        if (redeemedCol === -1) redeemedCol = 7;
+        if (redeemedAtCol === -1) redeemedAtCol = 8;
+
+        var colLetter = function(idx) { return String.fromCharCode(65 + idx); };
+
         var allCouponsRes = await sheets.spreadsheets.values.get({
           spreadsheetId: SHEET_ID,
-          range: 'Coupons!A2:L',
+          range: 'Coupons!A2:Z',
         });
         var allCoupons = allCouponsRes.data.values || [];
         var couponRowIdx = -1;
@@ -68,12 +87,24 @@ export default async function handler(req, res) {
         if (couponRowIdx === -1) return res.status(404).json({ error: 'Coupon not found' });
 
         var sheetRow = couponRowIdx + 2;
+
+        // Update redeemed column
         await sheets.spreadsheets.values.update({
           spreadsheetId: SHEET_ID,
-          range: 'Coupons!H' + sheetRow + ':I' + sheetRow,
+          range: 'Coupons!' + colLetter(redeemedCol) + sheetRow,
           valueInputOption: 'RAW',
-          resource: { values: [['TRUE', new Date().toISOString().split('T')[0]]] },
+          resource: { values: [['TRUE']] },
         });
+
+        // Update redeemedAt column
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!' + colLetter(redeemedAtCol) + sheetRow,
+          valueInputOption: 'RAW',
+          resource: { values: [[new Date().toISOString().split('T')[0]]] },
+        });
+
+        console.log('✅ Coupon redeemed:', body.couponID, 'Row:', sheetRow, 'Redeemed col:', colLetter(redeemedCol), 'At col:', colLetter(redeemedAtCol));
 
         return res.status(200).json({ success: true, message: 'Coupon redeemed' });
       }
@@ -91,17 +122,21 @@ export default async function handler(req, res) {
         });
         var clientRows = clientsRes.data.values || [];
         var celebrants = [];
+        console.log('🎂 Looking for', bdayMonth, 'celebrants in', clientRows.length, 'clients');
         for (var c = 0; c < clientRows.length; c++) {
           var status = (clientRows[c][11] || '').toLowerCase();
           if (status === 'rejected' || status === 'pending') continue;
-          var cMonth = (clientRows[c][10] || '').toLowerCase();
-          if (cMonth === bdayMonth.toLowerCase()) {
-            celebrants.push(clientRows[c][0]); // clientID
+          var cMonth = (clientRows[c][10] || '').trim().toLowerCase();
+          console.log('  Client:', clientRows[c][2], 'BdayMonth:', clientRows[c][10], '→', cMonth);
+          if (cMonth === bdayMonth.trim().toLowerCase()) {
+            celebrants.push(clientRows[c][0]);
           }
         }
 
+        console.log('🎂 Found', celebrants.length, 'celebrants');
+
         if (celebrants.length === 0) {
-          return res.status(400).json({ error: 'No celebrants found for ' + bdayMonth });
+          return res.status(400).json({ error: 'No celebrants found for ' + bdayMonth + '. Make sure clients have Birthday Month set in their profile.' });
         }
 
         // Create a coupon for each celebrant
@@ -118,8 +153,8 @@ export default async function handler(req, res) {
             body.expiryDate || '',
             'FALSE',
             '',
+            '',
             body.notes || '',
-            body.createdBy || 'admin',
             '',
           ]);
         }
@@ -151,8 +186,8 @@ export default async function handler(req, res) {
         body.expiryDate || '',
         'FALSE',
         '',
+        '',
         body.notes || '',
-        body.createdBy || 'admin',
         '',
       ];
 
@@ -175,20 +210,35 @@ export default async function handler(req, res) {
       var rowIndex = req.query.row || req.body.row;
       if (!rowIndex) return res.status(400).json({ error: 'Row index required' });
 
-      // Mark as redeemed instead of deleting
+      // Read headers to find correct column positions
+      var delHeaderRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Coupons!A1:Z1',
+      });
+      var delHeaders = (delHeaderRes.data.values || [[]])[0].map(function(h) { return (h || '').toLowerCase().trim(); });
+      var delRedeemedCol = 7;
+      var delRedeemedAtCol = 8;
+      for (var dh = 0; dh < delHeaders.length; dh++) {
+        if (delHeaders[dh] === 'redeemed' || delHeaders[dh] === 'isredeemed') delRedeemedCol = dh;
+        if (delHeaders[dh] === 'redeemedat' || delHeaders[dh] === 'redeemeddate' || delHeaders[dh] === 'claimeddate' || delHeaders[dh] === 'claimedat') delRedeemedAtCol = dh;
+      }
+      var delColLetter = function(idx) { return String.fromCharCode(65 + idx); };
+
       await sheets.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
-        range: 'Coupons!H' + rowIndex,
+        range: 'Coupons!' + delColLetter(delRedeemedCol) + rowIndex,
         valueInputOption: 'RAW',
         resource: { values: [['TRUE']] },
       });
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
-        range: 'Coupons!I' + rowIndex,
+        range: 'Coupons!' + delColLetter(delRedeemedAtCol) + rowIndex,
         valueInputOption: 'RAW',
         resource: { values: [[new Date().toISOString().split('T')[0]]] },
       });
+
+      console.log('✅ Coupon removed/redeemed Row:', rowIndex, 'Cols:', delColLetter(delRedeemedCol), delColLetter(delRedeemedAtCol));
 
       return res.status(200).json({ success: true, message: 'Coupon removed' });
     }
