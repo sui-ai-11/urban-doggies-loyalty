@@ -113,10 +113,13 @@ function AdminPanel() {
   useEffect(() => {
     let filtered = [...allClients];
     if (searchQuery) {
+      var q = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.token.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.mobile.includes(searchQuery)
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.token || '').toLowerCase().includes(q) ||
+        (c.mobile || '').includes(searchQuery) ||
+        (c.email || '').toLowerCase().includes(q) ||
+        (c.birthday || '').includes(searchQuery)
       );
     }
     if (selectedMonth !== 'all') filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
