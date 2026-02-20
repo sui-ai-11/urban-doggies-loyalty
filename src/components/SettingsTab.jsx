@@ -51,6 +51,9 @@ function SettingsTab() {
           stampFilledIcon: data.stampFilledIcon || '✓',
           termsURL: data.termsURL || '',
           contactEmail: data.contactEmail || '',
+          navButton1Contact: data.navButton1Contact || '',
+          callLabel: data.callLabel || '',
+          feedbackLabel: data.feedbackLabel || '',
           milestones: (function() {
             try { return JSON.parse(data.milestonesJson || '[]'); } catch(e) { return []; }
           })(),
@@ -361,12 +364,11 @@ function SettingsTab() {
             {renderInput('Tagline', 'tagline', 'Digital Loyalty System')}
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
-            {renderInput('Custom Field Label (leave empty to hide)', 'customFieldLabel', 'e.g. Dog Breed, Company, Nickname')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Card Navigation Labels</h4>
             {renderInput('Tab 1 Label', 'navButton1Text', 'Date Stamp')}
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
-            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'customFieldLabel']); }}
+            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
@@ -380,15 +382,15 @@ function SettingsTab() {
             <p className="text-gray-500 text-sm mb-4">Print this QR code so customers can self-register and get their loyalty card instantly.</p>
             <div className="inline-block bg-white rounded-2xl p-4 border-2 shadow-sm mb-4" style={{ borderColor: accentColor + '30' }}>
               <img
-                src={'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(window.location.origin + '/#/register')}
+                src={'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(window.location.origin + '/#/portal')}
                 alt="Registration QR"
                 className="w-48 h-48 mx-auto"
               />
             </div>
-            <p className="text-xs text-gray-400 mb-3">{window.location.origin + '/#/register'}</p>
+            <p className="text-xs text-gray-400 mb-3">{window.location.origin + '/#/portal'}</p>
             <div className="flex gap-2 justify-center">
               <button onClick={function() {
-                navigator.clipboard.writeText(window.location.origin + '/#/register');
+                navigator.clipboard.writeText(window.location.origin + '/#/portal');
                 showToast('Link copied!');
               }}
                 className="px-4 py-2 rounded-xl text-sm font-bold transition"
@@ -400,8 +402,8 @@ function SettingsTab() {
                 win.document.write('<html><head><title>Registration QR</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;margin:0;}h1{font-size:28px;margin-bottom:8px;}p{color:#888;margin-bottom:24px;}</style></head><body>');
                 win.document.write('<h1>' + ((businessInfo && businessInfo.businessName) || 'Business') + '</h1>');
                 win.document.write('<p>Scan to join our loyalty program!</p>');
-                win.document.write('<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(window.location.origin + '/#/register') + '" width="300" height="300" />');
-                win.document.write('<p style="margin-top:24px;font-size:12px;color:#aaa;">' + window.location.origin + '/#/register</p>');
+                win.document.write('<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(window.location.origin + '/#/portal') + '" width="300" height="300" />');
+                win.document.write('<p style="margin-top:24px;font-size:12px;color:#aaa;">' + window.location.origin + '/#/portal</p>');
                 win.document.write('</body></html>');
                 win.document.close();
                 win.print();
@@ -418,18 +420,31 @@ function SettingsTab() {
       {/* ═══ CONTACT SECTION ═══ */}
       {activeSection === 'contact' && (
         <div>
-          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Contact Info</h3>
+          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Contact Page Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            {renderInput('Support Text', 'supportText', "We'd love to hear from you")}
-            {renderInput('Chat Label', 'chatLabel', 'Message us via Viber')}
-            {renderInput('Chat Link / Number', 'chatLink', 'viber://chat?number=%2B6312345678')}
-            {renderInput('Phone Number (Call Us)', 'termsURL', '+63 2 1234 5678')}
-            {renderInput('Contact Email (Send Feedback)', 'contactEmail', 'info@yourbusiness.com')}
-            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail']); }}
+            {renderInput('Page Title', 'chatLabel', 'Get in Touch')}
+            {renderInput('Subtitle', 'supportText', "We'd love to hear from you")}
+
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Chat Button</h4>
+            <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
+            {renderInput('Button Label', 'navButton1Contact', 'Message us via Viber')}
+            {renderInput('Chat Link', 'chatLink', 'viber://chat?number=%2B6312345678')}
+
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Call Button</h4>
+            <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
+            {renderInput('Button Label', 'callLabel', 'Call Us')}
+            {renderInput('Phone Number', 'termsURL', '+63 2 1234 5678')}
+
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Feedback Button</h4>
+            <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
+            {renderInput('Button Label', 'feedbackLabel', 'Send Feedback')}
+            {renderInput('Email Address', 'contactEmail', 'info@yourbusiness.com')}
+
+            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail', 'navButton1Contact', 'callLabel', 'feedbackLabel']); }}
               disabled={saving}
-              className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
+              className="mt-4 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor }}>
-              {saving ? 'Saving...' : 'Save Contact Info'}
+              {saving ? 'Saving...' : 'Save Contact Settings'}
             </button>
           </div>
         </div>
