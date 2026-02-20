@@ -524,6 +524,19 @@ function StaffPanel() {
                 <div className="space-y-1.5">
                   {clientInfo.milestones.map(function(m, idx) {
                     var reached = clientInfo.currentVisits >= m.position;
+                    // Check if this milestone has a claimed coupon
+                    var milestoneCoupon = null;
+                    for (var ci = 0; ci < clientCoupons.length; ci++) {
+                      var cn = clientCoupons[ci].notes || '';
+                      var ct = clientCoupons[ci].text || '';
+                      if (cn.indexOf('Milestone: ' + m.label) > -1 || cn.indexOf('milestone_' + m.position) > -1) {
+                        milestoneCoupon = clientCoupons[ci];
+                        break;
+                      }
+                    }
+                    var isClaimed = milestoneCoupon && milestoneCoupon.redeemed === 'TRUE';
+                    var isPending = milestoneCoupon && milestoneCoupon.redeemed !== 'TRUE';
+
                     return (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-gray-100">
                         <div className="flex items-center gap-2">
@@ -533,11 +546,86 @@ function StaffPanel() {
                             <p className="text-xs text-gray-400">Visit {m.position}{m.description ? ' · ' + m.description : ''}</p>
                           </div>
                         </div>
-                        {reached ? (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ backgroundColor: accentColor + '20', color: accentColor }}>✓ Reached</span>
-                        ) : (
-                          <span className="text-xs text-gray-300">{m.position - clientInfo.currentVisits} away</span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {!reached && (
+                            <span className="text-xs text-gray-300">{m.position - clientInfo.currentVisits} away</span>
+                          )}
+                          {reached && isClaimed && (
+                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500">✓ Claimed</span>
+                          )}
+                          {reached && isPending && (
+                            <button onClick={function() {
+                              var thisCoupon = milestoneCoupon;
+                              if (!confirm('Mark "' + m.label + '" as claimed/given?')) return;
+                              fetch('/api/manage-coupons', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'redeem', couponID: thisCoupon.couponID }),
+                              })
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                  if (data.success) {
+                                    setMessage('✅ Milestone claimed: ' + m.label);
+                                    setClientCoupons(clientCoupons.map(function(c) {
+                                      if (c.couponID === thisCoupon.couponID) return Object.assign({}, c, { redeemed: 'TRUE' });
+                                      return c;
+                                    }));
+                                  } else {
+                                    setMessage('❌ ' + (data.error || 'Failed'));
+                                  }
+                                })
+                                .catch(function() { setMessage('❌ Failed'); });
+                            }}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
+                              style={{ backgroundColor: '#10b981' }}>
+                              Claim
+                            </button>
+                          )}
+                          {reached && !milestoneCoupon && (
+                            <button onClick={function() {
+                              var mLabel = m.label;
+                              var mPos = m.position;
+                              if (!confirm('Issue & claim milestone "' + mLabel + '"?')) return;
+                              fetch('/api/manage-coupons', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  clientID: clientInfo.token,
+                                  type: 'milestone',
+                                  text: mLabel,
+                                  notes: 'Milestone: ' + mLabel + ' (milestone_' + mPos + ')',
+                                  businessID: 'BIZ_001',
+                                }),
+                              })
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                  if (data.success) {
+                                    // Now redeem it immediately
+                                    return fetch('/api/manage-coupons', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ action: 'redeem', couponID: data.couponID }),
+                                    }).then(function(r2) { return r2.json(); });
+                                  }
+                                  throw new Error(data.error || 'Failed');
+                                })
+                                .then(function() {
+                                  setMessage('✅ Milestone claimed: ' + mLabel);
+                                  // Reload coupons
+                                  fetch('/api/client-dashboard?token=' + clientInfo.token)
+                                    .then(function(r) { return r.json(); })
+                                    .then(function(result) {
+                                      if (result.coupons) setClientCoupons(result.coupons);
+                                    });
+                                })
+                                .catch(function(err) { setMessage('❌ ' + (err.message || 'Failed')); });
+                            }}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
+                              style={{ backgroundColor: accentColor }}>
+                              Give & Claim
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
