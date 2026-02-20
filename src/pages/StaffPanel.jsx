@@ -98,6 +98,21 @@ function StaffPanel() {
     }, 300);
   }
 
+  function buildClientInfo(result) {
+    var milestones = [];
+    if (result.business && result.business.milestonesJson) {
+      try { milestones = JSON.parse(result.business.milestonesJson); } catch(e) {}
+    }
+    return {
+      name: result.client.name,
+      token: result.client.token,
+      email: result.client.email,
+      currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
+      requiredVisits: (result.business && result.business.requiredVisits) || 10,
+      milestones: milestones,
+    };
+  }
+
   function stopScanner() {
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
     if (videoRef.current && videoRef.current.srcObject) {
@@ -119,14 +134,7 @@ function StaffPanel() {
       })
       .then(function(result) {
         if (result.client) {
-          setClientInfo({
-            name: result.client.name,
-            token: result.client.token,
-            email: result.client.email,
-            
-            currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
-            requiredVisits: (result.business && result.business.requiredVisits) || 10
-          });
+          setClientInfo(buildClientInfo(result));
           setClientCoupons(result.coupons || []);
           setMessage('Customer found! Review info and confirm to add stamp.');
         }
@@ -165,14 +173,7 @@ function StaffPanel() {
       .then(function(result) {
         if (result.client) {
           // Single client from token search
-          setClientInfo({
-            name: result.client.name,
-            token: result.client.token,
-            email: result.client.email,
-            
-            currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
-            requiredVisits: (result.business && result.business.requiredVisits) || 10
-          });
+          setClientInfo(buildClientInfo(result));
           setClientCoupons(result.coupons || []);
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
@@ -258,15 +259,17 @@ function StaffPanel() {
   }
 
   function selectCustomer(customer) {
-    // Fetch full loyalty data for selected customer
     fetch('/api/client-dashboard?token=' + customer.token)
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(full) {
-        setClientInfo({
-          name: customer.name, token: customer.token, email: customer.email,
-          currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
-          requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
-        });
+        if (full && full.client) {
+          setClientInfo(buildClientInfo(full));
+        } else {
+          setClientInfo({
+            name: customer.name, token: customer.token, email: customer.email,
+            currentVisits: 0, requiredVisits: 10, milestones: [],
+          });
+        }
         setClientCoupons(full ? (full.coupons || []) : []);
         setMultipleResults(null);
         setMessage('Customer selected! Review info and confirm to add stamp.');
@@ -513,6 +516,34 @@ function StaffPanel() {
                 <p className="text-xs text-gray-400">visits</p>
               </div>
             </div>
+
+            {/* Milestones */}
+            {clientInfo.milestones && clientInfo.milestones.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Milestones</p>
+                <div className="space-y-1.5">
+                  {clientInfo.milestones.map(function(m, idx) {
+                    var reached = clientInfo.currentVisits >= m.position;
+                    return (
+                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: '16px' }}>{m.icon || '🎁'}</span>
+                          <div>
+                            <p className="font-semibold text-xs" style={{ color: reached ? borderColor : '#9ca3af' }}>{m.label}</p>
+                            <p className="text-xs text-gray-400">Visit {m.position}{m.description ? ' · ' + m.description : ''}</p>
+                          </div>
+                        </div>
+                        {reached ? (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ backgroundColor: accentColor + '20', color: accentColor }}>✓ Reached</span>
+                        ) : (
+                          <span className="text-xs text-gray-300">{m.position - clientInfo.currentVisits} away</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Primary Actions */}
             <div className="flex gap-2 mb-4">
