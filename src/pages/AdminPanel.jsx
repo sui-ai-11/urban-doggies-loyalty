@@ -180,6 +180,16 @@ function AdminPanel() {
   const borderColor = businessInfo?.borderColor || '#2a2a3a';
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
 
+  // Smart text colors for admin panels (white/light card backgrounds)
+  function isLight(hex) {
+    const c = (hex || '#000').replace('#','');
+    return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
+  }
+  // For text on white panels: use borderColor if dark enough, otherwise use a dark fallback
+  const panelText = isLight(borderColor) ? '#1a1a2e' : borderColor;
+  // For accent on white panels: use accentColor if dark enough, otherwise darken it
+  const panelAccent = isLight(accentColor) ? '#1a1a2e' : accentColor;
+
   // Don't render until we have business colors
   if (!businessInfo) {
     return (
@@ -262,7 +272,7 @@ function AdminPanel() {
             style={{ backgroundColor: accentColor }}>
             <span style={{ fontSize: '28px' }}>🔒</span>
           </div>
-          <h2 className="text-2xl font-bold mb-2" style={{ color: borderColor }}>Client Management</h2>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: panelText }}>Client Management</h2>
           <p className="text-gray-500 text-sm mb-6">Enter PIN to access</p>
           <input type="password" value={pinInput}
             onChange={(e) => { setPinInput(e.target.value); setPinError(''); }}
@@ -309,8 +319,8 @@ function AdminPanel() {
               <button key={key} onClick={() => setActiveTab(key)}
                 className="px-5 py-4 font-semibold transition-all duration-200 flex items-center gap-2 whitespace-nowrap text-sm"
                 style={{
-                  backgroundColor: activeTab === key ? borderColor : 'transparent',
-                  color: activeTab === key ? '#FFFFFF' : '#6B7280',
+                  backgroundColor: activeTab === key ? panelText : 'transparent',
+                  color: activeTab === key ? (isLight(panelText) ? '#1a1a2e' : '#FFFFFF') : '#6B7280',
                 }}>
                 <Icon size={18} /> {label}
               </button>
@@ -323,11 +333,11 @@ function AdminPanel() {
             {/* ═══ DASHBOARD ═══ */}
             {activeTab === 'dashboard' && analytics && (
               <div className="animate-fade-in">
-                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Analytics Dashboard</h2>
+                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Analytics Dashboard</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                   {[
-                    { label: 'Total Clients', value: analytics.totalClients, icon: <Users size={28} />, color: borderColor },
+                    { label: 'Total Clients', value: analytics.totalClients, icon: <Users size={28} />, color: panelText },
                     { label: 'Stamps Today', value: analytics.stampsToday, icon: '🏷️', color: accentColor },
                     { label: 'Rewards Issued', value: analytics.rewardsIssued, icon: '⭐', color: '#F59E0B' },
                   ].map((card, i) => (
@@ -344,7 +354,7 @@ function AdminPanel() {
 
                 {/* Top Customers */}
                 <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: `${bgColor}10` }}>
-                  <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>🏆 Top Customers</h3>
+                  <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>🏆 Top Customers</h3>
                   <div className="space-y-2">
                     {allClients.sort((a, b) => b.visits - a.visits).slice(0, 10).map((client, i) => (
                       <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4 transition-all duration-200 hover:shadow-md">
@@ -356,7 +366,7 @@ function AdminPanel() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-xl font-bold" style={{ color: accentColor }}>{client.visits}</span>
+                          <span className="text-xl font-bold" style={{ color: panelAccent }}>{client.visits}</span>
                           <p className="text-xs text-gray-400">total visits</p>
                         </div>
                       </div>
@@ -368,7 +378,7 @@ function AdminPanel() {
                 <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-bold" style={{ color: borderColor }}>🎁 Coupons</h3>
+                      <h3 className="text-lg font-bold" style={{ color: panelText }}>🎁 Coupons</h3>
                       <p className="text-sm text-gray-400 mt-1">{couponsList ? couponsList.length : 0} total coupons issued</p>
                     </div>
                     <button onClick={() => setActiveTab('coupons')}
@@ -385,7 +395,7 @@ function AdminPanel() {
             {activeTab === 'clients' && (
               <div className="animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold tracking-tight" style={{ color: borderColor }}>
+                  <h2 className="text-2xl font-bold tracking-tight" style={{ color: panelText }}>
                     All Clients ({filteredClients.length})
                   </h2>
                   <button onClick={() => setActiveTab('add')}
@@ -452,7 +462,7 @@ function AdminPanel() {
                                 <p className="text-xs text-gray-400">{client.email || 'No email'}</p>
                               </td>
                               <td className="px-5 py-4">
-                                <span className="font-mono font-bold text-sm" style={{ color: accentColor }}>{client.token}</span>
+                                <span className="font-mono font-bold text-sm" style={{ color: panelAccent }}>{client.token}</span>
                               </td>
                               <td className="px-5 py-4">
                                 <span className="text-sm text-gray-600">{client.mobile || '—'}</span>
@@ -461,7 +471,7 @@ function AdminPanel() {
                                 <span className="text-sm text-gray-600">{client.birthday || '—'}</span>
                               </td>
                               <td className="px-5 py-4">
-                                <span className="font-bold text-sm" style={{ color: accentColor }}>
+                                <span className="font-bold text-sm" style={{ color: panelAccent }}>
                                   {client.visits}
                                 </span>
                               </td>
@@ -491,7 +501,7 @@ function AdminPanel() {
             {/* ═══ ADD CLIENT ═══ */}
             {activeTab === 'add' && (
               <div className="animate-fade-in">
-                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Add New Client</h2>
+                <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Add New Client</h2>
                 <form onSubmit={handleAddClient} className="max-w-2xl space-y-5">
                   {[
                     { label: 'Customer Name *', key: 'name', type: 'text', required: true },
