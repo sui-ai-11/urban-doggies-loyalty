@@ -13,6 +13,9 @@ function CouponsTab() {
 
   var accentColor = (businessInfo && businessInfo.accentColor) || '#17BEBB';
   var borderColor = (businessInfo && businessInfo.borderColor) || '#1F3A93';
+  function isLightC(hex) { var c = (hex || '#000').replace('#',''); return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6; }
+  var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
+  var panelAccent = isLightC(accentColor) ? '#1a1a2e' : accentColor;
 
   useEffect(function() {
     fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
@@ -90,7 +93,7 @@ function CouponsTab() {
 
   return (
     <div className="animate-fade-in">
-      <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: borderColor }}>Coupons</h2>
+      <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Coupons</h2>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -110,7 +113,7 @@ function CouponsTab() {
 
       {/* Issue New Coupon */}
       <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100">
-        <h3 className="font-bold text-sm mb-4" style={{ color: borderColor }}>Issue New Coupon</h3>
+        <h3 className="font-bold text-sm mb-4" style={{ color: panelText }}>Issue New Coupon</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Assign to</label>
@@ -214,7 +217,7 @@ function CouponsTab() {
               <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-gray-100">
                 <div className="flex-1 min-w-0 mr-3">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="font-bold text-sm truncate" style={{ color: borderColor }}>{c.text || 'Untitled'}</p>
+                    <p className="font-bold text-sm truncate" style={{ color: panelText }}>{c.text || 'Untitled'}</p>
                     <span className="text-xs text-gray-400 capitalize shrink-0">{c.type}</span>
                   </div>
                   <p className="text-xs text-gray-400">
