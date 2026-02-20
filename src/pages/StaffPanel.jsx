@@ -586,6 +586,8 @@ function StaffPanel() {
                               var mLabel = m.label;
                               var mPos = m.position;
                               if (!confirm('Issue & claim milestone "' + mLabel + '"?')) return;
+
+                              // Step 1: Create the coupon
                               fetch('/api/manage-coupons', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -598,27 +600,33 @@ function StaffPanel() {
                                 }),
                               })
                                 .then(function(r) { return r.json(); })
-                                .then(function(data) {
-                                  if (data.success) {
-                                    // Now redeem it immediately
-                                    return fetch('/api/manage-coupons', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ action: 'redeem', couponID: data.couponID }),
-                                    }).then(function(r2) { return r2.json(); });
+                                .then(function(createData) {
+                                  if (!createData.success || !createData.couponID) {
+                                    setMessage('❌ Failed to create: ' + (createData.error || 'Unknown error'));
+                                    return;
                                   }
-                                  throw new Error(data.error || 'Failed');
-                                })
-                                .then(function() {
-                                  setMessage('✅ Milestone claimed: ' + mLabel);
-                                  // Reload coupons
-                                  fetch('/api/client-dashboard?token=' + clientInfo.token)
-                                    .then(function(r) { return r.json(); })
-                                    .then(function(result) {
-                                      if (result.coupons) setClientCoupons(result.coupons);
+                                  // Step 2: Redeem it
+                                  fetch('/api/manage-coupons', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'redeem', couponID: createData.couponID }),
+                                  })
+                                    .then(function(r2) { return r2.json(); })
+                                    .then(function(redeemData) {
+                                      if (redeemData.success) {
+                                        setMessage('✅ Milestone given & claimed: ' + mLabel);
+                                      } else {
+                                        setMessage('⚠️ Created but failed to claim: ' + (redeemData.error || ''));
+                                      }
+                                      // Step 3: Reload all coupons
+                                      fetch('/api/client-dashboard?token=' + clientInfo.token)
+                                        .then(function(r3) { return r3.json(); })
+                                        .then(function(result) {
+                                          if (result.coupons) setClientCoupons(result.coupons);
+                                        });
                                     });
                                 })
-                                .catch(function(err) { setMessage('❌ ' + (err.message || 'Failed')); });
+                                .catch(function(err) { setMessage('❌ Error: ' + err.message); });
                             }}
                               className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
                               style={{ backgroundColor: accentColor }}>
