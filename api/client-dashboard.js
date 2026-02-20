@@ -117,7 +117,7 @@ export default async function handler(req, res) {
       contactEmail: businessRow[30] || '',
     };
 
-    console.log('✅ Business found:', business.name);
+    console.log('✅ Business found:', business.name, '| milestonesJson length:', (business.milestonesJson || '').length, '| clientID:', client.clientID, '| token:', client.token);
 
     // Count visits (exclude voided)
     const visits = ((visitsRes.data.values) || []).filter(row => 
@@ -127,9 +127,9 @@ export default async function handler(req, res) {
     const progress = visitCount % business.stampsRequired;
     const nextRewardIn = business.stampsRequired - progress;
 
-    // Get active coupons (include all for this client)
+    // Get coupons for this client (match by clientID or token, plus global)
     const coupons = ((couponsRes.data.values) || []).filter(row => 
-      row[2] === client.clientID || row[2] === '' || row[2] === undefined
+      row[2] === client.clientID || row[2] === client.token || row[2] === '' || row[2] === undefined
     ).map(row => ({
       couponID: row[0],
       clientName: row[3] || '',
@@ -143,7 +143,7 @@ export default async function handler(req, res) {
       qrCode: row[12],
     })) || [];
 
-    console.log(`✅ Loaded ${visitCount} visits, ${coupons.length} active coupons`);
+    console.log(`✅ Loaded ${visitCount} visits, ${coupons.length} coupons. All coupon rows: ${(couponsRes.data.values || []).length}`);
 
     return res.status(200).json({
       client,
