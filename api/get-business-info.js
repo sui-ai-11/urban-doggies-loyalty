@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     // Fetch business data from Row 2 (get columns A through AB)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:AE2',
+      range: 'Businesses!A2:AH2',
     });
 
     const row = response.data.values?.[0];
@@ -73,6 +73,9 @@ export default async function handler(req, res) {
       milestonesJson: row[28] || '',                       // AC
       customFieldLabel: row[29] || '',                     // AD
       contactEmail: row[30] || '',                         // AE
+      navButton1Contact: row[31] || '',                    // AF
+      callLabel: row[32] || '',                            // AG
+      feedbackLabel: row[33] || '',                        // AH
     };
 
     console.log('✅ Business loaded:', businessInfo.businessName);
