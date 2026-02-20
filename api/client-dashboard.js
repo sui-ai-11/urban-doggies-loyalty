@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:L' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AE' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AH' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:F' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:M' }),
     ]);
@@ -77,11 +77,17 @@ export default async function handler(req, res) {
 
     console.log('✅ Client found:', client.name);
 
-    // Find business
-    const businessRow = ((businessesRes.data.values) || []).find(row => row[0] === client.businessID);
+    // Find business - try exact match first, then fall back to first business
+    const allBusinessRows = (businessesRes.data.values) || [];
+    let businessRow = allBusinessRows.find(row => row[0] === client.businessID);
+    
+    if (!businessRow && allBusinessRows.length > 0) {
+      console.log('⚠️ Business not found with ID:', client.businessID, '- using first business as fallback');
+      businessRow = allBusinessRows[0];
+    }
     
     if (!businessRow) {
-      console.log('❌ Business not found with ID:', client.businessID);
+      console.log('❌ No businesses found at all');
       return res.status(404).json({ error: 'Business not found' });
     }
 
@@ -115,13 +121,16 @@ export default async function handler(req, res) {
       stampFilledIcon: businessRow[27] || '✓',
       milestonesJson: businessRow[28] || '',
       contactEmail: businessRow[30] || '',
+      navButton1Contact: businessRow[31] || '',
+      callLabel: businessRow[32] || '',
+      feedbackLabel: businessRow[33] || '',
     };
 
     console.log('✅ Business found:', business.name, '| milestonesJson length:', (business.milestonesJson || '').length, '| clientID:', client.clientID, '| token:', client.token);
 
-    // Count visits (exclude voided)
+    // Count visits (exclude voided) - match by clientID
     const visits = ((visitsRes.data.values) || []).filter(row => 
-      row[1] === client.clientID && row[2] === client.businessID && (row[5] || '').indexOf('VOIDED') === -1
+      row[1] === client.clientID && (row[5] || '').indexOf('VOIDED') === -1
     ) || [];
     const visitCount = visits.length;
     const progress = visitCount % business.stampsRequired;
