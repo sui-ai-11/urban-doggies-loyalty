@@ -436,7 +436,7 @@ function AdminPanel() {
                       <table className="w-full">
                         <thead>
                           <tr style={{ backgroundColor: `${borderColor}08` }}>
-                            {['Name', 'Token', 'Visits', 'Send Link', 'Message', 'Card'].map(h => (
+                            {['Name', 'Token', 'Mobile', 'Birthday', 'Visits', 'Card'].map(h => (
                               <th key={h} className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -452,48 +452,15 @@ function AdminPanel() {
                                 <span className="font-mono font-bold text-sm" style={{ color: accentColor }}>{client.token}</span>
                               </td>
                               <td className="px-5 py-4">
+                                <span className="text-sm text-gray-600">{client.mobile || '—'}</span>
+                              </td>
+                              <td className="px-5 py-4">
+                                <span className="text-sm text-gray-600">{client.birthday || '—'}</span>
+                              </td>
+                              <td className="px-5 py-4">
                                 <span className="font-bold text-sm" style={{ color: accentColor }}>
                                   {client.visits}
                                 </span>
-                              </td>
-                              <td className="px-5 py-4">
-                                <div className="flex gap-1">
-                                  <button onClick={() => {
-                                    fetch('/api/send-card-link', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ token: client.token }),
-                                    })
-                                      .then(r => r.json())
-                                      .then(data => {
-                                        if (data.success) setMessage('✅ Card link sent to ' + client.name);
-                                        else setMessage('❌ ' + (data.error || 'Failed'));
-                                      });
-                                  }}
-                                    className="px-2 py-1 rounded-lg text-xs font-bold transition hover:shadow-sm"
-                                    style={{ backgroundColor: accentColor + '15', color: accentColor }}
-                                    title="Send via Email">
-                                    📧
-                                  </button>
-                                  {client.mobile && (
-                                    <a href={'viber://forward?text=' + encodeURIComponent('Here is your loyalty card: ' + window.location.origin + '/#/card?token=' + client.token)}
-                                      className="px-2 py-1 rounded-lg text-xs font-bold transition hover:shadow-sm no-underline"
-                                      style={{ backgroundColor: '#7360F220', color: '#7360F2' }}
-                                      title="Send via Viber">
-                                      💬
-                                    </a>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-5 py-4">
-                                {client.mobile && (
-                                  <a href={'viber://chat?number=' + encodeURIComponent(client.mobile)}
-                                    className="px-2 py-1 rounded-lg text-xs font-bold transition hover:shadow-sm no-underline"
-                                    style={{ backgroundColor: '#7360F220', color: '#7360F2' }}
-                                    title="Message via Viber">
-                                    💬 Viber
-                                  </a>
-                                )}
                               </td>
                               <td className="px-5 py-4">
                                 <div className="flex gap-1">
