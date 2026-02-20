@@ -71,16 +71,13 @@ function CouponsTab() {
 
   // Process coupons for display
   var processedCoupons = coupons.map(function(c) {
-    var clientName = '';
-    for (var i = 0; i < clients.length; i++) {
-      if (clients[i].clientID === c.clientID || clients[i].token === c.clientID) {
-        clientName = clients[i].name; break;
-      }
-    }
     var status = 'active';
     if (c.redeemed === 'TRUE') status = 'claimed';
     else if (c.expiryDate && new Date(c.expiryDate) < new Date()) status = 'expired';
-    return Object.assign({}, c, { clientName: clientName || (c.clientID ? c.clientID : '🌐 Global'), status: status });
+    return Object.assign({}, c, {
+      displayName: c.clientName || (c.clientID ? c.clientID : '🌐 Global'),
+      status: status
+    });
   });
 
   var activeCoupons = processedCoupons.filter(function(c) { return c.status === 'active'; });
@@ -217,7 +214,7 @@ function CouponsTab() {
                     <span className="text-xs text-gray-400 capitalize shrink-0">{c.type}</span>
                   </div>
                   <p className="text-xs text-gray-400">
-                    {c.clientName}{c.expiryDate ? ' · Exp: ' + c.expiryDate : ''}{c.redeemedAt ? ' · Claimed: ' + c.redeemedAt : ''}
+                    {c.displayName}{c.expiryDate ? ' · Exp: ' + c.expiryDate : ''}{c.redeemedAt ? ' · Claimed: ' + c.redeemedAt : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
