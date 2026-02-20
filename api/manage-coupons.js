@@ -178,8 +178,9 @@ export default async function handler(req, res) {
       // Single client or global coupon
       var couponID = 'CPN_' + Date.now().toString(36).toUpperCase();
 
-      // Look up client name
+      // Look up client name and resolve token to clientID
       var clientName = '';
+      var resolvedClientID = targetClientID;
       if (targetClientID) {
         var clRes = await sheets.spreadsheets.values.get({
           spreadsheetId: SHEET_ID,
@@ -189,6 +190,7 @@ export default async function handler(req, res) {
         for (var cl = 0; cl < clRows.length; cl++) {
           if (clRows[cl][0] === targetClientID || clRows[cl][3] === targetClientID) {
             clientName = clRows[cl][2] || '';
+            resolvedClientID = clRows[cl][0]; // Always use actual clientID
             break;
           }
         }
@@ -197,7 +199,7 @@ export default async function handler(req, res) {
       var newRow = [
         couponID,
         body.businessID || 'BIZ_001',
-        targetClientID,
+        resolvedClientID,
         clientName || (targetClientID ? '' : 'All Clients'),
         body.type || 'reward',
         body.text || '',
