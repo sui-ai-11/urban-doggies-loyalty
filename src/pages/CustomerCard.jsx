@@ -298,20 +298,40 @@ function CustomerCard() {
 
                     {/* Milestone Info Cards */}
                     <div className="space-y-2">
-                      {milestones.filter(m => m.label).map((m, i) => (
+                      {milestones.filter(m => m.label).map((m, i) => {
+                        const reached = currentStamps >= m.position;
+                        // Check if this milestone has been claimed via coupons
+                        let milestoneClaimed = false;
+                        if (coupons) {
+                          for (let ci = 0; ci < coupons.length; ci++) {
+                            const cn = coupons[ci].notes || '';
+                            if ((cn.indexOf('Milestone: ' + m.label) > -1 || cn.indexOf('milestone_' + m.position) > -1) && coupons[ci].redeemed === 'TRUE') {
+                              milestoneClaimed = true;
+                              break;
+                            }
+                          }
+                        }
+                        return (
                         <div key={i} className="flex items-center gap-3 rounded-xl p-3 border"
-                          style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}20` }}>
+                          style={{
+                            backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                            borderColor: milestoneClaimed ? '#d1d5db' : `${accentColor}20`,
+                            opacity: milestoneClaimed ? 0.6 : 1,
+                          }}>
                           <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                            style={{ backgroundColor: `${accentColor}15` }}>{m.icon}</div>
+                            style={{ backgroundColor: milestoneClaimed ? '#f3f4f6' : `${accentColor}15` }}>{m.icon}</div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm" style={{ color: headingColor }}>{m.label}</p>
+                            <p className="font-bold text-sm" style={{ color: milestoneClaimed ? '#9ca3af' : headingColor }}>{m.label}</p>
                             <p className="text-xs" style={{ color: subtextColor }}>{m.description || `Visit ${m.position} reward`}</p>
                           </div>
-                          {currentStamps >= m.position && (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ backgroundColor: accentColor + '20', color: accentColor }}>✓ Reached</span>
-                          )}
+                          {milestoneClaimed ? (
+                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0">✓ Claimed</span>
+                          ) : reached ? (
+                            <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ backgroundColor: accentColor + '20', color: accentColor }}>Show to staff</span>
+                          ) : null}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </>
                 );
