@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       var result = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'Coupons!A2:L',
+        range: 'Coupons!A2:M',
       });
 
       var rows = result.data.values || [];
@@ -35,15 +35,16 @@ export default async function handler(req, res) {
           couponID: row[0] || '',
           businessID: row[1] || '',
           clientID: row[2] || '',
-          type: row[3] || '',
-          text: row[4] || '',
-          issuedAt: row[5] || '',
-          expiryDate: row[6] || '',
-          redeemed: row[7] || 'FALSE',
-          redeemedAt: row[8] || '',
-          redeemedBy: row[9] || '',
-          notes: row[10] || '',
-          qrCode: row[11] || '',
+          clientName: row[3] || '',
+          type: row[4] || '',
+          text: row[5] || '',
+          issuedAt: row[6] || '',
+          expiryDate: row[7] || '',
+          redeemed: row[8] || 'FALSE',
+          redeemedAt: row[9] || '',
+          redeemedBy: row[10] || '',
+          notes: row[11] || '',
+          qrCode: row[12] || '',
         });
       }
 
@@ -129,7 +130,7 @@ export default async function handler(req, res) {
           var cMonth = (clientRows[c][10] || '').trim().toLowerCase();
           console.log('  Client:', clientRows[c][2], 'BdayMonth:', clientRows[c][10], '→', cMonth);
           if (cMonth === bdayMonth.trim().toLowerCase()) {
-            celebrants.push(clientRows[c][0]);
+            celebrants.push({ clientID: clientRows[c][0], name: clientRows[c][2] || '' });
           }
         }
 
@@ -146,7 +147,8 @@ export default async function handler(req, res) {
           newRows.push([
             couponID,
             body.businessID || 'BIZ_001',
-            celebrants[b],
+            celebrants[b].clientID,
+            celebrants[b].name,
             body.type || 'birthday',
             body.text || '',
             new Date().toISOString().split('T')[0],
@@ -161,7 +163,7 @@ export default async function handler(req, res) {
 
         await sheets.spreadsheets.values.append({
           spreadsheetId: SHEET_ID,
-          range: 'Coupons!A2:L',
+          range: 'Coupons!A2:M',
           valueInputOption: 'RAW',
           resource: { values: newRows },
         });
@@ -176,10 +178,27 @@ export default async function handler(req, res) {
       // Single client or global coupon
       var couponID = 'CPN_' + Date.now().toString(36).toUpperCase();
 
+      // Look up client name
+      var clientName = '';
+      if (targetClientID) {
+        var clRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Clients!A2:D',
+        });
+        var clRows = clRes.data.values || [];
+        for (var cl = 0; cl < clRows.length; cl++) {
+          if (clRows[cl][0] === targetClientID || clRows[cl][3] === targetClientID) {
+            clientName = clRows[cl][2] || '';
+            break;
+          }
+        }
+      }
+
       var newRow = [
         couponID,
         body.businessID || 'BIZ_001',
         targetClientID,
+        clientName || (targetClientID ? '' : 'All Clients'),
         body.type || 'reward',
         body.text || '',
         new Date().toISOString().split('T')[0],
@@ -193,7 +212,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: 'Coupons!A2:L',
+        range: 'Coupons!A2:M',
         valueInputOption: 'RAW',
         resource: { values: [newRow] },
       });
