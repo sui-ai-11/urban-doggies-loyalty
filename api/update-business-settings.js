@@ -53,6 +53,9 @@ export default async function handler(req, res) {
       milestonesJson: 'AC2',
       customFieldLabel: 'AD2',
       contactEmail: 'AE2',
+      navButton1Contact: 'AF2',
+      callLabel: 'AG2',
+      feedbackLabel: 'AH2',
     };
 
     var updates = [];
