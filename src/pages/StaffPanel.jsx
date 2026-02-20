@@ -103,12 +103,16 @@ function StaffPanel() {
     if (result.business && result.business.milestonesJson) {
       try { milestones = JSON.parse(result.business.milestonesJson); } catch(e) {}
     }
+    var total = (result.loyalty && result.loyalty.totalVisits) || 0;
+    var required = (result.business && result.business.requiredVisits) || 10;
+    var progress = (result.loyalty && result.loyalty.currentProgress !== undefined) ? result.loyalty.currentProgress : (total % required);
     return {
       name: result.client.name,
       token: result.client.token,
       email: result.client.email,
-      currentVisits: (result.loyalty && result.loyalty.totalVisits) || 0,
-      requiredVisits: (result.business && result.business.requiredVisits) || 10,
+      currentVisits: total,
+      currentProgress: progress,
+      requiredVisits: required,
       milestones: milestones,
     };
   }
@@ -225,7 +229,9 @@ function StaffPanel() {
           setMessage('✅ Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
         }
         // Update visits count on screen
-        setClientInfo(Object.assign({}, clientInfo, { currentVisits: result.totalVisits }));
+        var newTotal = result.totalVisits;
+        var newProgress = newTotal % clientInfo.requiredVisits;
+        setClientInfo(Object.assign({}, clientInfo, { currentVisits: newTotal, currentProgress: newProgress }));
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
@@ -512,7 +518,7 @@ function StaffPanel() {
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{clientInfo.token}</p>
               </div>
               <div className="text-center px-4 py-2 rounded-2xl" style={{ backgroundColor: accentColor + '15' }}>
-                <p className="text-2xl font-black" style={{ color: accentColor }}>{clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
+                <p className="text-2xl font-black" style={{ color: accentColor }}>{clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
                 <p className="text-xs text-gray-400">visits</p>
               </div>
             </div>
@@ -523,7 +529,8 @@ function StaffPanel() {
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Milestones</p>
                 <div className="space-y-1.5">
                   {clientInfo.milestones.map(function(m, idx) {
-                    var reached = clientInfo.currentVisits >= m.position;
+                    var progressForMilestones = clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits;
+                    var reached = progressForMilestones >= m.position;
                     // Check if this milestone has a claimed coupon
                     var milestoneCoupon = null;
                     for (var ci = 0; ci < clientCoupons.length; ci++) {
@@ -548,7 +555,7 @@ function StaffPanel() {
                         </div>
                         <div className="flex items-center gap-1.5">
                           {!reached && (
-                            <span className="text-xs text-gray-300">{m.position - clientInfo.currentVisits} away</span>
+                            <span className="text-xs text-gray-300">{m.position - progressForMilestones} away</span>
                           )}
                           {reached && isClaimed && (
                             <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500">✓ Claimed</span>
