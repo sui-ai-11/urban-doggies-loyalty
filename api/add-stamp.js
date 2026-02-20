@@ -118,20 +118,21 @@ export default async function handler(req, res) {
         couponID,
         businessID,
         client.clientID,
+        client.name || '',
         'reward',
         rewardText,
-        new Date().toISOString(), // issuedAt
-        '', // expiryDate
-        'FALSE', // isRedeemed
-        '', // redeemedAt
-        '', // redeemedBy
+        new Date().toISOString().split('T')[0],
+        '',
+        'FALSE',
+        '',
+        '',
         `Earned after ${totalVisits} visits`,
         qrCode
       ]];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SHEET_ID,
-        range: 'Coupons!A:L',
+        range: 'Coupons!A:M',
         valueInputOption: 'RAW',
         resource: { values: couponValues },
       });
