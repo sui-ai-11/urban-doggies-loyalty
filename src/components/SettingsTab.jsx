@@ -148,6 +148,9 @@ function SettingsTab() {
 
   var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
   var borderColor = (businessInfo && businessInfo.borderColor) || '#1a1a2e';
+  function isLightC(hex) { var c = (hex || '#000').replace('#',''); return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6; }
+  var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
+  var panelAccent = isLightC(accentColor) ? '#1a1a2e' : accentColor;
 
   var sections = [
     { key: 'rewards', label: '⭐ Date Stamp' },
@@ -196,12 +199,12 @@ function SettingsTab() {
       {/* ═══ REWARDS SECTION ═══ */}
       {activeSection === 'rewards' && (
         <div>
-          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Stamp Card Settings</h3>
+          <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Stamp Card Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Required Visits for Reward', 'stampsRequired', '10', 'number')}
             {renderInput('Progress Message', 'progressText', 'Track your visits and earn rewards!')}
 
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Stamp Icon (filled)</h4>
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Stamp Icon (filled)</h4>
             <div className="mb-4">
               <div className="flex gap-2 flex-wrap">
                 {['✓', '⭐', '🐾', '❤️', '✨', '🔥', '💎', '🌸', '🦴', '🎵', '☕', '🍕'].map(function(emoji) {
@@ -219,7 +222,7 @@ function SettingsTab() {
               </div>
             </div>
 
-            <h4 className="font-bold text-sm mt-6 mb-4" style={{ color: borderColor }}>
+            <h4 className="font-bold text-sm mt-6 mb-4" style={{ color: panelText }}>
               Reward Milestones — place rewards on any stamp (1 to {fields.stampsRequired || 10})
             </h4>
             <p className="text-xs text-gray-400 mb-4">Add milestones to any stamp position. Customers see the icon and reward when they reach that stamp.</p>
@@ -230,7 +233,7 @@ function SettingsTab() {
               updateField('milestones', ms);
             }}
               className="mb-4 px-4 py-2 rounded-xl text-sm font-bold transition"
-              style={{ backgroundColor: accentColor + '15', color: accentColor, border: '1px dashed ' + accentColor }}>
+              style={{ backgroundColor: accentColor + '15', color: panelAccent, border: '1px dashed ' + accentColor }}>
               + Add Milestone
             </button>
 
@@ -239,7 +242,7 @@ function SettingsTab() {
               return (
                 <div key={idx} className="rounded-xl p-4 mb-3" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h5 className="font-bold text-sm" style={{ color: borderColor }}>Milestone {idx + 1}</h5>
+                    <h5 className="font-bold text-sm" style={{ color: panelText }}>Milestone {idx + 1}</h5>
                     <button onClick={function() {
                       var ms2 = (fields.milestones || []).slice();
                       ms2.splice(idx, 1);
@@ -358,13 +361,13 @@ function SettingsTab() {
       {/* ═══ BUSINESS SECTION ═══ */}
       {activeSection === 'business' && (
         <div>
-          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Business Profile</h3>
+          <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Business Profile</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Business Name', 'businessName', 'Urban Doggies')}
             {renderInput('Tagline', 'tagline', 'Digital Loyalty System')}
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Card Navigation Labels</h4>
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Card Navigation Labels</h4>
             {renderInput('Tab 1 Label', 'navButton1Text', 'Date Stamp')}
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
@@ -377,7 +380,7 @@ function SettingsTab() {
           </div>
 
           {/* Registration QR */}
-          <h3 className="text-lg font-bold mt-8 mb-4" style={{ color: borderColor }}>Customer Registration</h3>
+          <h3 className="text-lg font-bold mt-8 mb-4" style={{ color: panelText }}>Customer Registration</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
             <p className="text-gray-500 text-sm mb-4">Print this QR code so customers can self-register and get their loyalty card instantly.</p>
             <div className="inline-block bg-white rounded-2xl p-4 border-2 shadow-sm mb-4" style={{ borderColor: accentColor + '30' }}>
@@ -394,7 +397,7 @@ function SettingsTab() {
                 showToast('Link copied!');
               }}
                 className="px-4 py-2 rounded-xl text-sm font-bold transition"
-                style={{ backgroundColor: accentColor + '15', color: accentColor }}>
+                style={{ backgroundColor: accentColor + '15', color: panelAccent }}>
                 📋 Copy Link
               </button>
               <button onClick={function() {
@@ -420,22 +423,22 @@ function SettingsTab() {
       {/* ═══ CONTACT SECTION ═══ */}
       {activeSection === 'contact' && (
         <div>
-          <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Contact Page Settings</h3>
+          <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Contact Page Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Page Title', 'chatLabel', 'Get in Touch')}
             {renderInput('Subtitle', 'supportText', "We'd love to hear from you")}
 
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Chat Button</h4>
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Chat Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
             {renderInput('Button Label', 'navButton1Contact', 'Message us via Viber')}
             {renderInput('Chat Link', 'chatLink', 'viber://chat?number=%2B6312345678')}
 
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Call Button</h4>
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Call Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
             {renderInput('Button Label', 'callLabel', 'Call Us')}
             {renderInput('Phone Number', 'termsURL', '+63 2 1234 5678')}
 
-            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: borderColor }}>Feedback Button</h4>
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Feedback Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
             {renderInput('Button Label', 'feedbackLabel', 'Send Feedback')}
             {renderInput('Email Address', 'contactEmail', 'info@yourbusiness.com')}
