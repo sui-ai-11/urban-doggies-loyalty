@@ -118,7 +118,7 @@ function CouponsTab() {
               onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { clientID: e.target.value })); }}
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
               <option value="">All clients (global)</option>
-              {newCoupon.type === 'birthday' && newCoupon.birthdayMonth && (
+              {newCoupon.type.toLowerCase() === 'birthday' && newCoupon.birthdayMonth && (
                 <option value={'bday_' + newCoupon.birthdayMonth}>🎂 All {newCoupon.birthdayMonth} Celebrants ({clients.filter(function(c) { return (c.birthdayMonth || '').toLowerCase() === newCoupon.birthdayMonth.toLowerCase(); }).length})</option>
               )}
               {clients.map(function(c) {
@@ -128,17 +128,21 @@ function CouponsTab() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Type</label>
-            <select value={newCoupon.type}
+            <input type="text" value={newCoupon.type}
               onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { type: e.target.value, birthdayMonth: '' })); }}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
-              <option value="reward">Reward</option>
-              <option value="discount">Discount</option>
-              <option value="freebie">Freebie</option>
-              <option value="promo">Promo</option>
-              <option value="birthday">Birthday Promo</option>
-            </select>
+              placeholder="e.g. reward, discount, freebie, birthday"
+              list="coupon-types"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white" />
+            <datalist id="coupon-types">
+              <option value="reward" />
+              <option value="discount" />
+              <option value="freebie" />
+              <option value="promo" />
+              <option value="birthday" />
+              <option value="milestone" />
+            </datalist>
           </div>
-          {newCoupon.type === 'birthday' && (
+          {newCoupon.type.toLowerCase() === 'birthday' && (
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
               <select value={newCoupon.birthdayMonth}
