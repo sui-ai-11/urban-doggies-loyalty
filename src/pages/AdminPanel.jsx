@@ -452,8 +452,8 @@ function AdminPanel() {
                                 <span className="font-mono font-bold text-sm" style={{ color: accentColor }}>{client.token}</span>
                               </td>
                               <td className="px-5 py-4">
-                                <span className={`font-bold text-sm ${client.visits >= client.requiredVisits ? 'text-green-600' : 'text-gray-700'}`}>
-                                  {client.visits}/{client.requiredVisits}
+                                <span className="font-bold text-sm" style={{ color: accentColor }}>
+                                  {client.visits}
                                 </span>
                               </td>
                               <td className="px-5 py-4">
