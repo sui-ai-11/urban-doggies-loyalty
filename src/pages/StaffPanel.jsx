@@ -57,6 +57,14 @@ function StaffPanel() {
   var heroText = bgIsDark ? '#ffffff' : borderColor;
   var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
 
+  // Smart text colors for glass card panels (white/light backgrounds)
+  function isLightColor(hex) {
+    var c = (hex || '#000').replace('#','');
+    return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
+  }
+  var panelText = isLightColor(borderColor) ? '#1a1a2e' : borderColor;
+  var panelAccent = isLightColor(accentColor) ? '#1a1a2e' : accentColor;
+
   // QR Scanner
   function startScanner() {
     setShowScanner(true);
@@ -192,11 +200,16 @@ function StaffPanel() {
           fetch('/api/client-dashboard?token=' + c.token)
             .then(function(r2) { return r2.ok ? r2.json() : null; })
             .then(function(full) {
-              setClientInfo({
-                name: c.name, token: c.token, breed: c.breed, mobile: c.mobile,
-                currentVisits: full ? (full.loyalty && full.loyalty.totalVisits) || 0 : 0,
-                requiredVisits: full ? (full.business && full.business.requiredVisits) || 10 : 10
-              });
+              if (full && full.client) {
+                setClientInfo(buildClientInfo(full));
+                setClientCoupons(full.coupons || []);
+              } else {
+                setClientInfo({
+                  name: c.name, token: c.token,
+                  currentVisits: 0, currentProgress: 0, requiredVisits: 10, milestones: [],
+                });
+                setClientCoupons([]);
+              }
               setMultipleResults(null);
               setMessage('Customer found! Review info and confirm to add stamp.');
             });
@@ -348,7 +361,7 @@ function StaffPanel() {
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
             <div className="glass-card rounded-3xl p-6 max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold" style={{ color: borderColor }}>Scan QR Code</h2>
+                <h2 className="text-2xl font-bold" style={{ color: panelText }}>Scan QR Code</h2>
                 <button onClick={stopScanner} className="p-2 hover:bg-gray-100 rounded-xl transition">
                   <span style={{ fontSize: '24px', color: '#666' }}>✕</span>
                 </button>
@@ -376,16 +389,16 @@ function StaffPanel() {
             }} className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span>🔔</span>
-                <span className="font-bold text-sm" style={{ color: borderColor }}>{pendingClients.length} Pending Registration{pendingClients.length > 1 ? 's' : ''}</span>
+                <span className="font-bold text-sm" style={{ color: panelText }}>{pendingClients.length} Pending Registration{pendingClients.length > 1 ? 's' : ''}</span>
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: accentColor + '15', color: accentColor }}>Tap to review</span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: accentColor + '15', color: panelAccent }}>Tap to review</span>
             </button>
             <div id="pending-list" style={{ display: 'none' }} className="mt-3 space-y-2">
               {pendingClients.map(function(client) {
                 return (
                   <div key={client.rowIndex} className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="font-bold text-sm" style={{ color: borderColor }}>{client.name}</p>
+                      <p className="font-bold text-sm" style={{ color: panelText }}>{client.name}</p>
                       <p className="text-xs text-gray-400">
                         {client.mobile || 'No mobile'} · {client.token}
                         {client.customField ? ' · ' + client.customField : ''}
@@ -446,7 +459,7 @@ function StaffPanel() {
                 style={{ backgroundColor: accentColor }}>
                 <span style={{ fontSize: '36px' }}>🔍</span>
               </div>
-              <h2 className="text-2xl font-bold tracking-tight" style={{ color: borderColor }}>Customer Check-In</h2>
+              <h2 className="text-2xl font-bold tracking-tight" style={{ color: panelText }}>Customer Check-In</h2>
             </div>
 
             <button type="button" onClick={startScanner}
@@ -482,7 +495,7 @@ function StaffPanel() {
         {multipleResults && multipleResults.length > 0 && (
           <div className="glass-card rounded-3xl shadow-xl p-8 animate-slide-up">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold" style={{ color: borderColor }}>Select Customer</h2>
+              <h2 className="text-2xl font-bold" style={{ color: panelText }}>Select Customer</h2>
               <p className="text-gray-500 mt-2 text-sm">Found {multipleResults.length} customers. Click to select:</p>
             </div>
             <div className="space-y-3 mb-6">
@@ -493,8 +506,8 @@ function StaffPanel() {
                     style={{ border: '2px solid ' + accentColor + '40', display: 'block', cursor: 'pointer' }}>
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-bold text-lg" style={{ color: borderColor }}>{customer.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">Token: <span className="font-mono font-bold" style={{ color: accentColor }}>{customer.token}</span></p>
+                        <p className="font-bold text-lg" style={{ color: panelText }}>{customer.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">Token: <span className="font-mono font-bold" style={{ color: panelAccent }}>{customer.token}</span></p>
                         {customer.email && <p className="text-xs text-gray-500">Email: {customer.email}</p>}
                       </div>
                       <span style={{ color: accentColor, fontSize: '20px' }}>›</span>
@@ -514,11 +527,11 @@ function StaffPanel() {
             {/* Header: Name + Visits */}
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-xl font-bold" style={{ color: borderColor }}>{clientInfo.name}</h2>
+                <h2 className="text-xl font-bold" style={{ color: panelText }}>{clientInfo.name}</h2>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{clientInfo.token}</p>
               </div>
               <div className="text-center px-4 py-2 rounded-2xl" style={{ backgroundColor: accentColor + '15' }}>
-                <p className="text-2xl font-black" style={{ color: accentColor }}>{clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
+                <p className="text-2xl font-black" style={{ color: panelAccent }}>{clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
                 <p className="text-xs text-gray-400">visits</p>
               </div>
             </div>
@@ -673,7 +686,7 @@ function StaffPanel() {
                     return (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100">
                         <div className="flex-1 min-w-0 mr-2">
-                          <p className="font-semibold text-sm truncate" style={{ color: borderColor }}>{coupon.text || 'Coupon'}</p>
+                          <p className="font-semibold text-sm truncate" style={{ color: panelText }}>{coupon.text || 'Coupon'}</p>
                           <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · ' + coupon.expiryDate : ''}</p>
                         </div>
                         <button onClick={function() {
