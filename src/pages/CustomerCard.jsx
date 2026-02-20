@@ -403,15 +403,16 @@ function CustomerCard() {
           {activeView === 'contact' && (
             <div className="animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>Get in Touch</h2>
+                <h2 className="text-2xl font-bold mb-1" style={{ color: headingColor }}>{business.chatLabel || 'Get in Touch'}</h2>
                 <p className="text-sm font-light" style={{ color: textColor }}>
                   {business.supportText || "We'd love to hear from you"}
                 </p>
               </div>
 
               <div className="space-y-3">
-                {/* Message via Viber */}
-                <a href="viber://chat?number=%2B638228234849"
+                {/* Chat Button */}
+                {business.chatLink && (
+                <a href={business.chatLink}
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
@@ -419,13 +420,14 @@ function CustomerCard() {
                     <MessageCircle size={24} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Message via Viber</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>+63 822 823 4849</p>
+                    <p className="font-bold" style={{ color: headingColor }}>{business.navButton1Contact || 'Message Us'}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>Tap to chat</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
+                )}
 
-                {/* Call Us */}
+                {/* Call Button */}
                 {business.termsURL && (
                 <a href={'tel:' + business.termsURL.replace(/\s/g, '')}
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
@@ -435,14 +437,14 @@ function CustomerCard() {
                     <Phone size={24} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Call Us</p>
+                    <p className="font-bold" style={{ color: headingColor }}>{business.callLabel || 'Call Us'}</p>
                     <p className="text-xs" style={{ color: subtextColor }}>{business.termsURL}</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
                 )}
 
-                {/* Send Feedback */}
+                {/* Feedback Button */}
                 {business.contactEmail && (
                 <a href={'mailto:' + business.contactEmail + '?subject=Feedback from ' + (client.name || 'Customer')}
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
@@ -452,7 +454,7 @@ function CustomerCard() {
                     <span style={{ fontSize: '20px' }}>📝</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold" style={{ color: headingColor }}>Send Feedback</p>
+                    <p className="font-bold" style={{ color: headingColor }}>{business.feedbackLabel || 'Send Feedback'}</p>
                     <p className="text-xs" style={{ color: subtextColor }}>{business.contactEmail}</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
