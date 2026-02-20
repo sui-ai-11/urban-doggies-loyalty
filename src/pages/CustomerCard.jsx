@@ -44,7 +44,7 @@ function CustomerCard() {
       pendingRef.current = false;
       return;
     }
-    if (pendingRef.current) return; // already polling
+    if (pendingRef.current) return;
     pendingRef.current = true;
     const interval = setInterval(async () => {
       try {
@@ -61,6 +61,21 @@ function CustomerCard() {
     }, 5000);
     return () => { clearInterval(interval); pendingRef.current = false; };
   }, [clientData && clientData.status, token]);
+
+  // Auto-refresh data every 10 seconds for live coupon/stamp updates
+  useEffect(() => {
+    if (!clientData || !token || clientData.status === 'pending') return;
+    const refreshInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/client-dashboard?token=${token}`);
+        if (response.ok) {
+          const data = await response.json();
+          setClientData(data);
+        }
+      } catch (e) {}
+    }, 10000);
+    return () => clearInterval(refreshInterval);
+  }, [token, clientData && clientData.status]);
 
   if (loading) {
     return (
@@ -238,7 +253,7 @@ function CustomerCard() {
                 <p className="text-xs mt-2 text-center" style={{ color: subtextColor }}>
                   {loyalty?.nextRewardIn > 0
                     ? `${loyalty.nextRewardIn} more visit${loyalty.nextRewardIn > 1 ? 's' : ''} until your next reward!`
-                    : '🎉 You earned a reward!'}
+                    : '🎉 Reward earned! Show this to staff to claim.'}
                 </p>
               </div>
 
@@ -293,7 +308,7 @@ function CustomerCard() {
                             <p className="text-xs" style={{ color: subtextColor }}>{m.description || `Visit ${m.position} reward`}</p>
                           </div>
                           {currentStamps >= m.position && (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full text-white shrink-0" style={{ backgroundColor: accentColor }}>Earned!</span>
+                            <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ backgroundColor: accentColor + '20', color: accentColor }}>✓ Reached</span>
                           )}
                         </div>
                       ))}
@@ -319,25 +334,40 @@ function CustomerCard() {
 
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
-                  {coupons.map((coupon, i) => (
+                  {coupons.map((coupon, i) => {
+                    var isClaimed = coupon.redeemed === 'TRUE';
+                    var isExpired = !isClaimed && coupon.expiryDate && new Date(coupon.expiryDate) < new Date();
+                    return (
                     <div key={i} className="rounded-2xl p-4 border-2 shadow-sm"
-                      style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
+                      style={{
+                        backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
+                        borderColor: isClaimed ? '#d1d5db' : `${accentColor}30`,
+                        opacity: isClaimed ? 0.6 : 1,
+                      }}>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
-                          style={{ backgroundColor: accentColor }}>
+                          style={{ backgroundColor: isClaimed ? '#9ca3af' : accentColor }}>
                           <Gift size={24} className="text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold" style={{ color: headingColor }}>{coupon.text || 'Reward'}</p>
+                          <p className="font-bold" style={{ color: isClaimed ? '#9ca3af' : headingColor }}>{coupon.text || 'Reward'}</p>
                           <p className="text-xs" style={{ color: subtextColor }}>
                             {coupon.type && <span className="capitalize">{coupon.type}</span>}
                             {coupon.expiryDate && <span> · Expires {coupon.expiryDate}</span>}
                           </p>
-                          {coupon.notes && <p className="text-xs mt-1" style={{ color: accentColor }}>{coupon.notes}</p>}
+                          {!isClaimed && coupon.notes && <p className="text-xs mt-1" style={{ color: accentColor }}>{coupon.notes}</p>}
                         </div>
+                        {isClaimed ? (
+                          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 shrink-0">✓ Claimed</span>
+                        ) : isExpired ? (
+                          <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-50 text-red-500 shrink-0">Expired</span>
+                        ) : (
+                          <span className="text-xs font-bold px-3 py-1.5 rounded-full shrink-0 text-white" style={{ backgroundColor: accentColor }}>Active</span>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12">
