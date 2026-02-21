@@ -305,7 +305,7 @@ function StaffPanel() {
 
   function voidLastStamp() {
     if (!clientInfo) return;
-    if (!confirm('Void last stamp for ' + clientInfo.name + '? This action will be logged.')) return;
+    if (!confirm('Void last stamp for ' + clientInfo.name + '? This will also revoke any milestone rewards above the new stamp count.')) return;
     setLoading(true);
     setMessage('');
     fetch('/api/void-stamp', {
@@ -316,8 +316,26 @@ function StaffPanel() {
       .then(function(r) { return r.json(); })
       .then(function(result) {
         if (result.error) throw new Error(result.error);
-        setMessage('⚠️ Last stamp voided for ' + clientInfo.name + '. Now has ' + result.remainingVisits + ' visits.');
-        setTimeout(function() { setSearchInput(''); setClientInfo(null); setMessage(''); }, 4000);
+        setMessage('⚠️ Stamp voided for ' + clientInfo.name + '. Now has ' + result.remainingVisits + ' visits.');
+        // Update visits immediately
+        var newProgress = result.remainingVisits % clientInfo.requiredVisits;
+        var newCycle = Math.floor(result.remainingVisits / clientInfo.requiredVisits) + 1;
+        setClientInfo(Object.assign({}, clientInfo, {
+          currentVisits: result.remainingVisits,
+          currentProgress: newProgress,
+          cardCycle: newCycle,
+        }));
+        // Reload full data after a short delay (let Sheets propagate)
+        setTimeout(function() {
+          fetch('/api/client-dashboard?token=' + clientInfo.token)
+            .then(function(r2) { return r2.json(); })
+            .then(function(fullResult) {
+              if (fullResult.client) {
+                setClientInfo(buildClientInfo(fullResult));
+                setClientCoupons(fullResult.coupons || []);
+              }
+            });
+        }, 1000);
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
@@ -598,11 +616,11 @@ function StaffPanel() {
                     var progressForMilestones = clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits;
                     var reached = progressForMilestones >= m.position;
                     var cycle = clientInfo.cardCycle || 1;
-                    // Check if this milestone has a coupon for THIS cycle
+                    // Check if this milestone has a coupon for THIS cycle (exclude VOIDED)
                     var milestoneCoupon = null;
                     for (var ci = 0; ci < clientCoupons.length; ci++) {
+                      if (clientCoupons[ci].redeemed === 'VOIDED') continue;
                       var cn = clientCoupons[ci].notes || '';
-                      // Match by cycle-specific tag first, then legacy
                       if (cn.indexOf('milestone_' + m.position + '_cycle_' + cycle) > -1) {
                         milestoneCoupon = clientCoupons[ci];
                         break;
@@ -611,6 +629,7 @@ function StaffPanel() {
                     // Legacy fallback: only for cycle 1 if no cycle tag found
                     if (!milestoneCoupon && cycle === 1) {
                       for (var ci2 = 0; ci2 < clientCoupons.length; ci2++) {
+                        if (clientCoupons[ci2].redeemed === 'VOIDED') continue;
                         var cn2 = clientCoupons[ci2].notes || '';
                         if ((cn2.indexOf('Milestone: ' + m.label) > -1 || cn2.indexOf('milestone_' + m.position) > -1) && cn2.indexOf('_cycle_') === -1) {
                           milestoneCoupon = clientCoupons[ci2];
@@ -740,13 +759,13 @@ function StaffPanel() {
             </div>
 
             {/* Active Coupons */}
-            {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length > 0 && (
+            {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).length > 0 && (
               <div className="mb-4">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).length})
+                  Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).length})
                 </p>
                 <div className="space-y-2">
-                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE'; }).map(function(coupon, idx) {
+                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).map(function(coupon, idx) {
                     return (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100">
                         <div className="flex-1 min-w-0 mr-2">
