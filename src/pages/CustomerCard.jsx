@@ -331,8 +331,9 @@ function CustomerCard() {
                         // Check if this milestone has been claimed for THIS cycle
                         let milestoneClaimed = false;
                         if (coupons) {
-                          // First check cycle-specific tag
+                          // First check cycle-specific tag (exclude VOIDED)
                           for (let ci = 0; ci < coupons.length; ci++) {
+                            if (coupons[ci].redeemed === 'VOIDED') continue;
                             const cn = coupons[ci].notes || '';
                             if (cn.indexOf('milestone_' + m.position + '_cycle_' + cardCycle) > -1 && coupons[ci].redeemed === 'TRUE') {
                               milestoneClaimed = true;
@@ -342,6 +343,7 @@ function CustomerCard() {
                           // Legacy fallback for cycle 1
                           if (!milestoneClaimed && cardCycle === 1) {
                             for (let ci2 = 0; ci2 < coupons.length; ci2++) {
+                              if (coupons[ci2].redeemed === 'VOIDED') continue;
                               const cn2 = coupons[ci2].notes || '';
                               if ((cn2.indexOf('Milestone: ' + m.label) > -1 || cn2.indexOf('milestone_' + m.position) > -1) && cn2.indexOf('_cycle_') === -1 && coupons[ci2].redeemed === 'TRUE') {
                                 milestoneClaimed = true;
@@ -393,7 +395,7 @@ function CustomerCard() {
 
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
-                  {coupons.slice().sort((a, b) => {
+                  {coupons.filter(c => c.redeemed !== 'VOIDED').slice().sort((a, b) => {
                     var aActive = a.redeemed !== 'TRUE' && !(a.expiryDate && new Date(a.expiryDate) < new Date()) ? 0 : 1;
                     var bActive = b.redeemed !== 'TRUE' && !(b.expiryDate && new Date(b.expiryDate) < new Date()) ? 0 : 1;
                     return aActive - bActive;
