@@ -189,6 +189,8 @@ function AdminPanel() {
   const panelText = isLight(borderColor) ? '#1a1a2e' : borderColor;
   // For accent on white panels: use accentColor if dark enough, otherwise darken it
   const panelAccent = isLight(accentColor) ? '#1a1a2e' : accentColor;
+  const btnOnAccent = isLight(accentColor) ? '#1a1a2e' : '#ffffff';
+  const btnOnBorder = isLight(borderColor) ? '#1a1a2e' : '#ffffff';
 
   // Don't render until we have business colors
   if (!businessInfo) {
@@ -240,8 +242,8 @@ function AdminPanel() {
                     style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
                     onError={function(e) { e.target.style.display = 'none'; }} />
                 ) : (
-                  <div className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
-                    style={{ backgroundColor: accentColor }}>
+                  <div className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold shadow-lg"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                     {businessInfo && businessInfo.businessName ? businessInfo.businessName.charAt(0) : 'B'}
                   </div>
                 )}
@@ -285,8 +287,8 @@ function AdminPanel() {
           />
           {pinError && <p className="text-red-500 text-sm font-semibold mb-4">{pinError}</p>}
           <button onClick={checkPin}
-            className="w-full text-white py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg"
-            style={{ backgroundColor: accentColor }}>
+            className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg"
+            style={{ backgroundColor: accentColor, color: btnOnAccent }}>
             Unlock
           </button>
         </div>
@@ -399,8 +401,8 @@ function AdminPanel() {
                     All Clients ({filteredClients.length})
                   </h2>
                   <button onClick={() => setActiveTab('add')}
-                    className="text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                    style={{ backgroundColor: accentColor }}>
+                    className="px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                     <UserPlus size={18} /> Add New
                   </button>
                 </div>
@@ -530,8 +532,8 @@ function AdminPanel() {
                     </select>
                   </div>
                   <button type="submit" disabled={loading}
-                    className="w-full text-white py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: accentColor }}>
+                    className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                     {loading ? (
                       <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> Adding…</>
                     ) : (
