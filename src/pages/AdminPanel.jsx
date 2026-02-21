@@ -91,7 +91,7 @@ function AdminPanel() {
   const [sortBy, setSortBy] = useState('name');
 
   const [newClient, setNewClient] = useState({
-    name: '', mobile: '', email: '', breed: '', birthdayMonth: ''
+    firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: ''
   });
 
   // Load business info for dynamic colors
@@ -151,17 +151,20 @@ function AdminPanel() {
 
   async function handleAddClient(e) {
     e.preventDefault();
-    if (!newClient.name || !newClient.mobile) { setMessage('⚠️ Name and mobile are required'); return; }
+    if (!newClient.firstName.trim() || !newClient.lastName.trim()) { setMessage('⚠️ First name and last name are required'); return; }
+    if (!newClient.mobile.trim()) { setMessage('⚠️ Mobile number is required'); return; }
+    if (!newClient.birthdayMonth) { setMessage('⚠️ Birthday month is required'); return; }
+    var fullName = newClient.firstName.trim() + ' ' + newClient.lastName.trim();
     try {
       setLoading(true); setMessage('');
       const response = await fetch('/api/add-client', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessID: 'BIZ_001', clientName: newClient.name, mobile: newClient.mobile, email: newClient.email || '', breed: newClient.breed || '', birthdayMonth: newClient.birthdayMonth || '' })
+        body: JSON.stringify({ businessID: 'BIZ_001', clientName: fullName, mobile: newClient.mobile.trim(), email: newClient.email || '', birthday: newClient.birthday || '', birthdayMonth: newClient.birthdayMonth || '' })
       });
       const result = await response.json();
       if (response.ok) {
         setMessage(`✅ Client added! Token: ${result.token}`);
-        setNewClient({ name: '', mobile: '', email: '', breed: '', birthdayMonth: '' });
+        setNewClient({ firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: '' });
         loadAllClients();
       } else throw new Error(result.error || 'Failed to add client');
     } catch (error) { setMessage(`❌ ${error.message}`); }
@@ -505,8 +508,23 @@ function AdminPanel() {
               <div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Add New Client</h2>
                 <form onSubmit={handleAddClient} className="max-w-2xl space-y-5">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">First Name *</label>
+                      <input type="text" value={newClient.firstName}
+                        onChange={(e) => setNewClient({ ...newClient, firstName: e.target.value })}
+                        required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
+                        style={{ borderColor: `${accentColor}40` }} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Last Name *</label>
+                      <input type="text" value={newClient.lastName}
+                        onChange={(e) => setNewClient({ ...newClient, lastName: e.target.value })}
+                        required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
+                        style={{ borderColor: `${accentColor}40` }} />
+                    </div>
+                  </div>
                   {[
-                    { label: 'Customer Name *', key: 'name', type: 'text', required: true },
                     { label: 'Mobile Number *', key: 'mobile', type: 'tel', required: true },
                     { label: 'Email', key: 'email', type: 'email' },
                   ].map(({ label, key, type, required, placeholder }) => (
@@ -519,17 +537,34 @@ function AdminPanel() {
                         style={{ borderColor: `${accentColor}40` }} />
                     </div>
                   ))}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
-                    <select value={newClient.birthdayMonth}
-                      onChange={(e) => setNewClient({ ...newClient, birthdayMonth: e.target.value })}
-                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                      style={{ borderColor: `${accentColor}40` }}>
-                      <option value="">Select month…</option>
-                      {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
-                        <option key={m} value={m}>{m}</option>
-                      )}
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
+                      <input type="date" value={newClient.birthday}
+                        onChange={(e) => {
+                          var val = e.target.value;
+                          var month = '';
+                          if (val) {
+                            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                            month = months[parseInt(val.split('-')[1]) - 1] || '';
+                          }
+                          setNewClient({ ...newClient, birthday: val, birthdayMonth: month });
+                        }}
+                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
+                        style={{ borderColor: `${accentColor}40` }} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month *</label>
+                      <select value={newClient.birthdayMonth}
+                        onChange={(e) => setNewClient({ ...newClient, birthdayMonth: e.target.value })}
+                        required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                        style={{ borderColor: `${accentColor}40` }}>
+                        <option value="">Select month…</option>
+                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
+                          <option key={m} value={m}>{m}</option>
+                        )}
+                      </select>
+                    </div>
                   </div>
                   <button type="submit" disabled={loading}
                     className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
