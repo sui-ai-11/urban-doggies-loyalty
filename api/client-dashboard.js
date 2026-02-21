@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     // Fetch all data
     const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:L' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AH' }),
+      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AI' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:G' }),
       sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:M' }),
     ]);
@@ -124,6 +124,7 @@ export default async function handler(req, res) {
       navButton1Contact: businessRow[31] || '',
       callLabel: businessRow[32] || '',
       feedbackLabel: businessRow[33] || '',
+      adminPin: businessRow[34] || '1234',
     };
 
     console.log('✅ Business found:', business.name, '| milestonesJson length:', (business.milestonesJson || '').length, '| clientID:', client.clientID, '| token:', client.token);
