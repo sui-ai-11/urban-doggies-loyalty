@@ -34,6 +34,7 @@ function HomePage() {
   const accentColor = businessInfo?.accentColor || '#4a4a5a';
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
   const borderColor = businessInfo?.borderColor || '#2a2a3a';
+  const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
 
   // Dynamic text colors based on background brightness
   const bgIsDark = isDark(bgColor);
@@ -81,8 +82,8 @@ function HomePage() {
                 />
               ) : (
                 <div 
-                  className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
-                  style={{ backgroundColor: accentColor }}
+                  className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold shadow-lg"
+                  style={{ backgroundColor: accentColor, color: btnOnAccent }}
                 >
                   {businessInfo?.businessName?.charAt(0) || 'B'}
                 </div>
