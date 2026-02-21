@@ -88,12 +88,12 @@ export default async function handler(req, res) {
     // Count total visits
     const visitsRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'VisitLog!A2:F',
+      range: 'VisitLog!A2:G',
     });
 
-    const totalVisits = visitsRes.data.values?.filter(row => 
-      row[1] === client.clientID && row[2] === businessID
-    ).length || 1;
+    const totalVisits = (visitsRes.data.values || []).filter(row => 
+      row[1] === client.clientID && (row[5] || '').indexOf('VOIDED') === -1
+    ).length;
 
     // Check if reward should be issued
     const businessesRes = await sheets.spreadsheets.values.get({
@@ -101,7 +101,10 @@ export default async function handler(req, res) {
       range: 'Businesses!A2:W',
     });
 
-    const businessRow = businessesRes.data.values?.find(row => row[0] === businessID);
+    let businessRow = businessesRes.data.values?.find(row => row[0] === businessID);
+    if (!businessRow && businessesRes.data.values?.length > 0) {
+      businessRow = businessesRes.data.values[0];
+    }
     const requiredVisits = parseInt(businessRow?.[5] || '10');
     const rewardText = businessRow?.[6] || 'Free reward!';
 
