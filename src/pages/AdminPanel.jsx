@@ -278,7 +278,7 @@ function AdminPanel() {
             onChange={(e) => { setPinInput(e.target.value); setPinError(''); }}
             onKeyDown={(e) => { if (e.key === 'Enter') checkPin(); }}
             placeholder="Enter PIN"
-            className="w-full px-6 py-4 text-2xl text-center tracking-widest rounded-2xl border-3 focus:outline-none mb-4"
+            className="w-full px-6 py-3.5 text-base text-center tracking-[0.3em] rounded-2xl border-3 focus:outline-none mb-4 font-mono"
             style={{ borderColor: pinError ? '#ef4444' : accentColor, borderWidth: '3px' }}
             autoFocus
             inputMode="numeric"
