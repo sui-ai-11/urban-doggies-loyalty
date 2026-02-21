@@ -140,6 +140,7 @@ function CustomerCard() {
   const loyalty = clientData.loyalty || {};
   const coupons = clientData.coupons || [];
   const accentColor = business.accentColor || '#4a4a5a';
+  const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   const borderColor = business.borderColor || '#1F3A93';
   const bgColor = business.backgroundColor || '#4a4a5a';
   const cardBg = business.cardBackground || '#FFFFFF';
@@ -412,7 +413,7 @@ function CustomerCard() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
                           style={{ backgroundColor: isClaimed ? '#9ca3af' : accentColor }}>
-                          <Gift size={24} className="text-white" />
+                          <Gift size={24} style={{ color: isClaimed ? '#ffffff' : btnOnAccent }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold" style={{ color: isClaimed ? '#9ca3af' : headingColor }}>{coupon.text || 'Reward'}</p>
@@ -427,7 +428,7 @@ function CustomerCard() {
                         ) : isExpired ? (
                           <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-50 text-red-500 shrink-0">Expired</span>
                         ) : (
-                          <span className="text-xs font-bold px-3 py-1.5 rounded-full shrink-0 text-white" style={{ backgroundColor: accentColor }}>Active</span>
+                          <span className="text-xs font-bold px-3 py-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor, color: btnOnAccent }}>Active</span>
                         )}
                       </div>
                     </div>
@@ -479,7 +480,7 @@ function CustomerCard() {
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
                     style={{ backgroundColor: accentColor }}>
-                    <Phone size={24} className="text-white" />
+                    <Phone size={24} style={{ color: btnOnAccent }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>{business.callLabel || 'Call Us'}</p>
