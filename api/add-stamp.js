@@ -106,12 +106,12 @@ export default async function handler(req, res) {
       businessRow = businessesRes.data.values[0];
     }
     const requiredVisits = parseInt(businessRow?.[5] || '10');
-    const rewardText = businessRow?.[6] || 'Free reward!';
+    const rewardText = businessRow?.[6] || '';
 
     let rewardEarned = false;
     let couponID = null;
 
-    if (totalVisits % requiredVisits === 0) {
+    if (totalVisits % requiredVisits === 0 && rewardText.trim()) {
       // Issue reward!
       rewardEarned = true;
       couponID = generateID('CPN_');
