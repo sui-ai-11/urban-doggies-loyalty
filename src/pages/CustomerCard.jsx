@@ -152,6 +152,7 @@ function CustomerCard() {
 
   const totalStamps = loyalty?.requiredVisits || business.stampsRequired || 10;
   const currentStamps = loyalty?.currentProgress || 0;
+  const cardCycle = Math.floor((loyalty?.totalVisits || 0) / totalStamps) + 1;
   const totalVisits = loyalty?.totalVisits || 0;
 
   // Nav buttons from business settings
@@ -261,7 +262,6 @@ function CustomerCard() {
               {(() => {
                 // Parse milestones — support tiered format
                 let milestones = [];
-                let cardCycle = 1;
                 try {
                   let parsed = JSON.parse(business.milestonesJson || '[]');
                   if (Array.isArray(parsed)) {
@@ -269,8 +269,6 @@ function CustomerCard() {
                     milestones = parsed;
                   } else if (typeof parsed === 'object') {
                     // Tiered format
-                    let completedCards = Math.floor((loyalty?.totalVisits || 0) / totalStamps);
-                    cardCycle = completedCards + 1;
                     let tierKeys = Object.keys(parsed).filter(k => !k.includes('_')).sort((a,b) => parseInt(a)-parseInt(b));
                     
                     // Exact match
