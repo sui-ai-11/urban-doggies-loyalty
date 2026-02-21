@@ -64,6 +64,9 @@ function StaffPanel() {
   }
   var panelText = isLightColor(borderColor) ? '#1a1a2e' : borderColor;
   var panelAccent = isLightColor(accentColor) ? '#1a1a2e' : accentColor;
+  // Smart button text: dark text on light bg, white text on dark bg
+  var btnOnAccent = isLightColor(accentColor) ? '#1a1a2e' : '#ffffff';
+  var btnOnBorder = isLightColor(borderColor) ? '#1a1a2e' : '#ffffff';
 
   // QR Scanner
   function startScanner() {
@@ -387,8 +390,8 @@ function StaffPanel() {
                   style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
                   onError={function(e) { e.target.style.display = 'none'; }} />
               ) : (
-                <div className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-lg"
-                  style={{ backgroundColor: accentColor }}>
+                <div className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg"
+                  style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                   {(businessInfo.businessName || 'B').charAt(0)}
                 </div>
               )}
@@ -535,7 +538,7 @@ function StaffPanel() {
 
             <button type="button" onClick={startScanner}
               className="w-full text-white py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-3 mb-4"
-              style={{ backgroundColor: borderColor }}>
+              style={{ backgroundColor: borderColor, color: btnOnBorder }}>
               📷 Scan QR Code
             </button>
 
@@ -554,8 +557,8 @@ function StaffPanel() {
                   placeholder="e.g. SMFECQJR or Juan" />
               </div>
               <button type="submit" disabled={loading || !searchInput.trim()}
-                className="w-full text-white py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-3"
-                style={{ backgroundColor: accentColor }}>
+                className="w-full py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-3"
+                style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                 {loading ? '⏳ Searching…' : '🔍 Search Customer'}
               </button>
             </form>
@@ -731,8 +734,8 @@ function StaffPanel() {
                                 })
                                 .catch(function(err) { setMessage('❌ Error: ' + err.message); });
                             }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
-                              style={{ backgroundColor: accentColor }}>
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold"
+                              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                               Give & Claim
                             </button>
                           )}
@@ -747,8 +750,8 @@ function StaffPanel() {
             {/* Primary Actions */}
             <div className="flex gap-2 mb-4">
               <button onClick={confirmAddStamp} disabled={loading}
-                className="flex-1 text-white py-3.5 rounded-2xl font-bold transition-all hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 text-sm"
-                style={{ backgroundColor: accentColor }}>
+                className="flex-1 py-3.5 rounded-2xl font-bold transition-all hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 text-sm"
+                style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                 {loading ? '⏳' : '✓ Add Stamp'}
               </button>
               <button onClick={voidLastStamp} disabled={loading || clientInfo.currentVisits === 0}
