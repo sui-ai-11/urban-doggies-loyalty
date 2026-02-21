@@ -15,6 +15,14 @@ function Navigation({ currentPage }) {
   const accentColor = businessInfo?.accentColor || '#4a4a5a';
   const borderColor = businessInfo?.borderColor || '#1a1a2e';
 
+  // Smart nav colors — if borderColor is light, use dark fallback
+  function isLightHex(hex) {
+    const c = (hex || '#000').replace('#','');
+    return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
+  }
+  const navBg = isLightHex(borderColor) ? '#1a1a2e' : borderColor;
+  const activeLinkColor = isLightHex(accentColor) ? '#1a1a2e' : '#ffffff';
+
   const links = [
     { key: 'home', href: '/#/', label: 'Home', icon: Home },
     { key: 'staff', href: '/#/staff', label: 'Loyalty Desk', icon: Users },
@@ -22,7 +30,7 @@ function Navigation({ currentPage }) {
   ];
 
   return (
-    <nav className="relative z-20" style={{ backgroundColor: borderColor }}>
+    <nav className="relative z-20" style={{ backgroundColor: navBg }}>
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           <a href="/#/" className="flex items-center gap-3">
@@ -45,7 +53,7 @@ function Navigation({ currentPage }) {
             {links.map(({ key, href, label, icon: Icon }) => (
               <a key={key} href={href}
                 className="px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 text-white"
-                style={{ backgroundColor: currentPage === key ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                style={{ backgroundColor: currentPage === key ? accentColor : 'rgba(255,255,255,0.1)', color: currentPage === key ? activeLinkColor : '#ffffff' }}>
                 <Icon className="w-4 h-4" /> {label}
               </a>
             ))}
@@ -63,7 +71,7 @@ function Navigation({ currentPage }) {
             {links.map(({ key, href, label, icon: Icon }) => (
               <a key={key} href={href}
                 className="px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-3 text-white"
-                style={{ backgroundColor: currentPage === key ? accentColor : 'rgba(255,255,255,0.1)' }}
+                style={{ backgroundColor: currentPage === key ? accentColor : 'rgba(255,255,255,0.1)', color: currentPage === key ? activeLinkColor : '#ffffff' }}
                 onClick={() => setMobileOpen(false)}>
                 <Icon className="w-5 h-5" /> {label}
               </a>
