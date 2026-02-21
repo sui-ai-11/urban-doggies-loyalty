@@ -82,6 +82,56 @@ export default async function handler(req, res) {
 
     console.log('⚠️ Stamp voided for', clientName, '| Remaining:', remainingVisits);
 
+    // Check if voiding drops below any milestone — void those milestone coupons
+    try {
+      // Get business milestones and required visits
+      var bizRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Businesses!A2:AH',
+      });
+      var bizRow = (bizRes.data.values || []).find(function(r) { return r[0] === businessID; });
+      var requiredVisits = parseInt(bizRow && bizRow[5]) || 10;
+      var currentProgress = remainingVisits % requiredVisits;
+      var currentCycle = Math.floor(remainingVisits / requiredVisits) + 1;
+
+      // Get all coupons
+      var couponsRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Coupons!A2:M',
+      });
+      var couponRows = couponsRes.data.values || [];
+
+      // Find milestone coupons for this client that are now above current progress
+      for (var ci = 0; ci < couponRows.length; ci++) {
+        var crow = couponRows[ci];
+        if (crow[2] !== clientID) continue;
+        var notes = crow[11] || '';
+        
+        // Check if this is a milestone coupon
+        var milestoneMatch = notes.match(/milestone_(\d+)(?:_cycle_(\d+))?/);
+        if (!milestoneMatch) continue;
+        
+        var msPosition = parseInt(milestoneMatch[1]);
+        var msCycle = milestoneMatch[2] ? parseInt(milestoneMatch[2]) : 1;
+        
+        // Void if: same cycle and position now above progress, OR cycle is now higher than current
+        if ((msCycle === currentCycle && msPosition > currentProgress) || msCycle > currentCycle) {
+          var couponSheetRow = ci + 2;
+          // Mark as voided: set IsRedeemed (col I) to VOIDED, RedeemedAt (col J), RedeemedBy (col K), Notes (col L)
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID,
+            range: 'Coupons!I' + couponSheetRow + ':L' + couponSheetRow,
+            valueInputOption: 'RAW',
+            resource: { values: [['VOIDED', new Date().toISOString().split('T')[0], 'auto-void', 'Stamp voided — milestone revoked']] },
+          });
+          console.log('🗑️ Voided milestone coupon:', crow[0], 'position:', msPosition, 'cycle:', msCycle);
+        }
+      }
+    } catch (msErr) {
+      console.error('Warning: milestone void check failed:', msErr.message);
+      // Don't fail the void — stamp was already voided successfully
+    }
+
     return res.status(200).json({
       success: true,
       clientName: clientName,
