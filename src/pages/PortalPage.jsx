@@ -19,7 +19,7 @@ function PortalPage() {
   var _e = useState(''), searchError = _e[0], setSearchError = _e[1];
 
   // Register state
-  var _f = useState({ name: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '' }),
+  var _f = useState({ firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '' }),
     form = _f[0], setForm = _f[1];
   var _g = useState(false), submitting = _g[0], setSubmitting = _g[1];
   var _h = useState(''), regError = _h[0], setRegError = _h[1];
@@ -80,8 +80,9 @@ function PortalPage() {
 
   function handleRegister(e) {
     e.preventDefault();
-    if (!form.name.trim()) { setRegError('Name is required'); return; }
-    if (!form.email.trim()) { setRegError('Email is required'); return; }
+    if (!form.firstName.trim() || !form.lastName.trim()) { setRegError('First name and last name are required'); return; }
+    if (!form.mobile.trim()) { setRegError('Mobile number is required'); return; }
+    if (!form.birthdayMonth) { setRegError('Birthday month is required'); return; }
     setSubmitting(true);
     setRegError('');
 
@@ -89,7 +90,7 @@ function PortalPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: form.name.trim(),
+        name: form.firstName.trim() + ' ' + form.lastName.trim(),
         mobile: form.mobile.trim(),
         email: form.email.trim(),
         birthday: form.birthday,
@@ -241,43 +242,57 @@ function PortalPage() {
                 </div>
 
                 <form onSubmit={handleRegister}>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
+                        First Name <span className="text-red-400">*</span>
+                      </label>
+                      <input type="text" value={form.firstName}
+                        onChange={function(e) { updateForm('firstName', e.target.value); }}
+                        placeholder="First name"
+                        className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
+                        style={{ borderColor: accentColor + '40' }}
+                        required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
+                        Last Name <span className="text-red-400">*</span>
+                      </label>
+                      <input type="text" value={form.lastName}
+                        onChange={function(e) { updateForm('lastName', e.target.value); }}
+                        placeholder="Last name"
+                        className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
+                        style={{ borderColor: accentColor + '40' }}
+                        required />
+                    </div>
+                  </div>
+
                   <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
-                      Name <span className="text-red-400">*</span>
-                    </label>
-                    <input type="text" value={form.name}
-                      onChange={function(e) { updateForm('name', e.target.value); }}
-                      placeholder="Your name"
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Mobile Number <span className="text-red-400">*</span></label>
+                    <input type="tel" value={form.mobile}
+                      onChange={function(e) { updateForm('mobile', e.target.value); }}
+                      placeholder="09XX XXX XXXX"
                       className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
                       style={{ borderColor: accentColor + '40' }}
                       required />
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Mobile Number</label>
-                    <input type="tel" value={form.mobile}
-                      onChange={function(e) { updateForm('mobile', e.target.value); }}
-                      placeholder="09XX XXX XXXX"
-                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                      style={{ borderColor: accentColor + '40' }} />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email <span className="text-red-400">*</span></label>
-                    <input type="email" value={form.email} required
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
+                    <input type="email" value={form.email}
                       onChange={function(e) { updateForm('email', e.target.value); }}
                       placeholder="your@email.com"
                       className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
                       style={{ borderColor: accentColor + '40' }} />
-                    <p className="text-xs mt-1.5" style={{ color: accentColor }}>📧 Your loyalty card link will be sent to this email</p>
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month <span className="text-red-400">*</span></label>
                     <select value={form.birthdayMonth}
                       onChange={function(e) { updateForm('birthdayMonth', e.target.value); }}
                       className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm bg-white"
-                      style={{ borderColor: accentColor + '40' }}>
+                      style={{ borderColor: accentColor + '40' }}
+                      required>
                       <option value="">Select month</option>
                       {months.map(function(m) { return <option key={m} value={m}>{m}</option>; })}
                     </select>
