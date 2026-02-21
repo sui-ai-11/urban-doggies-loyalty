@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { businessID, clientName, mobile, email, breed, birthday, birthdayMonth } = req.body;
+    const { businessID, clientName, mobile, email, birthday, birthdayMonth } = req.body;
     
     if (!businessID || !clientName) {
       return res.status(400).json({ error: 'BusinessID and ClientName are required' });
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       mobile || '',          // E
       email || '',           // F
       birthday || '',        // G
-      breed || '',           // H
+      '',                    // H (unused)
       createdAt,             // I
       '',                    // J (notes)
       birthdayMonth || ''    // K
