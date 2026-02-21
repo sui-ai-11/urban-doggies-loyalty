@@ -56,6 +56,7 @@ export default async function handler(req, res) {
       navButton1Contact: 'AF2',
       callLabel: 'AG2',
       feedbackLabel: 'AH2',
+      adminPin: 'AI2',
     };
 
     var updates = [];
