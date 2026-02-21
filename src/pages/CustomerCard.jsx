@@ -393,7 +393,11 @@ function CustomerCard() {
 
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
-                  {coupons.map((coupon, i) => {
+                  {coupons.slice().sort((a, b) => {
+                    var aActive = a.redeemed !== 'TRUE' && !(a.expiryDate && new Date(a.expiryDate) < new Date()) ? 0 : 1;
+                    var bActive = b.redeemed !== 'TRUE' && !(b.expiryDate && new Date(b.expiryDate) < new Date()) ? 0 : 1;
+                    return aActive - bActive;
+                  }).map((coupon, i) => {
                     var isClaimed = coupon.redeemed === 'TRUE';
                     var isExpired = !isClaimed && coupon.expiryDate && new Date(coupon.expiryDate) < new Date();
                     return (
