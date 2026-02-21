@@ -39,7 +39,7 @@ function HomePage() {
   const bgIsDark = isDark(bgColor);
   const heroText = bgIsDark ? '#ffffff' : borderColor;
   const heroSubtext = bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99`;
-  const navText = bgIsDark ? '#ffffff' : borderColor;
+  const navText = bgIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#1a1a2e');
 
   // Card text (cards are usually light)
   const cardIsDark = isDark(cardBg);
