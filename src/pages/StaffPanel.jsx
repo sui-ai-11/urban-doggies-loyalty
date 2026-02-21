@@ -377,7 +377,7 @@ function StaffPanel() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       {/* Nav */}
-      <nav className="relative z-20" style={{ backgroundColor: borderColor }}>
+      <nav className="relative z-20" style={{ backgroundColor: isLightColor(borderColor) ? '#1a1a2e' : borderColor }}>
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
             <a href="/#/" className="flex items-center gap-3 no-underline">
@@ -405,7 +405,7 @@ function StaffPanel() {
                 return (
                   <a key={link.href} href={link.href}
                     className="px-4 py-2.5 rounded-xl font-semibold text-sm text-white no-underline flex items-center gap-2"
-                    style={{ backgroundColor: link.active ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                    style={{ backgroundColor: link.active ? accentColor : 'rgba(255,255,255,0.1)', color: link.active ? (isLightColor(accentColor) ? '#1a1a2e' : '#ffffff') : '#ffffff' }}>
                     {link.label}
                   </a>
                 );
