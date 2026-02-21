@@ -227,7 +227,7 @@ function AdminPanel() {
       var c = bgColor.replace('#','');
       bgIsDark = (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 < 0.5;
     } catch(e) {}
-    var navText = bgIsDark ? '#ffffff' : borderColor;
+    var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#1a1a2e' : borderColor);
     return (
       <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
         <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', borderBottom: '1px solid ' + (bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') }} className="relative z-10">
@@ -259,7 +259,7 @@ function AdminPanel() {
                   Loyalty Desk
                 </a>
                 <a href="/#/admin" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
-                  style={{ backgroundColor: accentColor, color: '#ffffff' }}>
+                  style={{ backgroundColor: accentColor, color: isLight(accentColor) ? '#1a1a2e' : '#ffffff' }}>
                   Client Management
                 </a>
               </div>
