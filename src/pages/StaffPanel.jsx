@@ -106,14 +106,44 @@ function StaffPanel() {
     }, 300);
   }
 
-  function buildClientInfo(result) {
-    var milestones = [];
-    if (result.business && result.business.milestonesJson) {
-      try { milestones = JSON.parse(result.business.milestonesJson); } catch(e) {}
+  function resolveMilestones(milestonesJson, totalVisits, requiredVisits) {
+    var parsed = {};
+    try { parsed = JSON.parse(milestonesJson || '{}'); } catch(e) {}
+    // Old format: array → treat as Card 1
+    if (Array.isArray(parsed)) return { milestones: parsed, cardCycle: 1 };
+    
+    var completedCards = Math.floor(totalVisits / requiredVisits);
+    var cycle = completedCards + 1; // Current card number (1-indexed)
+    
+    // Find the right tier: exact match, or highest tier with _default flag, or highest available
+    var tierKeys = Object.keys(parsed).filter(function(k) { return !k.includes('_'); }).sort(function(a,b) { return parseInt(a)-parseInt(b); });
+    
+    if (parsed[String(cycle)]) {
+      return { milestones: parsed[String(cycle)], cardCycle: cycle };
     }
+    
+    // Find highest tier with _default flag
+    for (var i = tierKeys.length - 1; i >= 0; i--) {
+      if (parsed[tierKeys[i] + '_default'] && parseInt(tierKeys[i]) <= cycle) {
+        return { milestones: parsed[tierKeys[i]], cardCycle: cycle };
+      }
+    }
+    
+    // Fallback: use last defined tier
+    var lastKey = tierKeys[tierKeys.length - 1];
+    return { milestones: parsed[lastKey] || [], cardCycle: cycle };
+  }
+
+  function buildClientInfo(result) {
     var total = (result.loyalty && result.loyalty.totalVisits) || 0;
     var required = (result.business && result.business.requiredVisits) || 10;
     var progress = (result.loyalty && result.loyalty.currentProgress !== undefined) ? result.loyalty.currentProgress : (total % required);
+    
+    var resolved = resolveMilestones(
+      result.business && result.business.milestonesJson,
+      total, required
+    );
+    
     return {
       name: result.client.name,
       token: result.client.token,
@@ -121,7 +151,8 @@ function StaffPanel() {
       currentVisits: total,
       currentProgress: progress,
       requiredVisits: required,
-      milestones: milestones,
+      milestones: resolved.milestones,
+      cardCycle: resolved.cardCycle,
     };
   }
 
@@ -532,7 +563,7 @@ function StaffPanel() {
               </div>
               <div className="text-center px-4 py-2 rounded-2xl" style={{ backgroundColor: accentColor + '15' }}>
                 <p className="text-2xl font-black" style={{ color: panelAccent }}>{clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits}/{clientInfo.requiredVisits}</p>
-                <p className="text-xs text-gray-400">visits</p>
+                <p className="text-xs text-gray-400">visits{clientInfo.cardCycle > 1 ? ' · Card ' + clientInfo.cardCycle : ''}</p>
               </div>
             </div>
 
@@ -544,14 +575,25 @@ function StaffPanel() {
                   {clientInfo.milestones.map(function(m, idx) {
                     var progressForMilestones = clientInfo.currentProgress !== undefined ? clientInfo.currentProgress : clientInfo.currentVisits;
                     var reached = progressForMilestones >= m.position;
-                    // Check if this milestone has a claimed coupon
+                    var cycle = clientInfo.cardCycle || 1;
+                    // Check if this milestone has a coupon for THIS cycle
                     var milestoneCoupon = null;
                     for (var ci = 0; ci < clientCoupons.length; ci++) {
                       var cn = clientCoupons[ci].notes || '';
-                      var ct = clientCoupons[ci].text || '';
-                      if (cn.indexOf('Milestone: ' + m.label) > -1 || cn.indexOf('milestone_' + m.position) > -1) {
+                      // Match by cycle-specific tag first, then legacy
+                      if (cn.indexOf('milestone_' + m.position + '_cycle_' + cycle) > -1) {
                         milestoneCoupon = clientCoupons[ci];
                         break;
+                      }
+                    }
+                    // Legacy fallback: only for cycle 1 if no cycle tag found
+                    if (!milestoneCoupon && cycle === 1) {
+                      for (var ci2 = 0; ci2 < clientCoupons.length; ci2++) {
+                        var cn2 = clientCoupons[ci2].notes || '';
+                        if ((cn2.indexOf('Milestone: ' + m.label) > -1 || cn2.indexOf('milestone_' + m.position) > -1) && cn2.indexOf('_cycle_') === -1) {
+                          milestoneCoupon = clientCoupons[ci2];
+                          break;
+                        }
                       }
                     }
                     var isClaimed = milestoneCoupon && milestoneCoupon.redeemed === 'TRUE';
@@ -615,7 +657,7 @@ function StaffPanel() {
                                   clientID: clientInfo.token,
                                   type: 'milestone',
                                   text: mLabel,
-                                  notes: 'Milestone: ' + mLabel + ' (milestone_' + mPos + ')',
+                                  notes: 'Milestone: ' + mLabel + ' (milestone_' + mPos + '_cycle_' + (clientInfo.cardCycle || 1) + ')',
                                   businessID: 'BIZ_001',
                                 }),
                               })
