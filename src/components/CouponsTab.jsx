@@ -16,6 +16,7 @@ function CouponsTab() {
   function isLightC(hex) { var c = (hex || '#000').replace('#',''); return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6; }
   var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
   var panelAccent = isLightC(accentColor) ? '#1a1a2e' : accentColor;
+  var btnOnAccent = isLightC(accentColor) ? '#1a1a2e' : '#ffffff';
 
   useEffect(function() {
     fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
@@ -180,8 +181,8 @@ function CouponsTab() {
             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm" />
         </div>
         <button onClick={addCoupon} disabled={saving}
-          className="mt-4 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
-          style={{ backgroundColor: accentColor }}>
+          className="mt-4 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
+          style={{ backgroundColor: accentColor, color: btnOnAccent }}>
           {saving ? 'Creating...' : '+ Issue Coupon'}
         </button>
       </div>
