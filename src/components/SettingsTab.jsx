@@ -163,6 +163,7 @@ function SettingsTab() {
   function isLightC(hex) { var c = (hex || '#000').replace('#',''); return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6; }
   var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
   var panelAccent = isLightC(accentColor) ? '#1a1a2e' : accentColor;
+  var btnOnAccent = isLightC(accentColor) ? '#1a1a2e' : '#ffffff';
 
   var sections = [
     { key: 'rewards', label: '⭐ Date Stamp' },
@@ -474,8 +475,8 @@ function SettingsTab() {
                 .finally(function() { setSaving(false); });
             }}
               disabled={saving}
-              className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
-              style={{ backgroundColor: accentColor }}>
+              className="mt-2 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
+              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
               {saving ? 'Saving...' : 'Save Stamp Card Settings'}
             </button>
           </div>
@@ -499,8 +500,8 @@ function SettingsTab() {
             {renderInput('Admin PIN', 'adminPin', '1234')}
             <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'adminPin']); }}
               disabled={saving}
-              className="mt-2 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
-              style={{ backgroundColor: accentColor }}>
+              className="mt-2 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
+              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
               {saving ? 'Saving...' : 'Save Business Profile'}
             </button>
           </div>
@@ -537,8 +538,8 @@ function SettingsTab() {
                 win.document.close();
                 win.print();
               }}
-                className="px-4 py-2 rounded-xl text-sm font-bold text-white transition"
-                style={{ backgroundColor: accentColor }}>
+                className="px-4 py-2 rounded-xl text-sm font-bold transition"
+                style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                 🖨️ Print Poster
               </button>
             </div>
@@ -571,8 +572,8 @@ function SettingsTab() {
 
             <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail', 'navButton1Contact', 'callLabel', 'feedbackLabel']); }}
               disabled={saving}
-              className="mt-4 px-6 py-3 text-white rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
-              style={{ backgroundColor: accentColor }}>
+              className="mt-4 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
+              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
               {saving ? 'Saving...' : 'Save Contact Settings'}
             </button>
           </div>
