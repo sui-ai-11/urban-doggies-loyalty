@@ -236,7 +236,7 @@ function CustomerCard() {
               {/* Progress */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold" style={{ color: textColor }}>Progress</span>
+                  <span className="text-sm font-semibold" style={{ color: textColor }}>Progress{cardCycle > 1 ? ` · Card ${cardCycle}` : ''}</span>
                   <span className="text-sm font-bold" style={{ color: accentColor }}>
                     {currentStamps}/{totalStamps} stamps
                   </span>
@@ -259,9 +259,39 @@ function CustomerCard() {
 
               {/* Stamp Grid */}
               {(() => {
-                // Parse milestones — use JSON if available, fallback to legacy
+                // Parse milestones — support tiered format
                 let milestones = [];
-                try { milestones = JSON.parse(business.milestonesJson || '[]'); } catch(e) {}
+                let cardCycle = 1;
+                try {
+                  let parsed = JSON.parse(business.milestonesJson || '[]');
+                  if (Array.isArray(parsed)) {
+                    // Old format: array
+                    milestones = parsed;
+                  } else if (typeof parsed === 'object') {
+                    // Tiered format
+                    let completedCards = Math.floor((loyalty?.totalVisits || 0) / totalStamps);
+                    cardCycle = completedCards + 1;
+                    let tierKeys = Object.keys(parsed).filter(k => !k.includes('_')).sort((a,b) => parseInt(a)-parseInt(b));
+                    
+                    // Exact match
+                    if (parsed[String(cardCycle)]) {
+                      milestones = parsed[String(cardCycle)];
+                    } else {
+                      // Find highest tier with _default
+                      let found = false;
+                      for (let i = tierKeys.length - 1; i >= 0; i--) {
+                        if (parsed[tierKeys[i] + '_default'] && parseInt(tierKeys[i]) <= cardCycle) {
+                          milestones = parsed[tierKeys[i]];
+                          found = true;
+                          break;
+                        }
+                      }
+                      if (!found && tierKeys.length > 0) {
+                        milestones = parsed[tierKeys[tierKeys.length - 1]] || [];
+                      }
+                    }
+                  }
+                } catch(e) {}
                 if (milestones.length === 0) {
                   // Fallback to legacy milestone fields
                   milestones = [
@@ -300,14 +330,25 @@ function CustomerCard() {
                     <div className="space-y-2">
                       {milestones.filter(m => m.label).map((m, i) => {
                         const reached = currentStamps >= m.position;
-                        // Check if this milestone has been claimed via coupons
+                        // Check if this milestone has been claimed for THIS cycle
                         let milestoneClaimed = false;
                         if (coupons) {
+                          // First check cycle-specific tag
                           for (let ci = 0; ci < coupons.length; ci++) {
                             const cn = coupons[ci].notes || '';
-                            if ((cn.indexOf('Milestone: ' + m.label) > -1 || cn.indexOf('milestone_' + m.position) > -1) && coupons[ci].redeemed === 'TRUE') {
+                            if (cn.indexOf('milestone_' + m.position + '_cycle_' + cardCycle) > -1 && coupons[ci].redeemed === 'TRUE') {
                               milestoneClaimed = true;
                               break;
+                            }
+                          }
+                          // Legacy fallback for cycle 1
+                          if (!milestoneClaimed && cardCycle === 1) {
+                            for (let ci2 = 0; ci2 < coupons.length; ci2++) {
+                              const cn2 = coupons[ci2].notes || '';
+                              if ((cn2.indexOf('Milestone: ' + m.label) > -1 || cn2.indexOf('milestone_' + m.position) > -1) && cn2.indexOf('_cycle_') === -1 && coupons[ci2].redeemed === 'TRUE') {
+                                milestoneClaimed = true;
+                                break;
+                              }
                             }
                           }
                         }
