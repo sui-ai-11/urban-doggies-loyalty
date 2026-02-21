@@ -35,6 +35,7 @@ function PortalPage() {
   var bgColor = (businessInfo && businessInfo.backgroundColor) || '#0d0221';
   var accentColor = (businessInfo && businessInfo.accentColor) || '#0abdc6';
   var borderColor = (businessInfo && businessInfo.borderColor) || '#ea00d9';
+  var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var bgIsDark = isDark(bgColor);
   var heroText = bgIsDark ? '#ffffff' : borderColor;
   var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
@@ -201,8 +202,8 @@ function PortalPage() {
                     style={{ borderColor: accentColor + '40' }}
                     autoFocus />
                   <button type="submit" disabled={searching || !searchInput.trim()}
-                    className="w-full text-white py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: accentColor }}>
+                    className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                     {searching ? (
                       <span>
                         <span className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" style={{ verticalAlign: 'middle' }}></span>
@@ -300,8 +301,8 @@ function PortalPage() {
                   )}
 
                   <button type="submit" disabled={submitting}
-                    className="w-full text-white py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50"
-                    style={{ backgroundColor: accentColor }}>
+                    className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
                     {submitting ? 'Creating your card...' : '🎁 Join & Get My Card'}
                   </button>
                 </form>
