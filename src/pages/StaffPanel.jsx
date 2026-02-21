@@ -272,10 +272,32 @@ function StaffPanel() {
         } else {
           setMessage('✅ Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
         }
-        // Update visits count on screen
+        // Update visits count on screen and recalculate cycle
         var newTotal = result.totalVisits;
         var newProgress = newTotal % clientInfo.requiredVisits;
-        setClientInfo(Object.assign({}, clientInfo, { currentVisits: newTotal, currentProgress: newProgress }));
+        var newCycle = Math.floor(newTotal / clientInfo.requiredVisits) + 1;
+        
+        if (newCycle !== clientInfo.cardCycle) {
+          // Cycle changed — reload full data to get new milestones
+          fetch('/api/client-dashboard?token=' + clientInfo.token)
+            .then(function(r) { return r.json(); })
+            .then(function(fullResult) {
+              if (fullResult.client) {
+                setClientInfo(buildClientInfo(fullResult));
+                setClientCoupons(fullResult.coupons || []);
+              }
+            });
+        } else {
+          setClientInfo(Object.assign({}, clientInfo, { currentVisits: newTotal, currentProgress: newProgress }));
+          // Reload coupons in case a reward was auto-created
+          if (result.rewardEarned) {
+            fetch('/api/client-dashboard?token=' + clientInfo.token)
+              .then(function(r) { return r.json(); })
+              .then(function(dashResult) {
+                if (dashResult.coupons) setClientCoupons(dashResult.coupons);
+              });
+          }
+        }
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
