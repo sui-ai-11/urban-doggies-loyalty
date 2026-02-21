@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
-        range: 'VisitLog!A2:F',
+        range: 'VisitLog!A2:G',
       }),
     ]);
 
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       
       // Count visits for this client
       const visits = visitRows.filter(visit => 
-        visit[1] === clientID && visit[2] === businessID && (visit[5] || '').indexOf('VOIDED') === -1
+        visit[1] === clientID && (visit[5] || '').indexOf('VOIDED') === -1
       ).length;
 
       return {
