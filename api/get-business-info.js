@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     // Fetch business data from Row 2 (get columns A through AB)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:AH2',
+      range: 'Businesses!A2:AI2',
     });
 
     const row = response.data.values?.[0];
@@ -76,6 +76,7 @@ export default async function handler(req, res) {
       navButton1Contact: row[31] || '',                    // AF
       callLabel: row[32] || '',                            // AG
       feedbackLabel: row[33] || '',                        // AH
+      adminPin: row[34] || '1234',                          // AI
     };
 
     console.log('✅ Business loaded:', businessInfo.businessName);
