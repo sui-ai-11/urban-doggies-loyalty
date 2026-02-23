@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
 import CouponsTab from '../components/CouponsTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift } from 'lucide-react';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock } from 'lucide-react';
 
 function CouponsOverview({ couponsList, allClients }) {
   var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
@@ -235,47 +235,12 @@ function AdminPanel() {
     var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#1a1a2e' : borderColor);
     return (
       <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
-        <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', borderBottom: '1px solid ' + (bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') }} className="relative z-10">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {businessInfo && businessInfo.logo ? (
-                  <img src={businessInfo.logo} alt={businessInfo.businessName || ''}
-                    className="h-14 w-14 object-contain rounded-xl p-2"
-                    style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
-                    onError={function(e) { e.target.style.display = 'none'; }} />
-                ) : (
-                  <div className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-bold shadow-lg"
-                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-                    {businessInfo && businessInfo.businessName ? businessInfo.businessName.charAt(0) : 'B'}
-                  </div>
-                )}
-                <span className="text-2xl font-bold tracking-tight" style={{ color: navText }}>
-                  {(businessInfo && businessInfo.businessName) || 'Business'}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <a href="/#/" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
-                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', color: navText }}>
-                  Home
-                </a>
-                <a href="/#/staff" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
-                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', color: navText }}>
-                  Loyalty Desk
-                </a>
-                <a href="/#/admin" className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 no-underline"
-                  style={{ backgroundColor: accentColor, color: isLight(accentColor) ? '#1a1a2e' : '#ffffff' }}>
-                  Client Management
-                </a>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Navigation currentPage="admin" />
         <div className="flex items-center justify-center p-6" style={{ minHeight: 'calc(100vh - 80px)' }}>
         <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             style={{ backgroundColor: accentColor }}>
-            <span style={{ fontSize: '28px' }}>🔒</span>
+            <Lock size={28} color="#ffffff" />
           </div>
           <h2 className="text-2xl font-bold mb-2" style={{ color: panelText }}>Client Management</h2>
           <p className="text-gray-500 text-sm mb-6">Enter PIN to access</p>
@@ -310,9 +275,9 @@ function AdminPanel() {
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }} />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="text-center mb-8 animate-slide-up">
-          <h1 className="text-4xl font-black mb-2 tracking-tight" style={{ color: bgIsDark ? '#ffffff' : borderColor }}>Client Management</h1>
+          <h1 className="text-2xl sm:text-4xl font-black mb-2 tracking-tight" style={{ color: bgIsDark ? '#ffffff' : borderColor }}>Client Management</h1>
           <p className="font-light text-lg" style={{ color: bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99` }}>Manage your loyalty system</p>
         </div>
 
@@ -322,7 +287,7 @@ function AdminPanel() {
           <div className="flex border-b overflow-x-auto" style={{ borderColor: `${borderColor}20` }}>
             {tabs.map(({ key, label, icon: Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
-                className="px-5 py-4 font-semibold transition-all duration-200 flex items-center gap-2 whitespace-nowrap text-sm"
+                className="px-3 sm:px-5 py-3 sm:py-4 font-semibold transition-all duration-200 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-xs sm:text-sm"
                 style={{
                   backgroundColor: activeTab === key ? panelText : 'transparent',
                   color: activeTab === key ? (isLight(panelText) ? '#1a1a2e' : '#FFFFFF') : '#6B7280',
@@ -508,7 +473,7 @@ function AdminPanel() {
               <div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Add New Client</h2>
                 <form onSubmit={handleAddClient} className="max-w-2xl space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">First Name *</label>
                       <input type="text" value={newClient.firstName}
@@ -537,7 +502,7 @@ function AdminPanel() {
                         style={{ borderColor: `${accentColor}40` }} />
                     </div>
                   ))}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
                       <input type="date" value={newClient.birthday}
