@@ -53,15 +53,22 @@ function PortalPage() {
     if (!searchInput.trim()) return;
     setSearching(true);
     setSearchError('');
+    var input = searchInput.trim();
 
-    fetch('/api/client-dashboard?token=' + encodeURIComponent(searchInput.trim()))
+    // Try token first
+    fetch('/api/client-dashboard?token=' + encodeURIComponent(input))
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (data && data.client) {
           window.location.hash = '/card?token=' + data.client.token;
           return;
         }
-        return fetch('/api/find-client-by-email?email=' + encodeURIComponent(searchInput.trim()))
+        // Try email and mobile simultaneously
+        var isEmail = input.indexOf('@') > -1;
+        var query = isEmail
+          ? 'email=' + encodeURIComponent(input)
+          : 'mobile=' + encodeURIComponent(input);
+        return fetch('/api/find-client-by-email?' + query)
           .then(function(r) { return r.json(); });
       })
       .then(function(data) {
@@ -71,7 +78,7 @@ function PortalPage() {
         } else if (data.error) {
           setSearchError(data.error);
         } else {
-          setSearchError('No card found. Please check your email or token and try again.');
+          setSearchError('No card found. Please check your token, email, or mobile number and try again.');
         }
       })
       .catch(function() { setSearchError('Something went wrong. Please try again.'); })
@@ -198,7 +205,7 @@ function PortalPage() {
                 <form onSubmit={handleSearch}>
                   <input type="text" value={searchInput}
                     onChange={function(e) { setSearchInput(e.target.value); setSearchError(''); }}
-                    placeholder="Email address or token..."
+                    placeholder="Token, email, or mobile number..."
                     className="w-full px-5 py-4 rounded-2xl border-2 focus:outline-none text-sm mb-4"
                     style={{ borderColor: accentColor + '40' }}
                     autoFocus />
