@@ -445,9 +445,6 @@ function StaffPanel() {
           )}
         </div>
       </nav>
-          </div>
-        </div>
-      </nav>
 
       {/* Decorative blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
