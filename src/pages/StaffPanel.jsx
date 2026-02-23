@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
+import { renderIcon } from '../icon-registry';
 
 function isDark(hex) {
   if (!hex) return true;
@@ -674,7 +675,7 @@ function StaffPanel() {
                     return (
                       <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-gray-100">
                         <div className="flex items-center gap-2">
-                          <span style={{ fontSize: '16px' }}>{m.icon || '🎁'}</span>
+                          <span>{renderIcon(m.icon || 'gift', 16, 'currentColor')}</span>
                           <div>
                             <p className="font-semibold text-xs" style={{ color: reached ? borderColor : '#9ca3af' }}>{m.label}</p>
                             <p className="text-xs text-gray-400">Visit {m.position}{m.description ? ' · ' + m.description : ''}</p>
