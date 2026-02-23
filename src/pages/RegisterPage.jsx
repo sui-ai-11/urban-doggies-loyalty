@@ -58,9 +58,9 @@ function RegisterPage() {
       .finally(function() { setSubmitting(false); });
   }
 
-  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#0d0221';
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#0abdc6';
-  var borderColor = (businessInfo && businessInfo.borderColor) || '#ea00d9';
+  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#16161a';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
+  var borderColor = (businessInfo && businessInfo.borderColor) || '#fffffe';
   var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var cardBg = (businessInfo && businessInfo.cardBackground) || '#150734';
   var bgIsDark = isDark(bgColor);
