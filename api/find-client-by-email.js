@@ -10,7 +10,8 @@ export default async function handler(req, res) {
 
   try {
     var email = (req.query.email || '').trim().toLowerCase();
-    if (!email) return res.status(400).json({ error: 'Email required' });
+    var mobile = (req.query.mobile || '').trim().replace(/\s+/g, '');
+    if (!email && !mobile) return res.status(400).json({ error: 'Email or mobile required' });
 
     var auth = new google.auth.GoogleAuth({
       credentials: {
@@ -32,9 +33,14 @@ export default async function handler(req, res) {
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
       var clientEmail = (row[5] || '').trim().toLowerCase();
+      var clientMobile = (row[4] || '').trim().replace(/\s+/g, '');
       var status = (row[11] || '').toLowerCase();
 
-      if (clientEmail === email && status !== 'rejected') {
+      var matched = false;
+      if (email && clientEmail === email) matched = true;
+      if (mobile && clientMobile === mobile) matched = true;
+
+      if (matched && status !== 'rejected') {
         if (status === 'pending') {
           return res.status(200).json({
             error: 'Your registration is still pending approval. Please ask staff at the counter.',
@@ -47,7 +53,7 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ error: 'No card found with this email. Check your email or register for a new card.' });
+    return res.status(200).json({ error: 'No card found. Check your token, email, or mobile number and try again.' });
 
   } catch (error) {
     console.error('Find client error:', error);
