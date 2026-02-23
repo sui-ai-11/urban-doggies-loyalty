@@ -22,9 +22,9 @@ export default function PortalPage() {
     fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(function(data) { setBusinessInfo(data); }).catch(function() {});
   }, []);
 
-  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#0d0221';
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#0abdc6';
-  var borderColor = (businessInfo && businessInfo.borderColor) || '#ea00d9';
+  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#16161a';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
+  var borderColor = (businessInfo && businessInfo.borderColor) || '#fffffe';
   var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var bgIsDark = isDark(bgColor);
   var headingColor = isDark(borderColor) ? borderColor : '#1a1a2e';
