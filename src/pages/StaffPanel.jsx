@@ -537,7 +537,7 @@ function StaffPanel() {
             </div>
 
             <button type="button" onClick={startScanner}
-              className="w-full text-white py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-3 mb-4"
+              className="w-full py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-3 mb-4"
               style={{ backgroundColor: borderColor, color: btnOnBorder }}>
               📷 Scan QR Code
             </button>
