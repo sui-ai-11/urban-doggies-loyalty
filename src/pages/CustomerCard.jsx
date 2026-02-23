@@ -179,29 +179,29 @@ function CustomerCard() {
           boxShadow: `0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px ${accentColor}15, inset 0 1px 0 ${accentColor}10`,
         }}>
 
-        {/* Accent Header Band */}
-        <div style={{
-          background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
-          padding: '24px 24px 20px',
+        {/* Header with glassmorphism */}
+        <div className="p-6 pb-4" style={{
+          backgroundColor: cardIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: `1px solid ${cardIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
         }}>
           <div className="flex items-center justify-center gap-3 mb-2">
             {business.logo ? (
               <img src={business.logo} alt={business.name} className="h-20 w-auto"
-                style={{ filter: 'brightness(0) invert(1)' }}
-                onError={(e) => { e.target.style.filter = 'none'; }} />
+                onError={(e) => (e.target.style.display = 'none')} />
             ) : (
               <div className="flex flex-col items-center">
-                <span className="text-3xl font-black tracking-tight" style={{ color: btnOnAccent }}>
+                <span className="text-3xl font-black tracking-tight" style={{ color: headingColor }}>
                   {business.name}
                 </span>
               </div>
             )}
           </div>
-          {business.tagline && <p className="text-center text-sm font-light" style={{ color: btnOnAccent, opacity: 0.85 }}>{business.tagline}</p>}
+          {business.tagline && <p className="text-center text-sm font-light" style={{ color: textColor }}>{business.tagline}</p>}
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex mx-6 -mt-5 rounded-2xl overflow-hidden shadow-lg" style={{ backgroundColor: cardBg, border: `1px solid ${accentColor}20` }}>
+        <div className="flex mx-6 my-4 rounded-2xl overflow-hidden" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.1)' : `${accentColor}10`, border: `1px solid ${accentColor}15` }}>
           {navButtons.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActiveView(key)}
               className="flex-1 py-3 text-xs font-bold transition-all duration-200 flex flex-col items-center gap-1"
@@ -215,7 +215,7 @@ function CustomerCard() {
           ))}
         </div>
 
-        <div className="px-6 pb-6 pt-4">
+        <div className="px-6 pb-6">
           {/* ═══ STAMP VIEW ═══ */}
           {activeView === 'stamp' && (
             <div className="animate-fade-in">
@@ -313,8 +313,7 @@ function CustomerCard() {
 
                 return (
                   <>
-                    <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: `${accentColor}08`, border: `1px dashed ${accentColor}25` }}>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-2 mb-6">
                       {Array.from({ length: totalStamps }).map((_, i) => {
                         const pos = i + 1;
                         const isFilled = i < currentStamps;
@@ -333,7 +332,6 @@ function CustomerCard() {
                           </div>
                         );
                       })}
-                    </div>
                     </div>
 
                     {/* Milestone Info Cards */}
