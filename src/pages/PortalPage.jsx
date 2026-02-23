@@ -1,347 +1,119 @@
-import React, { useState, useEffect } from 'react';
+// Happy Hues-Inspired Palettes — Full Color System
+// ALL palettes pass WCAG AA contrast (4.5:1 minimum for text)
 
-function isDark(hex) {
-  if (!hex) return true;
-  var c = hex.replace('#', '');
-  var r = parseInt(c.substring(0, 2), 16);
-  var g = parseInt(c.substring(2, 4), 16);
-  var b = parseInt(c.substring(4, 6), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
-}
-
-function PortalPage() {
-  var _a = useState(null), businessInfo = _a[0], setBusinessInfo = _a[1];
-  var _b = useState('find'), activeTab = _b[0], setActiveTab = _b[1];
-
-  // Find card state
-  var _c = useState(''), searchInput = _c[0], setSearchInput = _c[1];
-  var _d = useState(false), searching = _d[0], setSearching = _d[1];
-  var _e = useState(''), searchError = _e[0], setSearchError = _e[1];
-
-  // Register state
-  var _f = useState({ firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '' }),
-    form = _f[0], setForm = _f[1];
-  var _g = useState(false), submitting = _g[0], setSubmitting = _g[1];
-  var _h = useState(''), regError = _h[0], setRegError = _h[1];
-  var _i = useState(null), result = _i[0], setResult = _i[1];
-
-  useEffect(function() {
-    fetch('/api/get-business-info')
-      .then(function(r) { return r.json(); })
-      .then(function(data) { setBusinessInfo(data); })
-      .catch(function() {});
-  }, []);
-
-  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#0d0221';
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#0abdc6';
-  var borderColor = (businessInfo && businessInfo.borderColor) || '#ea00d9';
-  var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
-  var bgIsDark = isDark(bgColor);
-  var heroText = bgIsDark ? '#ffffff' : borderColor;
-  var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
-  var customFieldLabel = (businessInfo && businessInfo.customFieldLabel) || '';
-  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  function updateForm(key, value) {
-    var updated = Object.assign({}, form);
-    updated[key] = value;
-    setForm(updated);
-  }
-
-  function handleSearch(e) {
-    e.preventDefault();
-    if (!searchInput.trim()) return;
-    setSearching(true);
-    setSearchError('');
-    var input = searchInput.trim();
-
-    // Try token first
-    fetch('/api/client-dashboard?token=' + encodeURIComponent(input))
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) {
-        if (data && data.client) {
-          window.location.hash = '/card?token=' + data.client.token;
-          return;
-        }
-        // Try email and mobile simultaneously
-        var isEmail = input.indexOf('@') > -1;
-        var query = isEmail
-          ? 'email=' + encodeURIComponent(input)
-          : 'mobile=' + encodeURIComponent(input);
-        return fetch('/api/find-client-by-email?' + query)
-          .then(function(r) { return r.json(); });
-      })
-      .then(function(data) {
-        if (!data) return;
-        if (data.token) {
-          window.location.hash = '/card?token=' + data.token;
-        } else if (data.error) {
-          setSearchError(data.error);
-        } else {
-          setSearchError('No card found. Please check your token, email, or mobile number and try again.');
-        }
-      })
-      .catch(function() { setSearchError('Something went wrong. Please try again.'); })
-      .finally(function() { setSearching(false); });
-  }
-
-  function handleRegister(e) {
-    e.preventDefault();
-    if (!form.firstName.trim() || !form.lastName.trim()) { setRegError('First name and last name are required'); return; }
-    if (!form.mobile.trim()) { setRegError('Mobile number is required'); return; }
-    if (!form.birthdayMonth) { setRegError('Birthday month is required'); return; }
-    setSubmitting(true);
-    setRegError('');
-
-    fetch('/api/register-client', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.firstName.trim() + ' ' + form.lastName.trim(),
-        mobile: form.mobile.trim(),
-        email: form.email.trim(),
-        birthday: form.birthday,
-        birthdayMonth: form.birthdayMonth,
-        customField: form.customField.trim(),
-        businessID: 'BIZ_001',
-      }),
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.error) { setRegError(data.error); return; }
-        setResult(data);
-      })
-      .catch(function() { setRegError('Something went wrong. Please try again.'); })
-      .finally(function() { setSubmitting(false); });
-  }
-
-  // Success screen
-  if (result) {
-    return (
-      <div className="min-h-screen py-8 px-4" style={{ backgroundColor: bgColor }}>
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 right-10 w-60 h-60 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }}></div>
-          <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }}></div>
-        </div>
-        <div className="relative z-10 max-w-md mx-auto">
-          <div className="glass-card rounded-3xl p-8 shadow-2xl text-center">
-            <div className="text-6xl mb-4">✅</div>
-            <h1 className="text-2xl font-black mb-2" style={{ color: borderColor }}>Thank You, {result.client.name}!</h1>
-            <p className="text-gray-500 mb-6">Your registration has been submitted.</p>
-            <div className="rounded-2xl p-5 mb-6" style={{ backgroundColor: accentColor + '10', border: '2px solid ' + accentColor + '20' }}>
-              <p className="font-bold text-lg mb-1" style={{ color: borderColor }}>⏳ Pending Approval</p>
-              <p className="text-sm text-gray-500">Please show this screen to the staff at the counter to activate your loyalty card.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-4 mb-4 border shadow-sm" style={{ borderColor: accentColor + '30' }}>
-              <p className="text-xs text-gray-400 mb-1">Your token</p>
-              <p className="font-mono font-bold text-2xl tracking-widest" style={{ color: accentColor }}>{result.client.token}</p>
-            </div>
-            <p className="text-xs text-gray-400 mb-2">Once approved, your card link will be sent to your email.</p>
-            <p className="text-xs text-gray-400">You can also scan this QR code anytime to find your card.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: bgColor }}>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-60 h-60 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }}></div>
-        <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }}></div>
-      </div>
-
-      <div className="relative z-10 max-w-md mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6">
-          {businessInfo && businessInfo.logo ? (
-            <img src={businessInfo.logo} alt={businessInfo.businessName}
-              className="h-20 w-auto mx-auto mb-3"
-              onError={function(e) { e.target.style.display = 'none'; }} />
-          ) : (
-            <h1 className="text-3xl font-black tracking-tight" style={{ color: heroText }}>
-              {(businessInfo && businessInfo.businessName) || 'Business'}
-            </h1>
-          )}
-          <p className="font-light" style={{ color: heroSub }}>
-            {(businessInfo && businessInfo.tagline) || 'Digital Loyalty Program'}
-          </p>
-        </div>
-
-        {/* Tab Card */}
-        <div className="glass-card rounded-3xl shadow-2xl overflow-hidden">
-          <div className="flex">
-            <button onClick={function() { setActiveTab('find'); }}
-              className="flex-1 py-4 text-center font-bold text-sm transition-all"
-              style={{
-                backgroundColor: activeTab === 'find' ? accentColor : 'transparent',
-                color: activeTab === 'find' ? '#ffffff' : (bgIsDark ? '#ffffff80' : '#6b7280'),
-              }}>
-              💳 Find My Card
-            </button>
-            <button onClick={function() { setActiveTab('register'); }}
-              className="flex-1 py-4 text-center font-bold text-sm transition-all"
-              style={{
-                backgroundColor: activeTab === 'register' ? accentColor : 'transparent',
-                color: activeTab === 'register' ? '#ffffff' : (bgIsDark ? '#ffffff80' : '#6b7280'),
-              }}>
-              ✨ Register
-            </button>
-          </div>
-
-          <div className="p-8">
-            {/* Find My Card */}
-            {activeTab === 'find' && (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
-                    style={{ backgroundColor: accentColor }}>
-                    <span style={{ fontSize: '24px' }}>🔍</span>
-                  </div>
-                  <h2 className="text-lg font-bold" style={{ color: borderColor }}>Access Your Card</h2>
-                  <p className="text-gray-500 text-xs mt-1">Enter your email or token</p>
-                </div>
-
-                <form onSubmit={handleSearch}>
-                  <input type="text" value={searchInput}
-                    onChange={function(e) { setSearchInput(e.target.value); setSearchError(''); }}
-                    placeholder="Token, email, or mobile number..."
-                    className="w-full px-5 py-4 rounded-2xl border-2 focus:outline-none text-sm mb-4"
-                    style={{ borderColor: accentColor + '40' }}
-                    autoFocus />
-                  <button type="submit" disabled={searching || !searchInput.trim()}
-                    className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-                    {searching ? (
-                      <span>
-                        <span className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" style={{ verticalAlign: 'middle' }}></span>
-                        Searching...
-                      </span>
-                    ) : 'Find My Card'}
-                  </button>
-                </form>
-
-                {searchError && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-                    <p className="text-red-600 text-sm font-semibold">{searchError}</p>
-                  </div>
-                )}
-
-                <p className="text-xs text-gray-400 text-center mt-5">
-                  Don't have a card yet?{' '}
-                  <button onClick={function() { setActiveTab('register'); }}
-                    className="font-bold border-0 bg-transparent cursor-pointer"
-                    style={{ color: accentColor }}>Register here →</button>
-                </p>
-              </div>
-            )}
-
-            {/* Register */}
-            {activeTab === 'register' && (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
-                    style={{ backgroundColor: accentColor }}>
-                    <span style={{ fontSize: '24px' }}>✨</span>
-                  </div>
-                  <h2 className="text-lg font-bold" style={{ color: borderColor }}>Join Our Loyalty Program</h2>
-                  <p className="text-gray-500 text-xs mt-1">Sign up and start earning rewards!</p>
-                </div>
-
-                <form onSubmit={handleRegister}>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
-                        First Name <span className="text-red-400">*</span>
-                      </label>
-                      <input type="text" value={form.firstName}
-                        onChange={function(e) { updateForm('firstName', e.target.value); }}
-                        placeholder="First name"
-                        className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                        style={{ borderColor: accentColor + '40' }}
-                        required />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
-                        Last Name <span className="text-red-400">*</span>
-                      </label>
-                      <input type="text" value={form.lastName}
-                        onChange={function(e) { updateForm('lastName', e.target.value); }}
-                        placeholder="Last name"
-                        className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                        style={{ borderColor: accentColor + '40' }}
-                        required />
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Mobile Number <span className="text-red-400">*</span></label>
-                    <input type="tel" value={form.mobile}
-                      onChange={function(e) { updateForm('mobile', e.target.value); }}
-                      placeholder="09XX XXX XXXX"
-                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                      style={{ borderColor: accentColor + '40' }}
-                      required />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
-                    <input type="email" value={form.email}
-                      onChange={function(e) { updateForm('email', e.target.value); }}
-                      placeholder="your@email.com"
-                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                      style={{ borderColor: accentColor + '40' }} />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month <span className="text-red-400">*</span></label>
-                    <select value={form.birthdayMonth}
-                      onChange={function(e) { updateForm('birthdayMonth', e.target.value); }}
-                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm bg-white"
-                      style={{ borderColor: accentColor + '40' }}
-                      required>
-                      <option value="">Select month</option>
-                      {months.map(function(m) { return <option key={m} value={m}>{m}</option>; })}
-                    </select>
-                  </div>
-
-                  {customFieldLabel && (
-                    <div className="mb-4">
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">{customFieldLabel}</label>
-                      <input type="text" value={form.customField}
-                        onChange={function(e) { updateForm('customField', e.target.value); }}
-                        placeholder={'Enter ' + customFieldLabel.toLowerCase()}
-                        className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
-                        style={{ borderColor: accentColor + '40' }} />
-                    </div>
-                  )}
-
-                  {regError && (
-                    <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold text-center">
-                      {regError}
-                    </div>
-                  )}
-
-                  <button type="submit" disabled={submitting}
-                    className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50"
-                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-                    {submitting ? 'Creating your card...' : '🎁 Join & Get My Card'}
-                  </button>
-                </form>
-
-                <p className="text-xs text-gray-400 text-center mt-4">
-                  Already have a card?{' '}
-                  <button onClick={function() { setActiveTab('find'); }}
-                    className="font-bold border-0 bg-transparent cursor-pointer"
-                    style={{ color: accentColor }}>Find it here →</button>
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default PortalPage;
+export const colorPalettes = [
+  {
+    id: 1, name: "Deep Space", description: "Dark & dramatic with vivid purple accents",
+    backgroundColor: "#16161a", accentColor: "#7f5af0", borderColor: "#fffffe",
+    cardBackground: "#242629", headline: "#fffffe", paragraph: "#94a1b2",
+    buttonText: "#fffffe", highlight: "#7f5af0", secondary: "#72757e", tertiary: "#2cb67d",
+  },
+  {
+    id: 2, name: "Playful Purple", description: "Whimsical purple with coral pop",
+    backgroundColor: "#f4effc", accentColor: "#7c3aed", borderColor: "#1f1235",
+    cardBackground: "#ffffff", headline: "#1f1235", paragraph: "#4a3560",
+    buttonText: "#ffffff", highlight: "#7c3aed", secondary: "#67568c", tertiary: "#f472b6",
+  },
+  {
+    id: 3, name: "Teal & Coral", description: "Bold contrast with tropical energy",
+    backgroundColor: "#264653", accentColor: "#b5452a", borderColor: "#e9c46a",
+    cardBackground: "#f1faee", headline: "#264653", paragraph: "#4a6670",
+    buttonText: "#ffffff", highlight: "#e9c46a", secondary: "#f4a261", tertiary: "#2a9d8f",
+  },
+  {
+    id: 4, name: "Fresh Mint", description: "Crisp and clean with teal energy",
+    backgroundColor: "#d8eefe", accentColor: "#094067", borderColor: "#094067",
+    cardBackground: "#ffffff", headline: "#094067", paragraph: "#5f6c7b",
+    buttonText: "#fffffe", highlight: "#3da9fc", secondary: "#90b4ce", tertiary: "#ef4565",
+  },
+  {
+    id: 5, name: "Neo Brutalist", description: "High contrast black & orange fire",
+    backgroundColor: "#0f0e17", accentColor: "#ff8906", borderColor: "#fffffe",
+    cardBackground: "#232136", headline: "#fffffe", paragraph: "#a7a9be",
+    buttonText: "#0f0e17", highlight: "#ff8906", secondary: "#e53170", tertiary: "#f25f4c",
+  },
+  {
+    id: 6, name: "Royal Burgundy", description: "Rich, premium feel with gold accents",
+    backgroundColor: "#2d1117", accentColor: "#d4a853", borderColor: "#fdf6ec",
+    cardBackground: "#3d1a22", headline: "#fdf6ec", paragraph: "#d4a89a",
+    buttonText: "#2d1117", highlight: "#d4a853", secondary: "#8b4557", tertiary: "#c49b6b",
+  },
+  {
+    id: 7, name: "Midnight Garden", description: "Lush dark blues with gold accents",
+    backgroundColor: "#1a1a2e", accentColor: "#e2b714", borderColor: "#edf2f4",
+    cardBackground: "#0f3460", headline: "#edf2f4", paragraph: "#a8b2c1",
+    buttonText: "#1a1a2e", highlight: "#e2b714", secondary: "#533483", tertiary: "#e94560",
+  },
+  {
+    id: 8, name: "Ocean Breeze", description: "Cool blues with warm coral pop",
+    backgroundColor: "#004643", accentColor: "#f9bc60", borderColor: "#fffffe",
+    cardBackground: "#001e1d", headline: "#fffffe", paragraph: "#abd1c6",
+    buttonText: "#001e1d", highlight: "#f9bc60", secondary: "#e8e4e6", tertiary: "#abd1c6",
+  },
+  {
+    id: 9, name: "Candy Pop", description: "Bright & playful pink with deep purple",
+    backgroundColor: "#c41e6a", accentColor: "#3a0ca3", borderColor: "#fef6ff",
+    cardBackground: "#ffffff", headline: "#3a0ca3", paragraph: "#4a4e69",
+    buttonText: "#ffffff", highlight: "#4361ee", secondary: "#7209b7", tertiary: "#f472b6",
+  },
+  {
+    id: 10, name: "Forest Calm", description: "Earthy greens with natural warmth",
+    backgroundColor: "#1b4332", accentColor: "#2d6a4f", borderColor: "#d8f3dc",
+    cardBackground: "#f1faee", headline: "#1b4332", paragraph: "#2d6a4f",
+    buttonText: "#ffffff", highlight: "#95d5b2", secondary: "#52b788", tertiary: "#b7e4c7",
+  },
+  {
+    id: 11, name: "Warm Terracotta", description: "Mediterranean warmth, refined & grounded",
+    backgroundColor: "#3d405b", accentColor: "#c0503a", borderColor: "#f4f1de",
+    cardBackground: "#f4f1de", headline: "#3d405b", paragraph: "#5c5e6e",
+    buttonText: "#ffffff", highlight: "#f2cc8f", secondary: "#81b29a", tertiary: "#e07a5f",
+  },
+  {
+    id: 12, name: "Arctic Ice", description: "Icy blues with electric accents",
+    backgroundColor: "#e8f1f2", accentColor: "#023e8a", borderColor: "#023e8a",
+    cardBackground: "#ffffff", headline: "#023e8a", paragraph: "#4a5568",
+    buttonText: "#ffffff", highlight: "#0077b6", secondary: "#48cae4", tertiary: "#90e0ef",
+  },
+  {
+    id: 13, name: "Noir Luxe", description: "Jet black with amber gold elegance",
+    backgroundColor: "#0a0a0a", accentColor: "#d4a853", borderColor: "#f5f0e8",
+    cardBackground: "#1a1a1a", headline: "#f5f0e8", paragraph: "#b0a898",
+    buttonText: "#0a0a0a", highlight: "#d4a853", secondary: "#2a2a2a", tertiary: "#c49b6b",
+  },
+  {
+    id: 14, name: "Lavender Dream", description: "Soft purple with warm peach accents",
+    backgroundColor: "#e2d5f1", accentColor: "#7c3aed", borderColor: "#4a2c6e",
+    cardBackground: "#ffffff", headline: "#4a2c6e", paragraph: "#6b5b7b",
+    buttonText: "#ffffff", highlight: "#7c3aed", secondary: "#a78bba", tertiary: "#f9a875",
+  },
+  {
+    id: 15, name: "Citrus Burst", description: "Vibrant orange & yellow energy",
+    backgroundColor: "#bf5000", accentColor: "#ffd000", borderColor: "#fff5e0",
+    cardBackground: "#fffbf0", headline: "#3d0000", paragraph: "#5c4033",
+    buttonText: "#3d0000", highlight: "#ffea00", secondary: "#ff9100", tertiary: "#ffab40",
+  },
+  {
+    id: 16, name: "Sage & Clay", description: "Organic, natural, and grounding",
+    backgroundColor: "#4a4538", accentColor: "#5c6e47", borderColor: "#e8e0d0",
+    cardBackground: "#ffffff", headline: "#3c3836", paragraph: "#665c54",
+    buttonText: "#ffffff", highlight: "#a8c686", secondary: "#9a8c6c", tertiary: "#c4a882",
+  },
+  {
+    id: 17, name: "Electric Night", description: "Cyberpunk neon on dark canvas",
+    backgroundColor: "#0d0221", accentColor: "#0abdc6", borderColor: "#ea00d9",
+    cardBackground: "#150734", headline: "#0abdc6", paragraph: "#a0a3b5",
+    buttonText: "#0d0221", highlight: "#ea00d9", secondary: "#711c91", tertiary: "#133e7c",
+  },
+  {
+    id: 18, name: "Light Neutral", description: "Clean minimal light with AAA contrast",
+    backgroundColor: "#FFFFFF", accentColor: "#404040", borderColor: "#171717",
+    cardBackground: "#FAFAFA", headline: "#0A0A0A", paragraph: "#525252",
+    buttonText: "#FFFFFF", highlight: "#737373", secondary: "#E5E5E5", tertiary: "#D4D4D4",
+  },
+  {
+    id: 19, name: "Dark Neutral", description: "Sleek dark mode with AAA contrast",
+    backgroundColor: "#000000", accentColor: "#D4D4D4", borderColor: "#FAFAFA",
+    cardBackground: "#171717", headline: "#F5F5F5", paragraph: "#A3A3A3",
+    buttonText: "#000000", highlight: "#8A8A8A", secondary: "#262626", tertiary: "#373737",
+  },
+];
