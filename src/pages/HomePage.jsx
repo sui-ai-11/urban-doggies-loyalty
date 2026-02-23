@@ -44,9 +44,9 @@ function HomePage() {
 
   // Card text (cards are usually light)
   const cardIsDark = isDark(cardBg);
-  const cardHeading = cardIsDark ? '#ffffff' : borderColor;
+  const cardHeading = cardIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#1a1a2e');
   const cardText = cardIsDark ? '#d1d5db' : '#6b7280';
-  const cardSubtext = cardIsDark ? '#9ca3af' : accentColor;
+  const cardSubtext = cardIsDark ? '#9ca3af' : (isDark(accentColor) ? accentColor : '#4a4a5a');
 
   if (loading) {
     return (
@@ -139,7 +139,7 @@ function HomePage() {
               className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
               style={{ backgroundColor: accentColor }}
             >
-              <Users className="w-10 h-10 text-white" />
+              <Users style={{ width: 40, height: 40, color: btnOnAccent }} />
             </div>
             <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
               Loyalty Desk
@@ -165,7 +165,7 @@ function HomePage() {
               className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 shadow-lg"
               style={{ backgroundColor: accentColor }}
             >
-              <Settings className="w-10 h-10 text-white" />
+              <Settings style={{ width: 40, height: 40, color: btnOnAccent }} />
             </div>
             <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: cardHeading }}>
               Client Management
