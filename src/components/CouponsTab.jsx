@@ -132,19 +132,16 @@ function CouponsTab() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Type</label>
-            <input type="text" value={newCoupon.type}
+            <select value={newCoupon.type}
               onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { type: e.target.value, birthdayMonth: '' })); }}
-              placeholder="e.g. reward, discount, freebie, birthday"
-              list="coupon-types"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white" />
-            <datalist id="coupon-types">
-              <option value="reward" />
-              <option value="discount" />
-              <option value="freebie" />
-              <option value="promo" />
-              <option value="birthday" />
-              <option value="milestone" />
-            </datalist>
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
+              <option value="reward">Reward</option>
+              <option value="discount">Discount</option>
+              <option value="freebie">Freebie</option>
+              <option value="promo">Promo</option>
+              <option value="birthday">Birthday</option>
+              <option value="milestone">Milestone</option>
+            </select>
           </div>
           {newCoupon.type.toLowerCase() === 'birthday' && (
             <div>
