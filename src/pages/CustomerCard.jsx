@@ -172,8 +172,12 @@ function CustomerCard() {
       </div>
 
       {/* Card Container */}
-      <div className="relative z-10 max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
-        style={{ backgroundColor: cardBg, border: `3px solid ${borderColor}20` }}>
+      <div className="relative z-10 max-w-md mx-auto rounded-3xl overflow-hidden animate-slide-up"
+        style={{
+          backgroundColor: cardBg,
+          border: `2px solid ${accentColor}35`,
+          boxShadow: `0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px ${accentColor}15, inset 0 1px 0 ${accentColor}10`,
+        }}>
 
         {/* Header */}
         <div className="p-6 pb-4">
