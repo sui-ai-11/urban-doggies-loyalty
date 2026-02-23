@@ -123,11 +123,11 @@ export default function PortalPage() {
         <div className="glass-card rounded-3xl shadow-2xl overflow-hidden">
           <div className="flex">
             <button onClick={function() { setActiveTab('find'); }} className="flex-1 py-4 text-center font-bold text-sm transition-all flex items-center justify-center gap-2"
-              style={{ backgroundColor: activeTab === 'find' ? accentColor : 'transparent', color: activeTab === 'find' ? btnOnAccent : (bgIsDark ? '#ffffff80' : '#6b7280') }}>
+              style={{ backgroundColor: activeTab === 'find' ? accentColor : (accentColor + '18'), color: activeTab === 'find' ? btnOnAccent : headingColor }}>
               <CreditCard size={16} /> Find My Card
             </button>
             <button onClick={function() { setActiveTab('register'); }} className="flex-1 py-4 text-center font-bold text-sm transition-all flex items-center justify-center gap-2"
-              style={{ backgroundColor: activeTab === 'register' ? accentColor : 'transparent', color: activeTab === 'register' ? btnOnAccent : (bgIsDark ? '#ffffff80' : '#6b7280') }}>
+              style={{ backgroundColor: activeTab === 'register' ? accentColor : (accentColor + '18'), color: activeTab === 'register' ? btnOnAccent : headingColor }}>
               <UserPlus size={16} /> Register
             </button>
           </div>
