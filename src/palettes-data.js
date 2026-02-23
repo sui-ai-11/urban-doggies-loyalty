@@ -58,9 +58,9 @@ export const colorPalettes = [
   },
   {
     id: 10, name: "Forest Calm", description: "Earthy greens with natural warmth",
-    backgroundColor: "#1b4332", accentColor: "#95d5b2", borderColor: "#d8f3dc",
+    backgroundColor: "#1b4332", accentColor: "#2d6a4f", borderColor: "#d8f3dc",
     cardBackground: "#f1faee", headline: "#1b4332", paragraph: "#2d6a4f",
-    buttonText: "#1b4332", highlight: "#95d5b2", secondary: "#52b788", tertiary: "#b7e4c7",
+    buttonText: "#ffffff", highlight: "#95d5b2", secondary: "#52b788", tertiary: "#b7e4c7",
   },
   {
     id: 11, name: "Warm Terracotta", description: "Mediterranean warmth, refined & grounded",
@@ -94,9 +94,9 @@ export const colorPalettes = [
   },
   {
     id: 16, name: "Sage & Clay", description: "Organic, natural, and grounding",
-    backgroundColor: "#4a4538", accentColor: "#a8c686", borderColor: "#e8e0d0",
+    backgroundColor: "#4a4538", accentColor: "#5c6e47", borderColor: "#e8e0d0",
     cardBackground: "#ffffff", headline: "#3c3836", paragraph: "#665c54",
-    buttonText: "#3c3836", highlight: "#a8c686", secondary: "#9a8c6c", tertiary: "#c4a882",
+    buttonText: "#ffffff", highlight: "#a8c686", secondary: "#9a8c6c", tertiary: "#c4a882",
   },
   {
     id: 17, name: "Electric Night", description: "Cyberpunk neon on dark canvas",
