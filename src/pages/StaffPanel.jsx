@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Search } from 'lucide-react';
 
 function isDark(hex) {
   if (!hex) return true;
@@ -17,6 +18,7 @@ function StaffPanel() {
   var _d2 = useState([]), clientCoupons = _d2[0], setClientCoupons = _d2[1];
   var _e = useState(null), multipleResults = _e[0], setMultipleResults = _e[1];
   var _f = useState(false), showScanner = _f[0], setShowScanner = _f[1];
+  var _mn = useState(false), mobileNav = _mn[0], setMobileNav = _mn[1];
   var _g = useState(false), scanning = _g[0], setScanning = _g[1];
   var _h = useState(null), businessInfo = _h[0], setBusinessInfo = _h[1];
   var _i = useState([]), pendingClients = _i[0], setPendingClients = _i[1];
@@ -399,7 +401,8 @@ function StaffPanel() {
                 {businessInfo.businessName || 'Business'}
               </span>
             </a>
-            <div className="flex gap-2">
+            {/* Desktop links */}
+            <div className="hidden md:flex gap-2">
               {[
                 { href: '/#/', label: 'Home' },
                 { href: '/#/staff', label: 'Loyalty Desk', active: true },
@@ -407,13 +410,41 @@ function StaffPanel() {
               ].map(function(link) {
                 return (
                   <a key={link.href} href={link.href}
-                    className="px-4 py-2.5 rounded-xl font-semibold text-sm text-white no-underline flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-xl font-semibold text-sm no-underline flex items-center gap-2"
                     style={{ backgroundColor: link.active ? accentColor : 'rgba(255,255,255,0.1)', color: link.active ? (isLightColor(accentColor) ? '#1a1a2e' : '#ffffff') : '#ffffff' }}>
                     {link.label}
                   </a>
                 );
               })}
             </div>
+            {/* Mobile hamburger */}
+            <button className="md:hidden p-2 rounded-xl text-white"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+              onClick={function() { setMobileNav(!mobileNav); }}>
+              <span style={{ fontSize: '22px' }}>{mobileNav ? '✕' : '☰'}</span>
+            </button>
+          </div>
+          {/* Mobile menu */}
+          {mobileNav && (
+            <div className="md:hidden mt-3 flex flex-col gap-2 pb-2">
+              {[
+                { href: '/#/', label: 'Home' },
+                { href: '/#/staff', label: 'Loyalty Desk', active: true },
+                { href: '/#/admin', label: 'Client Management' },
+              ].map(function(link) {
+                return (
+                  <a key={link.href} href={link.href}
+                    className="px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-3 text-white no-underline"
+                    style={{ backgroundColor: link.active ? accentColor : 'rgba(255,255,255,0.1)', color: link.active ? (isLightColor(accentColor) ? '#1a1a2e' : '#ffffff') : '#ffffff' }}
+                    onClick={function() { setMobileNav(false); }}>
+                    {link.label}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </nav>
           </div>
         </div>
       </nav>
@@ -531,7 +562,7 @@ function StaffPanel() {
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-18 h-18 rounded-2xl mb-4 shadow-lg p-4"
                 style={{ backgroundColor: accentColor }}>
-                <span style={{ fontSize: '36px' }}>🔍</span>
+                <Search size={36} style={{ color: '#ffffff' }} />
               </div>
               <h2 className="text-2xl font-bold tracking-tight" style={{ color: panelText }}>Customer Check-In</h2>
             </div>
@@ -559,7 +590,7 @@ function StaffPanel() {
               <button type="submit" disabled={loading || !searchInput.trim()}
                 className="w-full py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-3"
                 style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-                {loading ? '⏳ Searching…' : '🔍 Search Customer'}
+                {loading ? '⏳ Searching…' : <><Search size={20} /> Search Customer</>}
               </button>
             </form>
           </div>
