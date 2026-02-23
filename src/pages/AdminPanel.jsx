@@ -312,8 +312,8 @@ function AdminPanel() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="text-center mb-8 animate-slide-up">
-          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Client Management</h1>
-          <p className="text-white text-opacity-80 font-light text-lg">Manage your loyalty system</p>
+          <h1 className="text-4xl font-black mb-2 tracking-tight" style={{ color: bgIsDark ? '#ffffff' : borderColor }}>Client Management</h1>
+          <p className="font-light text-lg" style={{ color: bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99` }}>Manage your loyalty system</p>
         </div>
 
         {/* Glass Tab Container */}
