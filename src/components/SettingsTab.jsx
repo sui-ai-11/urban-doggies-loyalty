@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { iconRegistry, iconKeys, renderIcon } from '../icon-registry';
+
+function isDarkColor(hex) {
+  if (!hex) return true;
+  var c = hex.replace('#', '');
+  return (0.299 * parseInt(c.substring(0,2),16) + 0.587 * parseInt(c.substring(2,4),16) + 0.114 * parseInt(c.substring(4,6),16)) / 255 < 0.5;
+}
 
 function SettingsTab() {
   var _a = useState(null), businessInfo = _a[0], setBusinessInfo = _a[1];
@@ -220,20 +227,24 @@ function SettingsTab() {
 
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Stamp Icon (filled)</h4>
             <div className="mb-4">
-              <div className="flex gap-2 flex-wrap">
-                {['✓', '⭐', '🐾', '❤️', '✨', '🔥', '💎', '🌸', '🦴', '🎵', '☕', '🍕'].map(function(emoji) {
+              <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 max-h-40 overflow-y-auto p-2 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+                {iconKeys.map(function(key) {
+                  var selected = fields.stampFilledIcon === key;
                   return (
-                    <button key={emoji} onClick={function() { updateField('stampFilledIcon', emoji); }}
-                      className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
+                    <button key={key} onClick={function() { updateField('stampFilledIcon', key); }}
+                      title={iconRegistry[key].label}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                       style={{
-                        backgroundColor: fields.stampFilledIcon === emoji ? accentColor + '20' : '#f3f4f6',
-                        border: fields.stampFilledIcon === emoji ? '2px solid ' + accentColor : '2px solid transparent'
+                        backgroundColor: selected ? accentColor : '#ffffff',
+                        border: selected ? '2px solid ' + accentColor : '1px solid #e5e7eb',
+                        color: selected ? (isDarkColor(accentColor) ? '#ffffff' : '#1a1a2e') : '#6b7280',
                       }}>
-                      {emoji}
+                      {renderIcon(key, 18, selected ? (isDarkColor(accentColor) ? '#ffffff' : '#1a1a2e') : '#6b7280')}
                     </button>
                   );
                 })}
               </div>
+              <p className="text-xs text-gray-400 mt-1.5">Selected: <span className="font-semibold" style={{ color: panelAccent }}>{iconRegistry[fields.stampFilledIcon] ? iconRegistry[fields.stampFilledIcon].label : fields.stampFilledIcon}</span></p>
             </div>
 
             <h4 className="font-bold text-sm mt-6 mb-2" style={{ color: panelText }}>
@@ -345,7 +356,6 @@ function SettingsTab() {
                   </button>
 
                   {currentTierMs.map(function(ms, idx) {
-                    var emojiOptions = ['🎁', '⭐', '🎉', '🔥', '💎', '🌟', '🎯', '🏅', '🏆', '👑', '🐾', '🦴', '❤️', '✨', '☕', '🍕'];
                     return (
                       <div key={idx} className="rounded-xl p-4 mb-3" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
                         <div className="flex items-center justify-between mb-3">
@@ -377,22 +387,25 @@ function SettingsTab() {
                           </div>
                           <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Icon</label>
-                            <div className="flex gap-1 flex-wrap">
-                              {emojiOptions.map(function(emoji) {
+                            <div className="grid grid-cols-6 gap-1 max-h-28 overflow-y-auto p-1 rounded-lg" style={{ backgroundColor: '#f9fafb' }}>
+                              {iconKeys.map(function(key) {
+                                var selected = ms.icon === key;
                                 return (
-                                  <button key={emoji} onClick={function() {
+                                  <button key={key} onClick={function() {
                                     var newTiers = Object.assign({}, allTiers);
                                     var ms2 = (newTiers[activeTier] || []).slice();
-                                    ms2[idx] = Object.assign({}, ms2[idx], { icon: emoji });
+                                    ms2[idx] = Object.assign({}, ms2[idx], { icon: key });
                                     newTiers[activeTier] = ms2;
                                     updateTiers(newTiers);
                                   }}
-                                    className="w-7 h-7 rounded-md text-sm flex items-center justify-center"
+                                    title={iconRegistry[key].label}
+                                    className="w-7 h-7 rounded-md flex items-center justify-center transition-all hover:scale-110"
                                     style={{
-                                      backgroundColor: ms.icon === emoji ? accentColor + '20' : '#f3f4f6',
-                                      border: ms.icon === emoji ? '2px solid ' + accentColor : '1px solid transparent'
+                                      backgroundColor: selected ? accentColor : '#ffffff',
+                                      border: selected ? '2px solid ' + accentColor : '1px solid #e5e7eb',
+                                      color: selected ? (isDarkColor(accentColor) ? '#ffffff' : '#1a1a2e') : '#6b7280',
                                     }}>
-                                    {emoji}
+                                    {renderIcon(key, 14, selected ? (isDarkColor(accentColor) ? '#ffffff' : '#1a1a2e') : '#6b7280')}
                                   </button>
                                 );
                               })}
