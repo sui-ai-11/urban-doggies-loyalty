@@ -14,6 +14,7 @@ function isDark(hex) {
 function HomePage() {
   const [businessInfo, setBusinessInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
     const fetchBusinessInfo = async () => {
@@ -93,8 +94,8 @@ function HomePage() {
               </span>
             </div>
 
-            {/* Navigation Links */}
-            <div className="flex gap-2">
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex gap-2">
               {[
                 { href: '/#/', icon: Home, label: 'Home' },
                 { href: '/#/staff', icon: Users, label: 'Loyalty Desk' },
@@ -111,7 +112,31 @@ function HomePage() {
                 </a>
               ))}
             </div>
+            {/* Mobile hamburger */}
+            <button className="md:hidden p-2 rounded-xl"
+              style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)', color: navText }}
+              onClick={() => setMobileNav(!mobileNav)}>
+              <span style={{ fontSize: '22px' }}>{mobileNav ? '✕' : '☰'}</span>
+            </button>
           </div>
+          {/* Mobile menu */}
+          {mobileNav && (
+            <div className="md:hidden mt-3 flex flex-col gap-2 pb-2">
+              {[
+                { href: '/#/', icon: Home, label: 'Home' },
+                { href: '/#/staff', icon: Users, label: 'Loyalty Desk' },
+                { href: '/#/admin', icon: Settings, label: 'Client Management' },
+              ].map(({ href, icon: Icon, label }) => (
+                <a key={href} href={href}
+                  className="px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-3 no-underline"
+                  style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', color: navText }}
+                  onClick={() => setMobileNav(false)}>
+                  <Icon className="w-5 h-5" />
+                  {label}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </nav>
 
