@@ -382,13 +382,13 @@ function AdminPanel() {
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Name, token, or mobile..."
                       className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-200 text-sm"
-                      style={{ borderColor: `${accentColor}40`, focusBorderColor: accentColor }} />
+                      style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Sort By</label>
                     <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
                       className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                      style={{ borderColor: `${accentColor}40` }}>
+                      style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                       <option value="name">Name (A-Z)</option>
                       <option value="visits-high">Visits (High → Low)</option>
                       <option value="visits-low">Visits (Low → High)</option>
@@ -398,7 +398,7 @@ function AdminPanel() {
                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
                     <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}
                       className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                      style={{ borderColor: `${accentColor}40` }}>
+                      style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                       <option value="all">All Months</option>
                       {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
                         <option key={m} value={m}>{m}</option>
@@ -479,14 +479,14 @@ function AdminPanel() {
                       <input type="text" value={newClient.firstName}
                         onChange={(e) => setNewClient({ ...newClient, firstName: e.target.value })}
                         required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
-                        style={{ borderColor: `${accentColor}40` }} />
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Last Name *</label>
                       <input type="text" value={newClient.lastName}
                         onChange={(e) => setNewClient({ ...newClient, lastName: e.target.value })}
                         required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
-                        style={{ borderColor: `${accentColor}40` }} />
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                     </div>
                   </div>
                   {[
@@ -499,7 +499,7 @@ function AdminPanel() {
                         onChange={(e) => setNewClient({ ...newClient, [key]: e.target.value })}
                         placeholder={placeholder || ''} required={required}
                         className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
-                        style={{ borderColor: `${accentColor}40` }} />
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                     </div>
                   ))}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -516,14 +516,14 @@ function AdminPanel() {
                           setNewClient({ ...newClient, birthday: val, birthdayMonth: month });
                         }}
                         className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
-                        style={{ borderColor: `${accentColor}40` }} />
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month *</label>
                       <select value={newClient.birthdayMonth}
                         onChange={(e) => setNewClient({ ...newClient, birthdayMonth: e.target.value })}
                         required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                        style={{ borderColor: `${accentColor}40` }}>
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                         <option value="">Select month…</option>
                         {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
                           <option key={m} value={m}>{m}</option>
