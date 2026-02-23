@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Gift, MessageCircle, Star, ChevronRight, Phone } from 'lucide-react';
+import { renderIcon } from '../icon-registry';
 
 // Helper: determine if a hex color is dark
 function isDark(hex) {
@@ -91,7 +92,7 @@ function CustomerCard() {
   // Pending approval screen
   if (clientData && clientData.status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#0d0221' }}>
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#16161a' }}>
         <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
           <div className="text-5xl mb-4">⏳</div>
           <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
@@ -328,7 +329,8 @@ function CustomerCard() {
                               borderColor: isFilled ? 'transparent' : `${accentColor}40`,
                               color: isFilled ? '#FFFFFF' : subtextColor,
                             }}>
-                            {ms ? ms.icon : (isFilled ? stampIcon : pos)}
+                            {ms ? renderIcon(ms.icon, 18, isFilled ? '#FFFFFF' : subtextColor)
+                              : (isFilled ? renderIcon(stampIcon, 18, '#FFFFFF') : pos)}
                           </div>
                         );
                       })}
@@ -370,7 +372,7 @@ function CustomerCard() {
                             opacity: milestoneClaimed ? 0.6 : 1,
                           }}>
                           <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                            style={{ backgroundColor: milestoneClaimed ? '#f3f4f6' : `${accentColor}15` }}>{m.icon}</div>
+                            style={{ backgroundColor: milestoneClaimed ? '#f3f4f6' : `${accentColor}15` }}>{renderIcon(m.icon, 20, milestoneClaimed ? '#9ca3af' : accentColor)}</div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-sm" style={{ color: milestoneClaimed ? '#9ca3af' : headingColor }}>{m.label}</p>
                             <p className="text-xs" style={{ color: subtextColor }}>{m.description || `Visit ${m.position} reward`}</p>
