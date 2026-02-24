@@ -87,7 +87,62 @@ export default function PortalPage() {
       .finally(function() { setSubmitting(false); });
   }
 
+  // Poll for approval status when result exists
+  var _ap = useState('pending'), approvalStatus = _ap[0], setApprovalStatus = _ap[1];
+  
+  useEffect(function() {
+    if (!result || !result.client || !result.client.token) return;
+    var token = result.client.token;
+    var interval = setInterval(function() {
+      fetch('/api/client-dashboard?token=' + encodeURIComponent(token))
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (data && data.client) {
+            var status = (data.client.status || '').toLowerCase();
+            if (status === 'approved' || status === '') {
+              setApprovalStatus('approved');
+              clearInterval(interval);
+            } else if (status === 'rejected') {
+              setApprovalStatus('rejected');
+              clearInterval(interval);
+            }
+          }
+        })
+        .catch(function() {});
+    }, 3000);
+    return function() { clearInterval(interval); };
+  }, [result]);
+
   if (result) {
+    if (approvalStatus === 'approved') {
+      return (
+        <div className="min-h-screen py-8 px-4" style={{ backgroundColor: bgColor }}>
+          <div className="fixed inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-10 right-10 w-60 h-60 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: accentColor }}></div>
+            <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: borderColor }}></div>
+          </div>
+          <div className="relative z-10 max-w-md mx-auto">
+            <div className="glass-card rounded-3xl p-8 shadow-2xl text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ backgroundColor: '#10b981' }}>
+                <Sparkles size={28} color="#ffffff" />
+              </div>
+              <h1 className="text-2xl font-black mb-2" style={{ color: headingColor }}>You're In, {result.client.name}!</h1>
+              <p className="text-gray-500 mb-6">Your loyalty card is ready.</p>
+              <button onClick={function() { window.location.hash = '/card?token=' + result.client.token; }}
+                className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg flex items-center justify-center gap-2 mb-3"
+                style={{ backgroundColor: accentColor, color: btnOnAccent }}>
+                <CreditCard size={20} /> View My Card
+              </button>
+              <div className="bg-white rounded-2xl p-3 border shadow-sm" style={{ borderColor: accentColor + '30' }}>
+                <p className="text-xs text-gray-400 mb-1">Your token</p>
+                <p className="font-mono font-bold text-lg tracking-widest" style={{ color: linkColor }}>{result.client.token}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen py-8 px-4" style={{ backgroundColor: bgColor }}>
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -102,14 +157,16 @@ export default function PortalPage() {
             <h1 className="text-2xl font-black mb-2" style={{ color: headingColor }}>Thank You, {result.client.name}!</h1>
             <p className="text-gray-500 mb-6">Your registration has been submitted.</p>
             <div className="rounded-2xl p-5 mb-6" style={{ backgroundColor: accentColor + '10', border: '2px solid ' + accentColor + '20' }}>
-              <p className="font-bold text-lg mb-1" style={{ color: headingColor }}>Pending Approval</p>
-              <p className="text-sm text-gray-500">Please show this screen to the staff at the counter to activate your loyalty card.</p>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: accentColor }}></div>
+                <p className="font-bold text-lg" style={{ color: headingColor }}>Waiting for Approval</p>
+              </div>
+              <p className="text-sm text-gray-500">Please show this screen to the staff at the counter. This page will update automatically.</p>
             </div>
             <div className="bg-white rounded-2xl p-4 mb-4 border shadow-sm" style={{ borderColor: accentColor + '30' }}>
               <p className="text-xs text-gray-400 mb-1">Your token</p>
               <p className="font-mono font-bold text-2xl tracking-widest" style={{ color: linkColor }}>{result.client.token}</p>
             </div>
-            <p className="text-xs text-gray-400 mb-2">Save your token above. Once approved, use it to access your loyalty card anytime.</p>
           </div>
         </div>
       </div>
