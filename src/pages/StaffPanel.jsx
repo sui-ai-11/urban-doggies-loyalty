@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Eye, Copy, ArrowLeft, Camera } from 'lucide-react';
+import { Search, Eye, Copy, ArrowLeft, Camera, Lock } from 'lucide-react';
 import { renderIcon } from '../icon-registry';
 
 function isDark(hex) {
@@ -12,6 +12,9 @@ function isDark(hex) {
 }
 
 function StaffPanel() {
+  var _lock = useState(true), isLocked = _lock[0], setIsLocked = _lock[1];
+  var _pin = useState(''), pinInput = _pin[0], setPinInput = _pin[1];
+  var _pinErr = useState(''), pinError = _pinErr[0], setPinError = _pinErr[1];
   var _a = useState(''), searchInput = _a[0], setSearchInput = _a[1];
   var _b = useState(false), loading = _b[0], setLoading = _b[1];
   var _c = useState(''), message = _c[0], setMessage = _c[1];
@@ -376,6 +379,68 @@ function StaffPanel() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-600"></div>
+      </div>
+    );
+  }
+
+  var staffPin = businessInfo.staffPin || businessInfo.adminPin || '1234';
+
+  function handlePinSubmit() {
+    if (pinInput === staffPin) {
+      setIsLocked(false);
+      setPinError('');
+    } else {
+      setPinError('Incorrect PIN');
+    }
+  }
+
+  if (isLocked) {
+    var bgIsDarkPin = isLightColor(bgColor) ? false : true;
+    var navTextPin = bgIsDarkPin ? '#ffffff' : (isLightColor(borderColor) ? '#1a1a2e' : borderColor);
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+        <nav className="relative z-20" style={{ backgroundColor: isLightColor(borderColor) ? '#1a1a2e' : borderColor }}>
+          <div className="max-w-7xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-between">
+              <a href="/#/" className="flex items-center gap-3 no-underline">
+                {businessInfo.logo ? (
+                  <img src={businessInfo.logo} alt={businessInfo.businessName}
+                    className="h-12 w-12 object-contain rounded-xl p-1.5"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    onError={function(e) { e.target.style.display = 'none'; }} />
+                ) : (
+                  <div className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg"
+                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
+                    {(businessInfo.businessName || 'B').charAt(0)}
+                  </div>
+                )}
+                <span className="text-xl font-bold text-white tracking-tight hidden sm:inline">
+                  {businessInfo.businessName || 'Business'}
+                </span>
+              </a>
+            </div>
+          </div>
+        </nav>
+        <div className="flex items-center justify-center p-6" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
+            <Lock size={28} color={accentColor} />
+            <h2 className="text-xl font-black mt-3 mb-1" style={{ color: '#1a1a2e' }}>Loyalty Desk</h2>
+            <p className="text-gray-500 text-sm mb-6">Enter PIN to access</p>
+            <input type="password" value={pinInput}
+              onChange={function(e) { setPinInput(e.target.value); setPinError(''); }}
+              onKeyDown={function(e) { if (e.key === 'Enter') handlePinSubmit(); }}
+              placeholder="Enter PIN"
+              className="w-full px-5 py-4 rounded-2xl border-2 text-center text-2xl tracking-widest font-mono mb-4"
+              style={{ borderColor: accentColor + '40' }}
+              autoFocus />
+            {pinError && <p className="text-red-500 text-sm font-semibold mb-3">{pinError}</p>}
+            <button onClick={handlePinSubmit}
+              className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg"
+              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
+              Unlock
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
