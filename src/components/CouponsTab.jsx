@@ -161,7 +161,6 @@ function CouponsTab() {
                   return <option key={m} value={m}>{m} ({count} celebrant{count !== 1 ? 's' : ''})</option>;
                 })}
               </select>
-              </select>
             </div>
           )}
           <div>
