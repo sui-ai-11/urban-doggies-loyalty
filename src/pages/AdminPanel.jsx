@@ -153,7 +153,7 @@ function AdminPanel() {
     e.preventDefault();
     if (!newClient.firstName.trim() || !newClient.lastName.trim()) { setMessage('⚠️ First name and last name are required'); return; }
     if (!newClient.mobile.trim()) { setMessage('⚠️ Mobile number is required'); return; }
-    if (!newClient.birthdayMonth) { setMessage('⚠️ Birthday month is required'); return; }
+    if (!newClient.birthday) { setMessage('⚠️ Birthday is required'); return; }
     var fullName = newClient.firstName.trim() + ' ' + newClient.lastName.trim();
     try {
       setLoading(true); setMessage('');
@@ -438,7 +438,7 @@ function AdminPanel() {
                                 <span className="text-sm text-gray-600">{client.mobile || '—'}</span>
                               </td>
                               <td className="px-5 py-4">
-                                <span className="text-sm text-gray-600">{client.birthday || '—'}</span>
+                                <span className="text-sm text-gray-600" title={client.birthday || ''}>{client.birthdayMonth || client.birthday || '—'}</span>
                               </td>
                               <td className="px-5 py-4">
                                 <span className="font-bold text-sm" style={{ color: panelAccent }}>
@@ -502,34 +502,20 @@ function AdminPanel() {
                         style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                     </div>
                   ))}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
-                      <input type="date" value={newClient.birthday}
-                        onChange={(e) => {
-                          var val = e.target.value;
-                          var month = '';
-                          if (val) {
-                            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                            month = months[parseInt(val.split('-')[1]) - 1] || '';
-                          }
-                          setNewClient({ ...newClient, birthday: val, birthdayMonth: month });
-                        }}
-                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
-                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month *</label>
-                      <select value={newClient.birthdayMonth}
-                        onChange={(e) => setNewClient({ ...newClient, birthdayMonth: e.target.value })}
-                        required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
-                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
-                        <option value="">Select month…</option>
-                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m =>
-                          <option key={m} value={m}>{m}</option>
-                        )}
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday *</label>
+                    <input type="date" value={newClient.birthday}
+                      onChange={(e) => {
+                        var val = e.target.value;
+                        var month = '';
+                        if (val) {
+                          var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                          month = months[parseInt(val.split('-')[1]) - 1] || '';
+                        }
+                        setNewClient({ ...newClient, birthday: val, birthdayMonth: month });
+                      }}
+                      required className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all text-sm"
+                      style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }} />
                   </div>
                   <button type="submit" disabled={loading}
                     className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
