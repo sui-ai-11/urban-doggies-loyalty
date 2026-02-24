@@ -508,7 +508,7 @@ function CustomerCard() {
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
                     style={{ backgroundColor: '#10b981' }}>
-                    <span style={{ fontSize: '20px' }}>📝</span>
+                    <MessageCircle size={20} style={{ color: '#ffffff' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>{business.feedbackLabel || 'Send Feedback'}</p>
