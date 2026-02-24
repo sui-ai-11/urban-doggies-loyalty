@@ -75,7 +75,7 @@ export default function PortalPage() {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) { setRegError('First name and last name are required'); return; }
     if (!form.mobile.trim()) { setRegError('Mobile number is required'); return; }
-    if (!form.birthdayMonth) { setRegError('Birthday month is required'); return; }
+    if (!form.birthday) { setRegError('Birthday is required'); return; }
     setSubmitting(true); setRegError('');
     fetch('/api/register-client', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -262,12 +262,18 @@ export default function PortalPage() {
                       className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm" style={{ borderColor: accentColor + '40' }} />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month <span className="text-red-400">*</span></label>
-                    <select value={form.birthdayMonth} onChange={function(e) { updateForm('birthdayMonth', e.target.value); }}
-                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm bg-white" style={{ borderColor: accentColor + '40' }} required>
-                      <option value="">Select month</option>
-                      {months.map(function(m) { return <option key={m} value={m}>{m}</option>; })}
-                    </select>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday <span className="text-red-400">*</span></label>
+                    <input type="date" value={form.birthday}
+                      onChange={function(e) {
+                        var val = e.target.value;
+                        var month = '';
+                        if (val) {
+                          var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                          month = monthNames[parseInt(val.split('-')[1], 10) - 1] || '';
+                        }
+                        setForm(Object.assign({}, form, { birthday: val, birthdayMonth: month }));
+                      }}
+                      className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm" style={{ borderColor: accentColor + '40' }} required />
                   </div>
                   {customFieldLabel && (
                     <div className="mb-4">
