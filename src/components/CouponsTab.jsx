@@ -147,12 +147,20 @@ function CouponsTab() {
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
               <select value={newCoupon.birthdayMonth}
-                onChange={function(e) { setNewCoupon(Object.assign({}, newCoupon, { birthdayMonth: e.target.value })); }}
+                onChange={function(e) { 
+                  var month = e.target.value;
+                  setNewCoupon(Object.assign({}, newCoupon, { 
+                    birthdayMonth: month, 
+                    clientID: month ? 'bday_' + month : '' 
+                  })); 
+                }}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm bg-white">
                 <option value="">Select month...</option>
                 {['January','February','March','April','May','June','July','August','September','October','November','December'].map(function(m) {
-                  return <option key={m} value={m}>{m}</option>;
+                  var count = clients.filter(function(c) { return (c.birthdayMonth || '').toLowerCase() === m.toLowerCase(); }).length;
+                  return <option key={m} value={m}>{m} ({count} celebrant{count !== 1 ? 's' : ''})</option>;
                 })}
+              </select>
               </select>
             </div>
           )}
