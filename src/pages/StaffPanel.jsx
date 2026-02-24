@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Eye, Copy, ArrowLeft, Camera } from 'lucide-react';
 import { renderIcon } from '../icon-registry';
 
 function isDark(hex) {
@@ -568,7 +568,7 @@ function StaffPanel() {
             <button type="button" onClick={startScanner}
               className="w-full py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-3 mb-4"
               style={{ backgroundColor: borderColor, color: btnOnBorder }}>
-              📷 Scan QR Code
+              <Camera size={20} /> Scan QR Code
             </button>
 
             <div className="text-center text-gray-400 font-semibold text-sm my-4">OR</div>
@@ -842,27 +842,29 @@ function StaffPanel() {
                 window.open(window.location.origin + '/#/card?token=' + clientInfo.token, '_blank');
               }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
-                👁️ View Card
+                <Eye size={14} /> View Card
               </button>
               <button onClick={function() {
-                fetch('/api/send-card-link', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: clientInfo.token }),
-                })
-                  .then(function(r) { return r.json(); })
-                  .then(function(data) {
-                    if (data.success) setMessage('✅ Card link emailed!');
-                    else setMessage('❌ ' + (data.error || 'Failed'));
-                  })
-                  .catch(function() { setMessage('❌ Failed to send'); });
+                var link = window.location.origin + '/#/card?token=' + clientInfo.token;
+                navigator.clipboard.writeText(link).then(function() {
+                  setMessage('✅ Card link copied!');
+                }).catch(function() {
+                  // Fallback for older browsers
+                  var ta = document.createElement('textarea');
+                  ta.value = link;
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                  setMessage('✅ Card link copied!');
+                });
               }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
-                📧 Email Link
+                <Copy size={14} /> Copy Link
               </button>
               <button onClick={function() { setClientInfo(null); setClientCoupons([]); setMessage(''); setSearchInput(''); }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition">
-                ← Back
+                <ArrowLeft size={14} /> Back
               </button>
             </div>
           </div>
