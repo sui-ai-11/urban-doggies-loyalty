@@ -137,9 +137,9 @@ export default async function handler(req, res) {
     const progress = visitCount % business.stampsRequired;
     const nextRewardIn = business.stampsRequired - progress;
 
-    // Get coupons for this client (match by clientID or token, plus global)
+    // Get coupons for this client (match by clientID or token only - no global)
     const coupons = ((couponsRes.data.values) || []).filter(row => 
-      row[2] === client.clientID || row[2] === client.token || row[2] === '' || row[2] === undefined
+      row[2] === client.clientID || row[2] === client.token
     ).map(row => ({
       couponID: row[0],
       clientName: row[3] || '',
