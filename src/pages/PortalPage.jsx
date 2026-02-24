@@ -27,7 +27,19 @@ export default function PortalPage() {
   var borderColor = (businessInfo && businessInfo.borderColor) || '#fffffe';
   var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var bgIsDark = isDark(bgColor);
-  var headingColor = isDark(borderColor) ? borderColor : '#1a1a2e';
+  // Smart heading color: must be readable on glass card (~white bg)
+  var headingColor = (function() {
+    if (!isDark(borderColor)) return '#1a1a2e';
+    // Check contrast of borderColor against white
+    var c = borderColor.replace('#','');
+    var r = parseInt(c.substring(0,2),16)/255, g = parseInt(c.substring(2,4),16)/255, b = parseInt(c.substring(4,6),16)/255;
+    r = r <= 0.03928 ? r/12.92 : Math.pow((r+0.055)/1.055, 2.4);
+    g = g <= 0.03928 ? g/12.92 : Math.pow((g+0.055)/1.055, 2.4);
+    b = b <= 0.03928 ? b/12.92 : Math.pow((b+0.055)/1.055, 2.4);
+    var lumBorder = 0.2126*r + 0.7152*g + 0.0722*b;
+    var contrast = (1.05) / (lumBorder + 0.05);
+    return contrast >= 4.5 ? borderColor : '#1a1a2e';
+  })();
   var heroText = bgIsDark ? '#ffffff' : headingColor;
   var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
   var linkColor = isDark(accentColor) ? accentColor : '#1a1a2e';
@@ -97,7 +109,7 @@ export default function PortalPage() {
               <p className="text-xs text-gray-400 mb-1">Your token</p>
               <p className="font-mono font-bold text-2xl tracking-widest" style={{ color: linkColor }}>{result.client.token}</p>
             </div>
-            <p className="text-xs text-gray-400 mb-2">Once approved, your card link will be sent to your email.</p>
+            <p className="text-xs text-gray-400 mb-2">Save your token above. Once approved, use it to access your loyalty card anytime.</p>
           </div>
         </div>
       </div>
