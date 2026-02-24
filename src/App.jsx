@@ -6,21 +6,26 @@ import StaffPanel from './pages/StaffPanel';
 import PortalPage from './pages/PortalPage';
 
 function getView() {
-  var hash = window.location.hash || '';
-  if (hash.indexOf('portal') > -1) return 'portal';
-  if (hash.indexOf('register') > -1) return 'portal';
-  if (hash.indexOf('staff') > -1) return 'staff';
-  if (hash.indexOf('admin') > -1) return 'admin';
-  if (hash.indexOf('card') > -1) return 'customer';
-  if (hash.indexOf('token') > -1) return 'customer';
-  var path = window.location.pathname || '/';
-  if (path.indexOf('register') > -1) return 'portal';
-  if (path.indexOf('staff') > -1) return 'staff';
-  if (path.indexOf('admin') > -1) return 'admin';
-  if (path.indexOf('card') > -1) return 'customer';
+  var hash = (window.location.hash || '').replace('#', '').replace(/^\//, '').split('?')[0].toLowerCase();
+  
+  // Exact route matching
+  if (hash === 'portal' || hash === 'register') return 'portal';
+  if (hash === 'staff') return 'staff';
+  if (hash === 'admin') return 'admin';
+  if (hash === 'card') return 'customer';
+  
+  // Token in hash query
+  if ((window.location.hash || '').indexOf('token=') > -1) return 'customer';
+  
+  // Token in URL search params
   var search = window.location.search || '';
-  if (search.indexOf('token') > -1) return 'customer';
-  return 'home';
+  if (search.indexOf('token=') > -1) return 'customer';
+  
+  // Only show homepage for exact root
+  if (hash === '' || hash === '/') return 'home';
+  
+  // Unknown route → portal (safe public page)
+  return 'portal';
 }
 
 class ErrorBoundary extends React.Component {
