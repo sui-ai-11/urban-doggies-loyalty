@@ -110,6 +110,40 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'Coupon redeemed' });
       }
 
+      // VOID action
+      if (body.action === 'void' && body.couponID) {
+        var voidRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A2:Z',
+        });
+        var voidRows = voidRes.data.values || [];
+        var voidIdx = -1;
+        for (var vr = 0; vr < voidRows.length; vr++) {
+          if (voidRows[vr][0] === body.couponID) { voidIdx = vr; break; }
+        }
+        if (voidIdx === -1) return res.status(404).json({ error: 'Coupon not found' });
+
+        var voidSheetRow = voidIdx + 2;
+        // Set redeemed column to VOIDED
+        var voidHeaderRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A1:Z1',
+        });
+        var voidHeaders = (voidHeaderRes.data.values || [[]])[0].map(function(h) { return (h || '').toLowerCase().trim().replace(/\s/g, ''); });
+        var voidRedeemedCol = 7;
+        for (var vh = 0; vh < voidHeaders.length; vh++) {
+          if (voidHeaders[vh] === 'redeemed' || voidHeaders[vh] === 'isredeemed' || voidHeaders[vh] === 'claimed') { voidRedeemedCol = vh; break; }
+        }
+        var vColLetter = String.fromCharCode(65 + voidRedeemedCol);
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!' + vColLetter + voidSheetRow,
+          valueInputOption: 'RAW',
+          resource: { values: [['VOIDED']] },
+        });
+        return res.status(200).json({ success: true, message: 'Coupon voided' });
+      }
+
       var targetClientID = body.clientID || '';
 
       // Check if this is a birthday promo for multiple clients
@@ -175,24 +209,66 @@ export default async function handler(req, res) {
         });
       }
 
-      // Single client or global coupon
+      // Single client or ALL clients (explode into individual rows)
+      if (!targetClientID || targetClientID === '') {
+        // GLOBAL: create individual coupon for every approved client
+        var allClRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: 'Clients!A2:L',
+        });
+        var allClRows = allClRes.data.values || [];
+        var globalRows = [];
+        for (var g = 0; g < allClRows.length; g++) {
+          var gStatus = (allClRows[g][11] || '').toLowerCase();
+          if (gStatus === 'rejected' || gStatus === 'pending') continue;
+          var gID = 'CPN_' + Date.now().toString(36).toUpperCase() + '_' + g;
+          globalRows.push([
+            gID,
+            body.businessID || 'BIZ_001',
+            allClRows[g][0],
+            allClRows[g][2] || '',
+            body.type || 'reward',
+            body.text || '',
+            new Date().toISOString().split('T')[0],
+            body.expiryDate || '',
+            'FALSE',
+            '',
+            '',
+            body.notes || '',
+            '',
+          ]);
+        }
+        if (globalRows.length === 0) {
+          return res.status(400).json({ error: 'No approved clients found' });
+        }
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SHEET_ID,
+          range: 'Coupons!A2:M',
+          valueInputOption: 'RAW',
+          resource: { values: globalRows },
+        });
+        return res.status(200).json({
+          success: true,
+          count: globalRows.length,
+          message: globalRows.length + ' coupons issued to all clients',
+        });
+      }
+
+      // SINGLE client
       var couponID = 'CPN_' + Date.now().toString(36).toUpperCase();
 
-      // Look up client name and resolve token to clientID
       var clientName = '';
       var resolvedClientID = targetClientID;
-      if (targetClientID) {
-        var clRes = await sheets.spreadsheets.values.get({
-          spreadsheetId: SHEET_ID,
-          range: 'Clients!A2:D',
-        });
-        var clRows = clRes.data.values || [];
-        for (var cl = 0; cl < clRows.length; cl++) {
-          if (clRows[cl][0] === targetClientID || clRows[cl][3] === targetClientID) {
-            clientName = clRows[cl][2] || '';
-            resolvedClientID = clRows[cl][0]; // Always use actual clientID
-            break;
-          }
+      var clRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Clients!A2:D',
+      });
+      var clRows = clRes.data.values || [];
+      for (var cl = 0; cl < clRows.length; cl++) {
+        if (clRows[cl][0] === targetClientID || clRows[cl][3] === targetClientID) {
+          clientName = clRows[cl][2] || '';
+          resolvedClientID = clRows[cl][0];
+          break;
         }
       }
 
@@ -200,7 +276,7 @@ export default async function handler(req, res) {
         couponID,
         body.businessID || 'BIZ_001',
         resolvedClientID,
-        clientName || (targetClientID ? '' : 'All Clients'),
+        clientName,
         body.type || 'reward',
         body.text || '',
         new Date().toISOString().split('T')[0],
