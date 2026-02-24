@@ -156,7 +156,7 @@ export default async function handler(req, res) {
             'FALSE',
             '',
             '',
-            body.notes || '',
+            body.notes ? body.notes + ' | Birthday: ' + bdayMonth : 'Birthday: ' + bdayMonth,
             '',
           ]);
         }
