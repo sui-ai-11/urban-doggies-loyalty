@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     const token = generateToken();
     const createdAt = new Date().toISOString();
 
-    // Column mapping: A-K (ClientID, BusinessID, Name, Token, Mobile, Email, Birthday, Breed, DateAdded, Notes, BirthdayMonth)
+    // Column mapping: A-L (ClientID, BusinessID, Name, Token, Mobile, Email, Birthday, CustomField, DateAdded, Notes, BirthdayMonth, Status)
     const values = [[
       clientID,              // A
       businessID,            // B
@@ -56,15 +56,16 @@ export default async function handler(req, res) {
       mobile || '',          // E
       email || '',           // F
       birthday || '',        // G
-      '',                    // H (unused)
+      '',                    // H (customField/unused)
       createdAt,             // I
       '',                    // J (notes)
-      birthdayMonth || ''    // K
+      birthdayMonth || '',   // K
+      'approved',            // L (status - admin-added clients are auto-approved)
     ]];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: 'Clients!A:K',
+      range: 'Clients!A:L',
       valueInputOption: 'RAW',
       resource: { values },
     });
