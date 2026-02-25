@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     };
 
     var updates = { updated_at: new Date().toISOString() };
-    var fields = body.fields || {};
+    var fields = body.fields || body;
 
     for (var key in fields) {
       if (fieldMap[key]) {
