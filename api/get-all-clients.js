@@ -1,126 +1,73 @@
-import { google } from 'googleapis';
+import { supabase, getTenant } from './_lib/supabase.js';
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Setup Google Sheets
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
-    
-    const sheets = google.sheets({ version: 'v4', auth });
-    const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+    var businessID = await getTenant(req);
 
-    // Fetch clients and visit logs
-    const [clientsRes, visitsRes] = await Promise.all([
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SHEET_ID,
-        range: 'Clients!A2:L',
-      }),
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SHEET_ID,
-        range: 'VisitLog!A2:G',
-      }),
-    ]);
+    // Get all clients
+    var { data: clients, error: cErr } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('business_id', businessID)
+      .order('created_at', { ascending: false });
 
-    const clientRows = clientsRes.data.values || [];
-    const visitRows = visitsRes.data.values || [];
+    if (cErr) return res.status(500).json({ error: cErr.message });
 
-    // Filter out rejected clients, keep approved and no-status (legacy)
-    const activeRows = clientRows.filter(row => {
-      var status = (row[11] || '').toLowerCase();
-      return status !== 'rejected' && status !== 'pending';
+    // Get all active visits for counting
+    var { data: visits, error: vErr } = await supabase
+      .from('visits')
+      .select('client_id')
+      .eq('business_id', businessID)
+      .eq('status', 'active');
+
+    if (vErr) return res.status(500).json({ error: vErr.message });
+
+    // Count visits per client
+    var visitCounts = {};
+    (visits || []).forEach(function(v) {
+      visitCounts[v.client_id] = (visitCounts[v.client_id] || 0) + 1;
     });
 
-    // Process clients with visit counts
-    const clients = activeRows.map(row => {
-      const clientID = row[0];
-      const businessID = row[1];
-      
-      // Count visits for this client
-      const visits = visitRows.filter(visit => 
-        visit[1] === clientID && (visit[5] || '').indexOf('VOIDED') === -1
-      ).length;
-
-      return {
-        clientID: row[0],
-        businessID: row[1],
-        name: row[2],
-        token: row[3],
-        mobile: row[4] || '',
-        email: row[5] || '',
-        birthday: row[6] || '',
-        breed: row[7] || '',
-        dateAdded: row[8] || '',
-        notes: row[9] || '',
-        birthdayMonth: row[10] || '',
-        visits: visits,
-        requiredVisits: 10,
-        cardLink: `${req.headers.origin || 'https://urban-doggies-loyalty.vercel.app'}/#/card?token=${row[3]}`
-      };
+    // Get birthday months
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var birthdayMonths = months.filter(function(month) {
+      return (clients || []).some(function(c) { return c.birthday_month === month; });
     });
 
-    // Get unique breeds for filtering
-    const breeds = [...new Set(clients.map(c => c.breed).filter(Boolean))].sort();
-    
-    // Get unique birthday months for filtering
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'];
-    const birthdayMonths = months.filter(month => 
-      clients.some(c => c.birthdayMonth === month)
-    );
+    var origin = req.headers.origin || req.headers.referer || 'https://loyaltyv1.vercel.app';
 
-    // Calculate analytics
-    const totalClients = clients.length;
-    const stampsToday = visitRows.filter(visit => {
-      const visitDate = new Date(visit[3]);
-      const today = new Date();
-      return visitDate.toDateString() === today.toDateString();
-    }).length;
-    const rewardsIssued = clients.filter(c => c.visits >= c.requiredVisits).length;
-
-    // Breed breakdown
-    const breedBreakdown = breeds.map(breed => ({
-      breed,
-      count: clients.filter(c => c.breed === breed).length
-    }));
-
-    console.log(`✅ Loaded ${clients.length} clients`);
+    var result = (clients || [])
+      .filter(function(c) { return (c.status || '').toLowerCase() !== 'rejected'; })
+      .map(function(c) {
+        return {
+          clientID: c.id,
+          businessID: c.business_id,
+          name: c.name,
+          token: c.token,
+          mobile: c.mobile || '',
+          email: c.email || '',
+          birthday: c.birthday || '',
+          birthdayMonth: c.birthday_month || '',
+          dateAdded: c.created_at || '',
+          notes: c.notes || '',
+          status: c.status || 'approved',
+          visits: visitCounts[c.id] || 0,
+          requiredVisits: 10,
+          cardLink: origin.replace(/\/$/, '') + '/#/card?token=' + c.token,
+        };
+      });
 
     return res.status(200).json({
-      clients,
-      breeds,
-      birthdayMonths,
-      analytics: {
-        totalClients,
-        stampsToday,
-        rewardsIssued,
-        breedBreakdown
-      }
+      clients: result,
+      birthdayMonths: birthdayMonths,
     });
-
-  } catch (error) {
-    console.error('❌ Get all clients error:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error', 
-      details: error.message 
-    });
+  } catch (err) {
+    console.error('get-all-clients error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
