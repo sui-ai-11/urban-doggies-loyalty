@@ -1,87 +1,72 @@
-import { google } from 'googleapis';
+import { supabase, getTenant } from './_lib/supabase.js';
 
-async function getGoogleSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-  return google.sheets({ version: 'v4', auth });
-}
-
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-
-function generateID(prefix) {
-  return prefix + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
-function generateToken() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
+function generateToken(length) {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var result = '';
+  for (var i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { businessID, clientName, mobile, email, birthday, birthdayMonth } = req.body;
-    
-    if (!businessID || !clientName) {
-      return res.status(400).json({ error: 'BusinessID and ClientName are required' });
+    var businessID = await getTenant(req);
+    var { clientName, mobile, email, birthday, birthdayMonth } = req.body;
+
+    if (!clientName) return res.status(400).json({ error: 'Client name is required' });
+
+    // Generate unique token
+    var token = generateToken(8);
+    var { data: existing } = await supabase.from('clients').select('token').eq('token', token);
+    while (existing && existing.length > 0) {
+      token = generateToken(8);
+      var check = await supabase.from('clients').select('token').eq('token', token);
+      existing = check.data;
     }
 
-    const sheets = await getGoogleSheetsClient();
-    const clientID = generateID('CLI_');
-    const token = generateToken();
-    const createdAt = new Date().toISOString();
+    // Check duplicate mobile
+    if (mobile) {
+      var { data: mobileCheck } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('business_id', businessID)
+        .eq('mobile', mobile);
+      if (mobileCheck && mobileCheck.length > 0) {
+        return res.status(409).json({ error: 'This mobile number is already registered.' });
+      }
+    }
 
-    // Column mapping: A-L (ClientID, BusinessID, Name, Token, Mobile, Email, Birthday, CustomField, DateAdded, Notes, BirthdayMonth, Status)
-    const values = [[
-      clientID,              // A
-      businessID,            // B
-      clientName,            // C
-      token,                 // D
-      mobile || '',          // E
-      email || '',           // F
-      birthday || '',        // G
-      '',                    // H (customField/unused)
-      createdAt,             // I
-      '',                    // J (notes)
-      birthdayMonth || '',   // K
-      'approved',            // L (status - admin-added clients are auto-approved)
-    ]];
+    var clientID = 'CLI_' + Date.now().toString() + token.substring(0, 4);
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: 'Clients!A:L',
-      valueInputOption: 'RAW',
-      resource: { values },
+    var { error } = await supabase.from('clients').insert({
+      id: clientID,
+      business_id: businessID,
+      name: clientName,
+      token: token,
+      mobile: mobile || '',
+      email: email || '',
+      birthday: birthday || '',
+      birthday_month: birthdayMonth || '',
+      source: 'Admin-added',
+      status: 'approved',
     });
 
-    console.log('✅ Client added:', clientName, 'Token:', token);
+    if (error) return res.status(500).json({ error: error.message });
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
-      clientID,
-      token,
-      clientName,
-      message: `Client added successfully! Token: ${token}`
+      token: token,
+      clientID: clientID,
     });
-
-  } catch (error) {
-    console.error('❌ Add client error:', error);
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('add-client error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
