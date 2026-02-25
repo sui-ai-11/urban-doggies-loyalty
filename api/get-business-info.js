@@ -1,101 +1,62 @@
-import { google } from 'googleapis';
+import { supabase, getTenant } from './_lib/supabase.js';
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Setup Google Sheets auth
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    var businessID = await getTenant(req);
+    var { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', businessID)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Business not found' });
+
+    // Map DB columns to frontend camelCase (same keys the frontend expects)
+    return res.status(200).json({
+      businessID: data.id,
+      businessName: data.business_name,
+      tagline: data.tagline,
+      logo: data.logo,
+      accentColor: data.accent_color,
+      borderColor: data.border_color,
+      backgroundColor: data.background_color,
+      cardBackground: data.card_background,
+      stampsRequired: data.stamps_required,
+      rewardDescription: data.reward_description,
+      stampFilledIcon: data.stamp_filled_icon,
+      progressText: data.progress_text,
+      milestonesJson: JSON.stringify(data.milestones_json || []),
+      milestone1Label: data.milestone1_label,
+      milestone1Description: data.milestone1_description,
+      milestone1Position: data.milestone1_position,
+      milestone1Icon: data.milestone1_icon,
+      milestone2Label: data.milestone2_label,
+      milestone2Description: data.milestone2_description,
+      milestone2Position: data.milestone2_position,
+      milestone2Icon: data.milestone2_icon,
+      navButton1Text: data.nav_button1_text,
+      navButton2Text: data.nav_button2_text,
+      navButton3Text: data.nav_button3_text,
+      chatLabel: data.chat_label,
+      chatLink: data.chat_link,
+      supportText: data.support_text,
+      termsURL: data.terms_url,
+      contactEmail: data.contact_email,
+      navButton1Contact: data.nav_button1_contact,
+      callLabel: data.call_label,
+      feedbackLabel: data.feedback_label,
+      adImageUrl: data.ad_image_url,
+      customFieldLabel: data.custom_field_label,
+      adminPin: data.admin_pin,
+      staffPin: data.staff_pin,
     });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-
-    // Fetch business data from Row 2 (get columns A through AB)
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:AI2',
-    });
-
-    const row = response.data.values?.[0];
-    
-    if (!row) {
-      return res.status(404).json({ error: 'Business not found' });
-    }
-
-    // COMPLETE COLUMN MAPPING
-    const businessInfo = {
-      businessID: row[0] || 'BIZ001',                    // A
-      businessName: row[1] || 'Business Name',           // B
-      tagline: row[2] || 'Digital Loyalty System',       // C
-      accentColor: row[3] || '#17BEBB',                  // D
-      logo: row[4] || '',                                // E
-      stampsRequired: parseInt(row[5]) || 10,            // F
-      rewardDescription: row[6] || 'Free service',       // G
-      chatLabel: row[7] || '',                           // H
-      chatLink: row[8] || '',                            // I
-      termsURL: row[9] || '',                            // J
-      supportText: row[10] || '',                        // K
-      adImageUrl: row[11] || '',                         // L
-      progressText: row[12] || '',                       // M
-      milestone1Label: row[13] || '',                    // N
-      milestone2Label: row[14] || '',                    // O
-      milestone1Description: row[15] || '',              // P
-      milestone2Description: row[16] || '',              // Q
-      borderColor: row[17] || '#1F3A93',                 // R
-      backgroundColor: row[18] || '#17BEBB',             // S
-      cardBackground: row[19] || '#F5F1E8',              // T
-      navButton1Text: row[20] || 'Stamp Card',           // U
-      navButton2Text: row[21] || 'Rewards',              // V
-      navButton3Text: row[22] || 'Contact',              // W
-      milestone1Position: parseInt(row[23]) || 0,          // X (0 = auto halfway)
-      milestone2Position: parseInt(row[24]) || 0,          // Y (0 = auto last)
-      milestone1Icon: row[25] || '🎁',                    // Z
-      milestone2Icon: row[26] || '🏆',                    // AA
-      stampFilledIcon: row[27] || '✓',                    // AB
-      milestonesJson: row[28] || '',                       // AC
-      customFieldLabel: row[29] || '',                     // AD
-      contactEmail: row[30] || '',                         // AE
-      navButton1Contact: row[31] || '',                    // AF
-      callLabel: row[32] || '',                            // AG
-      feedbackLabel: row[33] || '',                        // AH
-      adminPin: row[34] || '1234',                          // AI
-      staffPin: row[35] || '0000',                          // AJ
-      feedbackUrl: row[35] || '',                           // AJ
-    };
-
-    console.log('✅ Business loaded:', businessInfo.businessName);
-    console.log('🎨 Colors:', {
-      accent: businessInfo.accentColor,
-      border: businessInfo.borderColor,
-      background: businessInfo.backgroundColor,
-      cardBg: businessInfo.cardBackground
-    });
-
-    return res.status(200).json(businessInfo);
-
-  } catch (error) {
-    console.error('❌ API Error:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error',
-      details: error.message 
-    });
+  } catch (err) {
+    console.error('get-business-info error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
