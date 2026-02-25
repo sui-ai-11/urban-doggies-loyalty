@@ -547,7 +547,14 @@ function AdminPanel() {
             : message.includes('⚠️') ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
             : 'bg-red-50 text-red-800 border border-red-200'
           }`}>
-            {message}
+            {message.includes('Token:') ? (
+              <div>
+                <p className="mb-1">{message.split('Token:')[0]}</p>
+                <p className="font-mono text-lg tracking-widest font-black" style={{ color: accentColor }}>
+                  {message.split('Token:')[1].trim()}
+                </p>
+              </div>
+            ) : message}
           </div>
         )}
       </div>
