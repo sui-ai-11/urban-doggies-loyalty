@@ -383,7 +383,7 @@ function StaffPanel() {
     );
   }
 
-  var staffPin = businessInfo.staffPin || businessInfo.adminPin || '1234';
+  var staffPin = businessInfo.staffPin || '0000';
 
   function handlePinSubmit() {
     if (pinInput === staffPin) {
