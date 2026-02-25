@@ -77,6 +77,8 @@ export default async function handler(req, res) {
       callLabel: row[32] || '',                            // AG
       feedbackLabel: row[33] || '',                        // AH
       adminPin: row[34] || '1234',                          // AI
+      staffPin: row[35] || '0000',                          // AJ
+      feedbackUrl: row[35] || '',                           // AJ
     };
 
     console.log('✅ Business loaded:', businessInfo.businessName);
