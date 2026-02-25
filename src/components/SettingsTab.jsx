@@ -61,7 +61,9 @@ function SettingsTab() {
           navButton1Contact: data.navButton1Contact || '',
           callLabel: data.callLabel || '',
           feedbackLabel: data.feedbackLabel || '',
+          feedbackUrl: data.feedbackUrl || '',
           adminPin: data.adminPin || '1234',
+          staffPin: data.staffPin || '0000',
           milestones: (function() {
             try { return JSON.parse(data.milestonesJson || '[]'); } catch(e) { return []; }
           })(),
@@ -511,7 +513,8 @@ function SettingsTab() {
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Security</h4>
             {renderInput('Admin PIN', 'adminPin', '1234')}
-            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'adminPin']); }}
+            {renderInput('Staff PIN', 'staffPin', '0000')}
+            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'adminPin', 'staffPin']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor, color: btnOnAccent }}>
@@ -581,9 +584,10 @@ function SettingsTab() {
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Feedback Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
             {renderInput('Button Label', 'feedbackLabel', 'Send Feedback')}
-            {renderInput('Email Address', 'contactEmail', 'info@yourbusiness.com')}
+            {renderInput('Feedback Form URL', 'feedbackUrl', 'https://forms.gle/your-form-id')}
+            {renderInput('Email Address (fallback)', 'contactEmail', 'info@yourbusiness.com')}
 
-            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail', 'navButton1Contact', 'callLabel', 'feedbackLabel']); }}
+            <button onClick={function() { saveSettings(['chatLabel', 'chatLink', 'supportText', 'termsURL', 'contactEmail', 'navButton1Contact', 'callLabel', 'feedbackLabel', 'feedbackUrl']); }}
               disabled={saving}
               className="mt-4 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor, color: btnOnAccent }}>
