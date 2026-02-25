@@ -1,168 +1,112 @@
-import { google } from 'googleapis';
-
-async function getGoogleSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  return google.sheets({ version: 'v4', auth });
-}
-
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+import { supabase, getTenant } from './_lib/supabase.js';
 
 function generateID(prefix) {
-  return prefix + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
+  return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { token, businessID, addedBy } = req.body;
+    var businessID = await getTenant(req);
+    var { token, addedBy } = req.body;
 
-    if (!token || !businessID) {
-      return res.status(400).json({ error: 'Token and BusinessID are required' });
+    if (!token) return res.status(400).json({ error: 'Token is required' });
+
+    // Find client
+    var { data: client, error: clientErr } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('token', token)
+      .eq('business_id', businessID)
+      .single();
+
+    if (clientErr || !client) return res.status(404).json({ error: 'Client not found' });
+
+    // Spam prevention: check last stamp time
+    var { data: recentVisits } = await supabase
+      .from('visits')
+      .select('visited_at')
+      .eq('client_id', client.id)
+      .eq('status', 'active')
+      .order('visited_at', { ascending: false })
+      .limit(1);
+
+    if (recentVisits && recentVisits.length > 0) {
+      var lastVisit = new Date(recentVisits[0].visited_at);
+      var now = new Date();
+      var diffMinutes = (now - lastVisit) / (1000 * 60);
+      if (diffMinutes < 1) {
+        return res.status(429).json({ error: 'Please wait at least 1 minute between stamps.' });
+      }
     }
-
-    const sheets = await getGoogleSheetsClient();
-
-    // Get client
-    const clientsRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Clients!A2:K',
-    });
-
-    const clientRow = clientsRes.data.values?.find(row => row[3] === token);
-    if (!clientRow) {
-      console.log('❌ Client not found with token:', token);
-      return res.status(404).json({ error: 'Invalid token - client not found' });
-    }
-
-    const client = {
-      clientID: clientRow[0],
-      businessID: clientRow[1],
-      name: clientRow[2],
-      mobile: clientRow[4],
-      breed: clientRow[7],
-    };
-
-    console.log('✅ Client found:', client.name);
 
     // Add visit
-    const visitID = generateID('VIS_');
-    const visitDateTime = new Date().toISOString();
-    
-    const visitValues = [[
-      visitID,
-      client.clientID,
-      businessID,
-      visitDateTime,
-      addedBy || 'staff',
-      '' // notes
-    ]];
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: 'VisitLog!A:F',
-      valueInputOption: 'RAW',
-      resource: { values: visitValues },
+    var visitID = generateID('VIS_');
+    var { error: visitErr } = await supabase.from('visits').insert({
+      id: visitID,
+      client_id: client.id,
+      business_id: businessID,
+      added_by: addedBy || 'staff',
+      notes: '',
+      status: 'active',
     });
 
-    console.log('✅ Visit added:', visitID);
+    if (visitErr) return res.status(500).json({ error: visitErr.message });
 
-    // Count total visits
-    const visitsRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'VisitLog!A2:G',
-    });
+    // Count total active visits
+    var { count } = await supabase
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', client.id)
+      .eq('status', 'active');
 
-    const totalVisits = (visitsRes.data.values || []).filter(row => 
-      row[1] === client.clientID && (row[5] || '').indexOf('VOIDED') === -1
-    ).length;
+    var totalVisits = count || 0;
 
-    // Check if reward should be issued
-    const businessesRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Businesses!A2:W',
-    });
+    // Get business settings for reward
+    var { data: biz } = await supabase
+      .from('businesses')
+      .select('stamps_required, reward_description, milestones_json')
+      .eq('id', businessID)
+      .single();
 
-    let businessRow = businessesRes.data.values?.find(row => row[0] === businessID);
-    if (!businessRow && businessesRes.data.values?.length > 0) {
-      businessRow = businessesRes.data.values[0];
-    }
-    const requiredVisits = parseInt(businessRow?.[5] || '10');
-    const rewardText = businessRow?.[6] || '';
+    var stampsRequired = (biz && biz.stamps_required) || 10;
+    var rewardDescription = (biz && biz.reward_description) || '';
 
-    let rewardEarned = false;
-    let couponID = null;
-
-    if (totalVisits % requiredVisits === 0 && rewardText.trim()) {
-      // Issue reward!
-      rewardEarned = true;
-      couponID = generateID('CPN_');
-      const qrCode = generateID('QR_');
-      
-      const couponValues = [[
-        couponID,
-        businessID,
-        client.clientID,
-        client.name || '',
-        'reward',
-        rewardText,
-        new Date().toISOString().split('T')[0],
-        '',
-        'FALSE',
-        '',
-        '',
-        `Earned after ${totalVisits} visits`,
-        qrCode
-      ]];
-
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: SHEET_ID,
-        range: 'Coupons!A:M',
-        valueInputOption: 'RAW',
-        resource: { values: couponValues },
+    // Check if milestone reached and auto-create coupon
+    var milestoneReward = null;
+    if (rewardDescription && totalVisits > 0 && totalVisits % stampsRequired === 0) {
+      var couponID = generateID('CPN_');
+      await supabase.from('coupons').insert({
+        id: couponID,
+        business_id: businessID,
+        client_id: client.id,
+        client_name: client.name,
+        type: 'reward',
+        text: rewardDescription,
+        notes: 'Auto-reward for completing card',
       });
-
-      console.log('🎉 Reward issued! Coupon:', couponID);
+      milestoneReward = rewardDescription;
     }
-
-    console.log(`✅ Total visits: ${totalVisits}/${requiredVisits}`);
 
     return res.status(200).json({
       success: true,
+      visitID: visitID,
+      totalVisits: totalVisits,
       client: {
+        clientID: client.id,
         name: client.name,
-        mobile: client.mobile,
-        breed: client.breed,
+        token: client.token,
+        email: client.email,
       },
-      totalVisits,
-      rewardEarned,
-      rewardText: rewardEarned ? rewardText : null,
-      couponID: rewardEarned ? couponID : null,
-      message: rewardEarned 
-        ? `🎉 Stamp added! ${client.name} earned a reward!` 
-        : `✅ Stamp added! ${client.name} now has ${totalVisits} visits.`
+      milestoneReward: milestoneReward,
     });
-
-  } catch (error) {
-    console.error('❌ Add stamp error:', error);
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('add-stamp error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
