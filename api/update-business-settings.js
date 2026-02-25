@@ -1,96 +1,83 @@
-import { google } from 'googleapis';
+import { supabase, getTenant } from './_lib/supabase.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    var businessID = await getTenant(req);
     var body = req.body || {};
-    var auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
 
-    var sheets = google.sheets({ version: 'v4', auth: auth });
-    var SHEET_ID = process.env.GOOGLE_SHEET_ID;
-
-    // Column mapping: field -> Sheet column
+    // Map frontend camelCase to DB snake_case
     var fieldMap = {
-      businessName: 'B2',
-      tagline: 'C2',
-      accentColor: 'D2',
-      logo: 'E2',
-      stampsRequired: 'F2',
-      rewardDescription: 'G2',
-      chatLabel: 'H2',
-      chatLink: 'I2',
-      termsURL: 'J2',
-      supportText: 'K2',
-      adImageUrl: 'L2',
-      progressText: 'M2',
-      milestone1Label: 'N2',
-      milestone2Label: 'O2',
-      milestone1Description: 'P2',
-      milestone2Description: 'Q2',
-      borderColor: 'R2',
-      backgroundColor: 'S2',
-      cardBackground: 'T2',
-      navButton1Text: 'U2',
-      navButton2Text: 'V2',
-      navButton3Text: 'W2',
-      milestone1Position: 'X2',
-      milestone2Position: 'Y2',
-      milestone1Icon: 'Z2',
-      milestone2Icon: 'AA2',
-      stampFilledIcon: 'AB2',
-      milestonesJson: 'AC2',
-      customFieldLabel: 'AD2',
-      contactEmail: 'AE2',
-      navButton1Contact: 'AF2',
-      callLabel: 'AG2',
-      feedbackLabel: 'AH2',
-      feedbackUrl: 'AJ2',
-      adminPin: 'AI2',
-      staffPin: 'AJ2',
+      businessName: 'business_name',
+      tagline: 'tagline',
+      logo: 'logo',
+      accentColor: 'accent_color',
+      borderColor: 'border_color',
+      backgroundColor: 'background_color',
+      cardBackground: 'card_background',
+      stampsRequired: 'stamps_required',
+      rewardDescription: 'reward_description',
+      stampFilledIcon: 'stamp_filled_icon',
+      progressText: 'progress_text',
+      milestonesJson: 'milestones_json',
+      milestone1Label: 'milestone1_label',
+      milestone1Description: 'milestone1_description',
+      milestone1Position: 'milestone1_position',
+      milestone1Icon: 'milestone1_icon',
+      milestone2Label: 'milestone2_label',
+      milestone2Description: 'milestone2_description',
+      milestone2Position: 'milestone2_position',
+      milestone2Icon: 'milestone2_icon',
+      navButton1Text: 'nav_button1_text',
+      navButton2Text: 'nav_button2_text',
+      navButton3Text: 'nav_button3_text',
+      chatLabel: 'chat_label',
+      chatLink: 'chat_link',
+      supportText: 'support_text',
+      termsURL: 'terms_url',
+      contactEmail: 'contact_email',
+      navButton1Contact: 'nav_button1_contact',
+      callLabel: 'call_label',
+      feedbackLabel: 'feedback_label',
+      adImageUrl: 'ad_image_url',
+      customFieldLabel: 'custom_field_label',
+      adminPin: 'admin_pin',
+      staffPin: 'staff_pin',
     };
 
-    var updates = [];
-    var keys = Object.keys(body);
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      if (fieldMap[key] !== undefined) {
-        updates.push(
-          sheets.spreadsheets.values.update({
-            spreadsheetId: SHEET_ID,
-            range: 'Businesses!' + fieldMap[key],
-            valueInputOption: 'RAW',
-            resource: { values: [[String(body[key])]] },
-          })
-        );
+    var updates = { updated_at: new Date().toISOString() };
+    var fields = body.fields || {};
+
+    for (var key in fields) {
+      if (fieldMap[key]) {
+        var val = fields[key];
+        // Parse milestones JSON if it's a string
+        if (key === 'milestonesJson' && typeof val === 'string') {
+          try { val = JSON.parse(val); } catch(e) { val = []; }
+        }
+        // Parse integers
+        if (key === 'stampsRequired' || key === 'milestone1Position' || key === 'milestone2Position') {
+          val = parseInt(val) || 0;
+        }
+        updates[fieldMap[key]] = val;
       }
     }
 
-    if (updates.length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update' });
-    }
+    var { error } = await supabase
+      .from('businesses')
+      .update(updates)
+      .eq('id', businessID);
 
-    await Promise.all(updates);
+    if (error) return res.status(500).json({ error: error.message });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Settings updated',
-      fieldsUpdated: keys.filter(function(k) { return fieldMap[k] !== undefined; })
-    });
-
-  } catch (error) {
-    console.error('Update settings error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('update-business-settings error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
