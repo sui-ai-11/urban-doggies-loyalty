@@ -1,175 +1,129 @@
-import { google } from 'googleapis';
-
-async function getGoogleSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  });
-
-  return google.sheets({ version: 'v4', auth });
-}
-
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+import { supabase, getTenant } from './_lib/supabase.js';
 
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { token } = req.query;
-    
-    if (!token) {
-      return res.status(400).json({ error: 'Token is required' });
-    }
+    var businessID = await getTenant(req);
+    var token = req.query.token;
 
-    const sheets = await getGoogleSheetsClient();
+    if (!token) return res.status(400).json({ error: 'Token is required' });
 
-    // Fetch all data
-    const [clientsRes, businessesRes, visitsRes, couponsRes] = await Promise.all([
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Clients!A2:L' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Businesses!A2:AI' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'VisitLog!A2:G' }),
-      sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'Coupons!A2:M' }),
-    ]);
+    // Get client
+    var { data: client, error: clientErr } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('token', token)
+      .single();
 
-    // Find client
-    const clientRow = ((clientsRes.data.values) || []).find(row => row[3] === token);
-    if (!clientRow) {
-      console.log('❌ Client not found with token:', token);
-      return res.status(404).json({ error: 'Client not found' });
-    }
+    if (clientErr || !client) return res.status(404).json({ error: 'Client not found' });
 
-    const client = {
-      clientID: clientRow[0],
-      businessID: clientRow[1],
-      name: clientRow[2],
-      token: clientRow[3],
-      mobile: clientRow[4] || '',
-      email: clientRow[5] || '',
-      birthday: clientRow[6] || '',
-      breed: clientRow[7] || '',
-      dateAdded: clientRow[8] || '',
-      notes: clientRow[9] || '',
-      birthdayMonth: clientRow[10] || '',
-      status: clientRow[11] || 'approved',
-    };
+    // Use client's business_id (in case token lookup crosses tenants)
+    var clientBusinessID = client.business_id || businessID;
 
-    // Check if pending
-    if (client.status === 'pending') {
-      return res.status(200).json({
-        client: client,
-        status: 'pending',
-        message: 'Your registration is pending approval. Please ask staff to confirm.',
-      });
-    }
+    // Get business info
+    var { data: biz } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', clientBusinessID)
+      .single();
 
-    if (client.status === 'rejected') {
-      return res.status(403).json({ error: 'This registration was not approved.' });
-    }
+    // Get active visits
+    var { data: visits } = await supabase
+      .from('visits')
+      .select('*')
+      .eq('client_id', client.id)
+      .eq('status', 'active')
+      .order('visited_at', { ascending: true });
 
-    console.log('✅ Client found:', client.name);
+    var totalVisits = (visits || []).length;
 
-    // Find business - try exact match first, then fall back to first business
-    const allBusinessRows = (businessesRes.data.values) || [];
-    let businessRow = allBusinessRows.find(row => row[0] === client.businessID);
-    
-    if (!businessRow && allBusinessRows.length > 0) {
-      console.log('⚠️ Business not found with ID:', client.businessID, '- using first business as fallback');
-      businessRow = allBusinessRows[0];
-    }
-    
-    if (!businessRow) {
-      console.log('❌ No businesses found at all');
-      return res.status(404).json({ error: 'Business not found' });
-    }
+    // Get coupons for this client only (no global)
+    var { data: coupons } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('client_id', client.id)
+      .order('issued_at', { ascending: false });
 
-    const business = {
-      name: businessRow[1] || 'Business Name',
-      tagline: businessRow[2] || 'Digital Loyalty System',
-      accentColor: businessRow[3] || '#17BEBB',
-      logo: businessRow[4] || '',
-      stampsRequired: parseInt(businessRow[5]) || 10,
-      rewardDescription: businessRow[6] || 'Free service',
-      chatLabel: businessRow[7] || '',
-      chatLink: businessRow[8] || '',
-      termsURL: businessRow[9] || '',
-      supportText: businessRow[10] || '',
-      adImageUrl: businessRow[11] || '',
-      progressText: businessRow[12] || 'Track your progress',
-      milestone1Label: businessRow[13] || '10% OFF',
-      milestone2Label: businessRow[14] || 'FREE TREAT',
-      milestone1Description: businessRow[15] || '5th visit reward',
-      milestone2Description: businessRow[16] || '10th visit reward',
-      borderColor: businessRow[17] || '#1F3A93',
-      backgroundColor: businessRow[18] || '#17BEBB',
-      cardBackground: businessRow[19] || '#F5F1E8',
-      navButton1Text: businessRow[20] || 'Stamp Card',
-      navButton2Text: businessRow[21] || 'Rewards',
-      navButton3Text: businessRow[22] || 'Contact',
-      milestone1Position: parseInt(businessRow[23]) || 0,
-      milestone2Position: parseInt(businessRow[24]) || 0,
-      milestone1Icon: businessRow[25] || '🎁',
-      milestone2Icon: businessRow[26] || '🏆',
-      stampFilledIcon: businessRow[27] || '✓',
-      milestonesJson: businessRow[28] || '',
-      contactEmail: businessRow[30] || '',
-      navButton1Contact: businessRow[31] || '',
-      callLabel: businessRow[32] || '',
-      feedbackLabel: businessRow[33] || '',
-      adminPin: businessRow[34] || '1234',
-    };
-
-    console.log('✅ Business found:', business.name, '| milestonesJson length:', (business.milestonesJson || '').length, '| clientID:', client.clientID, '| token:', client.token);
-
-    // Count visits (exclude voided) - match by clientID
-    const visits = ((visitsRes.data.values) || []).filter(row => 
-      row[1] === client.clientID && (row[5] || '').indexOf('VOIDED') === -1
-    ) || [];
-    const visitCount = visits.length;
-    const progress = visitCount % business.stampsRequired;
-    const nextRewardIn = business.stampsRequired - progress;
-
-    // Get coupons for this client (match by clientID or token only - no global)
-    const coupons = ((couponsRes.data.values) || []).filter(row => 
-      row[2] === client.clientID || row[2] === client.token
-    ).map(row => ({
-      couponID: row[0],
-      clientName: row[3] || '',
-      type: row[4],
-      text: row[5],
-      issuedAt: row[6],
-      expiryDate: row[7],
-      redeemed: row[8] || 'FALSE',
-      redeemedAt: row[9] || '',
-      notes: row[11] || '',
-      qrCode: row[12],
-    })) || [];
-
-    console.log(`✅ Loaded ${visitCount} visits, ${coupons.length} coupons. All coupon rows: ${(couponsRes.data.values || []).length}`);
-
-    return res.status(200).json({
-      client,
-      business,
-      loyalty: {
-        totalVisits: visitCount,
-        currentProgress: progress,
-        nextRewardIn,
-        requiredVisits: business.stampsRequired,
-        progressPercentage: Math.floor((progress / business.stampsRequired) * 100),
-      },
-      coupons,
+    var mappedCoupons = (coupons || []).map(function(c) {
+      return {
+        couponID: c.id,
+        clientName: c.client_name,
+        type: c.type,
+        text: c.text,
+        issuedAt: c.issued_at,
+        expiryDate: c.expiry_date,
+        redeemed: c.redeemed || 'FALSE',
+        redeemedAt: c.redeemed_at || '',
+        notes: c.notes || '',
+        qrCode: c.qr_code || '',
+      };
     });
 
-  } catch (error) {
-    console.error('❌ API Error:', error);
-    return res.status(500).json({ error: error.message });
+    // Map business data
+    var businessData = biz ? {
+      businessID: biz.id,
+      businessName: biz.business_name,
+      tagline: biz.tagline,
+      logo: biz.logo,
+      accentColor: biz.accent_color,
+      borderColor: biz.border_color,
+      backgroundColor: biz.background_color,
+      cardBackground: biz.card_background,
+      stampsRequired: biz.stamps_required,
+      rewardDescription: biz.reward_description,
+      stampFilledIcon: biz.stamp_filled_icon,
+      progressText: biz.progress_text,
+      milestonesJson: JSON.stringify(biz.milestones_json || []),
+      milestone1Label: biz.milestone1_label,
+      milestone1Description: biz.milestone1_description,
+      milestone1Position: biz.milestone1_position,
+      milestone1Icon: biz.milestone1_icon,
+      milestone2Label: biz.milestone2_label,
+      milestone2Description: biz.milestone2_description,
+      milestone2Position: biz.milestone2_position,
+      milestone2Icon: biz.milestone2_icon,
+      navButton1Text: biz.nav_button1_text,
+      navButton2Text: biz.nav_button2_text,
+      navButton3Text: biz.nav_button3_text,
+      chatLabel: biz.chat_label,
+      chatLink: biz.chat_link,
+      supportText: biz.support_text,
+      termsURL: biz.terms_url,
+      contactEmail: biz.contact_email,
+      navButton1Contact: biz.nav_button1_contact,
+      callLabel: biz.call_label,
+      feedbackLabel: biz.feedback_label,
+      adImageUrl: biz.ad_image_url,
+    } : {};
+
+    return res.status(200).json({
+      client: {
+        clientID: client.id,
+        name: client.name,
+        token: client.token,
+        mobile: client.mobile || '',
+        email: client.email || '',
+        birthday: client.birthday || '',
+        birthdayMonth: client.birthday_month || '',
+        status: client.status || 'approved',
+      },
+      business: businessData,
+      visits: (visits || []).map(function(v) {
+        return {
+          visitID: v.id,
+          date: v.visited_at,
+          addedBy: v.added_by,
+        };
+      }),
+      totalVisits: totalVisits,
+      coupons: mappedCoupons,
+    });
+  } catch (err) {
+    console.error('client-dashboard error:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
