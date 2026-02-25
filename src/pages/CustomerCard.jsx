@@ -448,7 +448,9 @@ function CustomerCard() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="text-5xl mb-4">🎁</div>
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: accentColor + '15' }}>
+                    <Gift size={28} style={{ color: accentColor }} />
+                  </div>
                   <p className="font-semibold mb-1" style={{ color: headingColor }}>No coupons yet</p>
                   <p className="text-sm" style={{ color: subtextColor }}>Keep collecting stamps to earn coupons!</p>
                 </div>
@@ -502,8 +504,11 @@ function CustomerCard() {
                 )}
 
                 {/* Feedback Button */}
-                {business.contactEmail && (
-                <a href={'mailto:' + business.contactEmail + '?subject=Feedback from ' + (client.name || 'Customer')}
+                {(business.feedbackUrl || business.contactEmail) && (
+                <a href={business.feedbackUrl
+                    ? business.feedbackUrl + (business.feedbackUrl.indexOf('?') > -1 ? '&' : '?') + 'entry.token=' + encodeURIComponent(client.token || '')
+                    : 'mailto:' + business.contactEmail + '?subject=Feedback from ' + (client.name || 'Customer')}
+                  target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
@@ -512,7 +517,7 @@ function CustomerCard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold" style={{ color: headingColor }}>{business.feedbackLabel || 'Send Feedback'}</p>
-                    <p className="text-xs" style={{ color: subtextColor }}>{business.contactEmail}</p>
+                    <p className="text-xs" style={{ color: subtextColor }}>{business.feedbackUrl ? 'Share your experience' : business.contactEmail}</p>
                   </div>
                   <ChevronRight size={20} style={{ color: subtextColor }} className="shrink-0" />
                 </a>
