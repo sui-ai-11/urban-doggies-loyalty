@@ -167,7 +167,7 @@ function HomePage() {
               border: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
               backdropFilter: 'blur(10px)',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = accentColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = btnOnAccent); }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = borderColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = isDark(borderColor) ? '#ffffff' : '#1a1a2e'); }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'; e.currentTarget.querySelector('[data-card-heading]').style.color = cardHeading; e.currentTarget.querySelector('[data-card-desc]').style.color = cardText; e.currentTarget.querySelector('[data-card-sub]').style.color = cardSubtext; }}
           >
             <div
@@ -200,7 +200,7 @@ function HomePage() {
               border: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
               backdropFilter: 'blur(10px)',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = accentColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = btnOnAccent); }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = borderColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = isDark(borderColor) ? '#ffffff' : '#1a1a2e'); }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'; e.currentTarget.querySelector('[data-card-heading]').style.color = cardHeading; e.currentTarget.querySelector('[data-card-desc]').style.color = cardText; e.currentTarget.querySelector('[data-card-sub]').style.color = cardSubtext; }}
           >
             <div
