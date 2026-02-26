@@ -445,6 +445,12 @@ function StaffPanel() {
     );
   }
 
+  if (!businessInfo) {
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+    </div>;
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       {/* Nav */}
