@@ -279,8 +279,23 @@ function StaffPanel() {
         var newProgress = newTotal % clientInfo.requiredVisits;
         var newCycle = Math.floor(newTotal / clientInfo.requiredVisits) + 1;
         
-        if (newCycle !== clientInfo.cardCycle) {
-          // Cycle changed — reload full data to get new milestones
+        if (newProgress === 0 && newTotal > 0) {
+          // Card just completed! Show full card (10/10) instead of resetting to 0
+          setClientInfo(Object.assign({}, clientInfo, {
+            currentVisits: newTotal,
+            currentProgress: clientInfo.requiredVisits, // Show as 10/10 not 0/10
+            cardCycle: newCycle - 1, // Stay on completed card
+          }));
+          // Reload coupons in case a reward was auto-created
+          if (result.milestoneReward) {
+            fetch('/api/client-dashboard?token=' + clientInfo.token)
+              .then(function(r) { return r.json(); })
+              .then(function(dashResult) {
+                if (dashResult.coupons) setClientCoupons(dashResult.coupons);
+              });
+          }
+        } else if (newCycle !== clientInfo.cardCycle) {
+          // Cycle changed (after adding more stamps on a new card) — reload full data
           fetch('/api/client-dashboard?token=' + clientInfo.token)
             .then(function(r) { return r.json(); })
             .then(function(fullResult) {
