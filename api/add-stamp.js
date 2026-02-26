@@ -158,8 +158,27 @@ export default async function handler(req, res) {
       .select('*', { count: 'exact', head: true })
       .eq('client_id', client.id)
       .eq('redeemed', 'FALSE');
+
+    // Find next reward for wallet display
+    var walletNextReward = '';
+    if (milestonesJson) {
+      try {
+        var wp = JSON.parse(milestonesJson);
+        var wm = [];
+        var wc = walletCards + (walletStamps > 0 ? 1 : 0) || 1;
+        if (Array.isArray(wp)) { wm = wp; }
+        else if (wp[String(wc)]) { wm = wp[String(wc)]; }
+        var wu = wm.filter(function(m) { return m.at > walletStamps; }).sort(function(a,b) { return a.at - b.at; });
+        if (wu.length > 0) walletNextReward = wu[0].reward + ' (at stamp ' + wu[0].at + ')';
+      } catch (e) {}
+    }
+    if (!walletNextReward && rewardDescription) {
+      walletNextReward = rewardDescription + ' (at stamp ' + stampsRequired + ')';
+    }
+    if (!walletNextReward) walletNextReward = 'Complete ' + stampsRequired + ' stamps!';
+
     try {
-      await updateWalletPass(client.token, walletStamps, totalVisits, walletCards, activeCoupons || 0);
+      await updateWalletPass(client.token, walletStamps, totalVisits, walletCards, activeCoupons || 0, stampsRequired, walletNextReward);
     } catch (e) {
       console.log('Wallet update skipped:', e.message);
     }
