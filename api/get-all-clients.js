@@ -33,17 +33,32 @@ export default async function handler(req, res) {
       visitCounts[v.client_id] = (visitCounts[v.client_id] || 0) + 1;
     });
 
-    // Get birthday months
     var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var birthdayMonths = months.filter(function(month) {
-      return (clients || []).some(function(c) { return c.birthday_month === month; });
-    });
 
-    var origin = req.headers.origin || req.headers.referer || 'https://loyaltyv1.vercel.app';
+    var origin = req.headers.origin || req.headers.referer || 'https://stampcard.org';
 
     var result = (clients || [])
       .filter(function(c) { return (c.status || '').toLowerCase() !== 'rejected'; })
       .map(function(c) {
+        // Derive birthday month from date if not set
+        var bdayMonth = c.birthday_month || '';
+        if (!bdayMonth && c.birthday) {
+          // Try parsing date formats: YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY
+          var bday = c.birthday;
+          var monthNum = -1;
+          if (bday.indexOf('-') > -1) {
+            // YYYY-MM-DD
+            monthNum = parseInt(bday.split('-')[1]) - 1;
+          } else if (bday.indexOf('/') > -1) {
+            var parts = bday.split('/');
+            // DD/MM/YYYY (day first if first part <= 12 is ambiguous, assume DD/MM)
+            monthNum = parseInt(parts[1]) - 1;
+          }
+          if (monthNum >= 0 && monthNum < 12) {
+            bdayMonth = months[monthNum];
+          }
+        }
+
         return {
           clientID: c.id,
           businessID: c.business_id,
@@ -52,7 +67,7 @@ export default async function handler(req, res) {
           mobile: c.mobile || '',
           email: c.email || '',
           birthday: c.birthday || '',
-          birthdayMonth: c.birthday_month || '',
+          birthdayMonth: bdayMonth,
           dateAdded: c.created_at || '',
           notes: c.notes || '',
           status: c.status || 'approved',
@@ -61,6 +76,11 @@ export default async function handler(req, res) {
           cardLink: origin.replace(/\/$/, '') + '/#/card?token=' + c.token,
         };
       });
+
+    // Build birthday months from derived data
+    var birthdayMonths = months.filter(function(month) {
+      return result.some(function(c) { return c.birthdayMonth === month; });
+    });
 
     return res.status(200).json({
       clients: result,
