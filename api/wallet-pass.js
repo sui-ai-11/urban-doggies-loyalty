@@ -56,6 +56,47 @@ export default async function handler(req, res) {
 
     activeCoupons = activeCoupons || 0;
 
+    // Build star progress
+    var stars = '';
+    for (var i = 0; i < stampsRequired; i++) {
+      stars += i < currentCardStamps ? '★' : '☆';
+    }
+
+    // Find next reward from milestones
+    var nextReward = '';
+    var milestonesJson = biz.milestones_json || '';
+    if (milestonesJson) {
+      try {
+        var parsed = JSON.parse(milestonesJson);
+        var milestones = [];
+        var cycle = cardsCompleted + (currentCardStamps > 0 ? 1 : 0) || 1;
+        if (Array.isArray(parsed)) {
+          milestones = parsed;
+        } else if (parsed[String(cycle)]) {
+          milestones = parsed[String(cycle)];
+        } else {
+          var tierKeys = Object.keys(parsed).filter(function(k) { return !k.includes('_'); }).sort(function(a,b) { return parseInt(a)-parseInt(b); });
+          for (var t = tierKeys.length - 1; t >= 0; t--) {
+            if (parseInt(tierKeys[t]) <= cycle) { milestones = parsed[tierKeys[t]]; break; }
+          }
+        }
+        var upcoming = milestones.filter(function(m) { return m.at > currentCardStamps; }).sort(function(a,b) { return a.at - b.at; });
+        if (upcoming.length > 0) {
+          nextReward = upcoming[0].reward + ' (at stamp ' + upcoming[0].at + ')';
+        }
+      } catch (e) {}
+    }
+    if (!nextReward && biz.reward_description) {
+      nextReward = biz.reward_description + ' (at stamp ' + stampsRequired + ')';
+    }
+    if (!nextReward) {
+      nextReward = 'Complete ' + stampsRequired + ' stamps!';
+    }
+
+    // Build card URL
+    var hostname = req.headers.host || 'stampcard.org';
+    var cardUrl = 'https://' + hostname + '/#/card?token=' + client.token;
+
     // Build class suffix from business ID (unique per business)
     var classSuffix = clientBusinessID.replace(/[^a-zA-Z0-9_.-]/g, '_');
     var objectSuffix = client.token;
@@ -104,9 +145,9 @@ export default async function handler(req, res) {
       accountId: client.token,
       accountName: client.name,
       loyaltyPoints: {
-        label: 'Stamps',
+        label: 'Progress',
         balance: {
-          int: currentCardStamps,
+          string: stars + ' ' + currentCardStamps + '/' + stampsRequired,
         },
       },
       barcode: {
@@ -121,16 +162,20 @@ export default async function handler(req, res) {
           id: 'total_visits',
         },
         {
-          header: 'Cards Completed',
-          body: String(cardsCompleted),
-          id: 'cards_completed',
-        },
-        {
-          header: 'Active Rewards',
-          body: String(activeCoupons),
-          id: 'active_rewards',
+          header: 'Next Reward',
+          body: nextReward,
+          id: 'next_reward',
         },
       ],
+      linksModuleData: {
+        uris: [
+          {
+            uri: cardUrl,
+            description: 'View My Card',
+            id: 'card_link',
+          },
+        ],
+      },
       heroImage: biz.ad_image_url ? {
         sourceUri: {
           uri: biz.ad_image_url,
