@@ -120,7 +120,7 @@ function HomePage() {
         {/* Logo + Tagline at top center */}
         <div className="text-center mb-12 animate-slide-up">
           {businessInfo?.logo ? (
-            <div style={{ marginBottom: '40px' }}>
+            <div style={{ marginBottom: '24px' }}>
               <img
                 src={businessInfo.logo}
                 alt={businessInfo.businessName}
@@ -139,7 +139,7 @@ function HomePage() {
               style={{
                 width: '200px',
                 height: '200px',
-                marginBottom: '40px',
+                marginBottom: '24px',
                 backgroundColor: accentColor,
                 color: btnOnAccent,
                 fontSize: '80px',
