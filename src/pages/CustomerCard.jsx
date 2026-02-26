@@ -82,10 +82,10 @@ function CustomerCard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-white mx-auto mb-4" />
-          <p className="text-lg font-semibold">Loading…</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto mb-4" />
+          <p className="text-sm font-semibold text-gray-500">Loading your card…</p>
         </div>
       </div>
     );
