@@ -148,9 +148,11 @@ function HomePage() {
               {businessInfo?.businessName?.charAt(0) || 'B'}
             </div>
           )}
-          <p className="font-light tracking-widest uppercase" style={{ color: heroSubtext, fontSize: '0.7rem', letterSpacing: '0.2em' }}>
-            {businessInfo?.tagline || 'Loyalty Rewards Program'}
-          </p>
+          {businessInfo?.tagline && (
+            <p className="font-light tracking-widest uppercase" style={{ color: heroSubtext, fontSize: '0.7rem', letterSpacing: '0.2em' }}>
+              {businessInfo.tagline}
+            </p>
+          )}
         </div>
 
         {/* Action Cards */}
