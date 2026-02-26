@@ -41,8 +41,8 @@ export default async function handler(req, res) {
       var lastVisit = new Date(recentVisits[0].visited_at);
       var now = new Date();
       var diffMinutes = (now - lastVisit) / (1000 * 60);
-      if (diffMinutes < 1) {
-        return res.status(429).json({ error: 'Please wait at least 1 minute between stamps.' });
+      if (diffMinutes < 0.167) {
+        return res.status(429).json({ error: 'Please wait at least 10 seconds between stamps.' });
       }
     }
 
@@ -77,13 +77,68 @@ export default async function handler(req, res) {
 
     var stampsRequired = (biz && biz.stamps_required) || 10;
     var rewardDescription = (biz && biz.reward_description) || '';
+    var milestonesJson = (biz && biz.milestones_json) || '';
 
     // Check if milestone reached and auto-create coupon
     var milestoneReward = null;
-    if (rewardDescription && totalVisits > 0 && totalVisits % stampsRequired === 0) {
-      var couponID = generateID('CPN_');
+    var currentCardStamps = totalVisits % stampsRequired;
+    var cardsCompleted = Math.floor(totalVisits / stampsRequired);
+    var currentCycle = cardsCompleted + (currentCardStamps > 0 ? 1 : 0);
+    var stampInCard = currentCardStamps === 0 ? stampsRequired : currentCardStamps;
+
+    // Try tiered milestones first
+    if (milestonesJson) {
+      try {
+        var parsed = JSON.parse(milestonesJson);
+        var milestones = [];
+
+        if (Array.isArray(parsed)) {
+          milestones = parsed;
+        } else {
+          // Tiered format: { "1": [...], "2": [...] }
+          var cycle = currentCycle || 1;
+          if (parsed[String(cycle)]) {
+            milestones = parsed[String(cycle)];
+          } else {
+            // Fallback to highest available tier
+            var tierKeys = Object.keys(parsed).filter(function(k) { return !k.includes('_'); }).sort(function(a,b) { return parseInt(a)-parseInt(b); });
+            for (var i = tierKeys.length - 1; i >= 0; i--) {
+              if (parseInt(tierKeys[i]) <= cycle) {
+                milestones = parsed[tierKeys[i]];
+                break;
+              }
+            }
+          }
+        }
+
+        // Check if current stamp hits a milestone
+        var matchedMilestone = milestones.find(function(m) {
+          return m.at === stampInCard || m.at === totalVisits;
+        });
+
+        if (matchedMilestone) {
+          var couponID = generateID('CPN_');
+          await supabase.from('coupons').insert({
+            id: couponID,
+            business_id: businessID,
+            client_id: client.id,
+            client_name: client.name,
+            type: matchedMilestone.type || 'reward',
+            text: matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
+            notes: 'Auto-reward at stamp ' + stampInCard + ' (Card ' + currentCycle + ')',
+          });
+          milestoneReward = matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
+        }
+      } catch (e) {
+        console.log('Milestone parse error:', e.message);
+      }
+    }
+
+    // Fallback: simple reward at card completion
+    if (!milestoneReward && rewardDescription && totalVisits > 0 && totalVisits % stampsRequired === 0) {
+      var couponID2 = generateID('CPN_');
       await supabase.from('coupons').insert({
-        id: couponID,
+        id: couponID2,
         business_id: businessID,
         client_id: client.id,
         client_name: client.name,
@@ -95,10 +150,16 @@ export default async function handler(req, res) {
     }
 
     // Update Google Wallet pass (best-effort, don't block response)
-    var currentCardStamps = totalVisits % stampsRequired;
-    var cardsCompleted = Math.floor(totalVisits / stampsRequired);
+    var walletStamps = totalVisits % stampsRequired;
+    var walletCards = Math.floor(totalVisits / stampsRequired);
+    // Count active coupons for wallet display
+    var { count: activeCoupons } = await supabase
+      .from('coupons')
+      .select('*', { count: 'exact', head: true })
+      .eq('client_id', client.id)
+      .eq('redeemed', 'FALSE');
     try {
-      await updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0);
+      await updateWalletPass(client.token, walletStamps, totalVisits, walletCards, activeCoupons || 0);
     } catch (e) {
       console.log('Wallet update skipped:', e.message);
     }
