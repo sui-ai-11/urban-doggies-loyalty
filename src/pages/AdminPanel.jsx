@@ -316,12 +316,12 @@ function AdminPanel() {
     const c = (hex || '#000').replace('#','');
     return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
   }
-  // For text on white panels: use borderColor if dark enough, otherwise use a dark fallback
-  const panelText = isLight(borderColor) ? '#f9fafb' : borderColor;
-  // For accent on white panels: use accentColor if dark enough, otherwise darken it
-  const panelAccent = isLight(accentColor) ? '#f9fafb' : accentColor;
-  const btnOnAccent = isLight(accentColor) ? '#f9fafb' : '#ffffff';
-  const btnOnBorder = isLight(borderColor) ? '#f9fafb' : '#ffffff';
+  // For text on white panels: use borderColor if dark enough, otherwise use dark fallback
+  const panelText = isLight(borderColor) ? '#1a1a2e' : borderColor;
+  // For accent on white panels: use accentColor if dark enough, otherwise use dark fallback
+  const panelAccent = isLight(accentColor) ? '#1a1a2e' : accentColor;
+  const btnOnAccent = isLight(accentColor) ? '#1a1a2e' : '#ffffff';
+  const btnOnBorder = isLight(borderColor) ? '#1a1a2e' : '#ffffff';
 
   // Don't render until we have business colors
   if (!businessInfo) {
@@ -360,7 +360,7 @@ function AdminPanel() {
       var c = bgColor.replace('#','');
       bgIsDark = (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 < 0.5;
     } catch(e) {}
-    var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#f9fafb' : borderColor);
+    var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#1a1a2e' : borderColor);
     return (
       <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
         <Navigation currentPage="admin" />
@@ -418,7 +418,7 @@ function AdminPanel() {
                 className="px-3 sm:px-5 py-3 sm:py-4 font-semibold transition-all duration-200 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-xs sm:text-sm"
                 style={{
                   backgroundColor: activeTab === key ? panelText : 'transparent',
-                  color: activeTab === key ? (isLight(panelText) ? '#f9fafb' : '#FFFFFF') : '#6B7280',
+                  color: activeTab === key ? (isLight(panelText) ? '#1a1a2e' : '#FFFFFF') : '#6B7280',
                 }}>
                 <Icon size={18} /> {label}
               </button>
