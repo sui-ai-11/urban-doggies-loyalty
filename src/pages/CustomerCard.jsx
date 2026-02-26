@@ -413,7 +413,10 @@ function CustomerCard() {
                     fetch('/api/wallet-pass?token=' + token)
                       .then(function(r) { return r.json(); })
                       .then(function(data) {
-                        if (data.saveUrl) { setWalletUrl(data.saveUrl); }
+                        if (data.saveUrl) {
+                          setWalletUrl(data.saveUrl);
+                          window.open(data.saveUrl, '_blank');
+                        }
                         setWalletLoading(false);
                       })
                       .catch(function() { setWalletLoading(false); });
