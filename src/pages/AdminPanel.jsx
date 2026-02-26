@@ -612,7 +612,7 @@ function AdminPanel() {
                                 <span className="text-sm text-gray-600">{client.mobile || '—'}</span>
                               </td>
                               <td className="px-5 py-4">
-                                <span className="text-sm text-gray-600" title={client.birthday || ''}>{client.birthdayMonth || client.birthday || '—'}</span>
+                                <span className="text-sm text-gray-600">{client.birthday || '—'}</span>
                               </td>
                               <td className="px-5 py-4">
                                 <span className="font-bold text-sm" style={{ color: panelAccent }}>
