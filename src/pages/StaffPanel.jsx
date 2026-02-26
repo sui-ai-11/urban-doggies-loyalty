@@ -557,12 +557,11 @@ function StaffPanel() {
             <div id="pending-list" style={{ display: 'none' }} className="mt-3 space-y-2">
               {pendingClients.map(function(client) {
                 return (
-                  <div key={client.rowIndex} className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+                  <div key={client.clientID} className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
                     <div>
                       <p className="font-bold text-sm" style={{ color: panelText }}>{client.name}</p>
                       <p className="text-xs text-gray-400">
                         {client.mobile || 'No mobile'} · {client.token}
-                        {client.customField ? ' · ' + client.customField : ''}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -570,7 +569,7 @@ function StaffPanel() {
                         fetch('/api/approve-client', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ rowIndex: client.rowIndex, action: 'approve' }),
+                          body: JSON.stringify({ clientID: client.clientID, action: 'approve' }),
                         })
                           .then(function(r) { return r.json(); })
                           .then(function(data) {
@@ -589,7 +588,7 @@ function StaffPanel() {
                           fetch('/api/approve-client', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ rowIndex: client.rowIndex, action: 'reject' }),
+                            body: JSON.stringify({ clientID: client.clientID, action: 'reject' }),
                           })
                             .then(function(r) { return r.json(); })
                             .then(function(data) {
