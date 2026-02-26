@@ -62,6 +62,8 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           feedbackUrl: data.feedbackUrl || '',
           adminPin: data.adminPin || '1234',
           staffPin: data.staffPin || '0000',
+          staffList: data.staffList || '',
+          branchList: data.branchList || '',
           milestones: (function() {
             try { return JSON.parse(data.milestonesJson || '[]'); } catch(e) { return []; }
           })(),
@@ -513,7 +515,10 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Security</h4>
             {renderInput('Admin PIN', 'adminPin', '1234')}
             {renderInput('Staff PIN', 'staffPin', '0000')}
-            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'adminPin', 'staffPin']); }}
+            <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Staff & Branches</h4>
+            {renderInput('Staff Names (comma-separated)', 'staffList', '')}
+            {renderInput('Branch Names (comma-separated)', 'branchList', '')}
+            <button onClick={function() { saveSettings(['businessName', 'tagline', 'logo', 'adImageUrl', 'navButton1Text', 'navButton2Text', 'navButton3Text', 'adminPin', 'staffPin', 'staffList', 'branchList']); }}
               disabled={saving}
               className="mt-2 px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition disabled:opacity-50"
               style={{ backgroundColor: accentColor, color: btnOnAccent }}>
