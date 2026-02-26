@@ -34,8 +34,8 @@ async function getAccessToken() {
   return data.access_token || null;
 }
 
-// Create or update a loyalty object via REST API
-async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted, activeCoupons) {
+// Update a loyalty object's stamps/visits on Google Wallet
+async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted, activeCoupons, stampsRequired, nextReward) {
   try {
     var accessToken = await getAccessToken();
     if (!accessToken) {
@@ -62,18 +62,24 @@ async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted
       return;
     }
 
+    // Build star progress
+    var req = stampsRequired || 10;
+    var stars = '';
+    for (var i = 0; i < req; i++) {
+      stars += i < stamps ? '★' : '☆';
+    }
+
     // Object exists — PATCH it
     var patchBody = {
       loyaltyPoints: {
-        label: 'Stamps',
+        label: 'Progress',
         balance: {
-          int: stamps,
+          string: stars + ' ' + stamps + '/' + req,
         },
       },
       textModulesData: [
         { header: 'Total Visits', body: String(totalVisits), id: 'total_visits' },
-        { header: 'Cards Completed', body: String(cardsCompleted), id: 'cards_completed' },
-        { header: 'Active Rewards', body: String(activeCoupons || 0), id: 'active_rewards' },
+        { header: 'Next Reward', body: nextReward || 'Keep collecting!', id: 'next_reward' },
       ],
     };
 
