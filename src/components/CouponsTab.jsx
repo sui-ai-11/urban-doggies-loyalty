@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, User, Plus, Filter, Check, X, Search } from 'lucide-react';
 
-function CouponsTab() {
+function CouponsTab({ businessInfo: parentBiz }) {
   var _a = useState([]), coupons = _a[0], setCoupons = _a[1];
   var _b = useState([]), clients = _b[0], setClients = _b[1];
-  var _c = useState(null), businessInfo = _c[0], setBusinessInfo = _c[1];
+  var _c = useState(parentBiz || null), businessInfo = _c[0], setBusinessInfo = _c[1];
   var _d = useState(false), saving = _d[0], setSaving = _d[1];
   var _e = useState(''), message = _e[0], setMessage = _e[1];
   var _f = useState({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '', birthdayMonth: '' }),
@@ -23,7 +23,7 @@ function CouponsTab() {
   var btnOnAccent = isLightC(accentColor) ? '#1a1a2e' : '#ffffff';
 
   useEffect(function() {
-    fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
+    if (!parentBiz) fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
     fetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); }).catch(function() {});
     loadCoupons();
   }, []);
