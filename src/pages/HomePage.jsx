@@ -120,14 +120,14 @@ function HomePage() {
         {/* Logo + Tagline at top center */}
         <div className="text-center mb-12 animate-slide-up">
           {businessInfo?.logo ? (
-            <div className="mb-4">
+            <div className="mb-3">
               <img
                 src={businessInfo.logo}
                 alt={businessInfo.businessName}
                 className="mx-auto object-contain"
                 style={{
-                  height: '140px',
-                  maxWidth: '260px',
+                  height: '280px',
+                  maxWidth: '400px',
                   filter: bgIsDark ? 'drop-shadow(0 4px 24px rgba(255,255,255,0.1))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.08))',
                 }}
                 onError={(e) => e.target.style.display = 'none'}
@@ -135,13 +135,13 @@ function HomePage() {
             </div>
           ) : (
             <div
-              className="mx-auto mb-4 rounded-3xl flex items-center justify-center shadow-xl"
+              className="mx-auto mb-3 rounded-3xl flex items-center justify-center shadow-xl"
               style={{
-                width: '100px',
-                height: '100px',
+                width: '200px',
+                height: '200px',
                 backgroundColor: accentColor,
                 color: btnOnAccent,
-                fontSize: '42px',
+                fontSize: '80px',
                 fontWeight: 800,
               }}>
               {businessInfo?.businessName?.charAt(0) || 'B'}
