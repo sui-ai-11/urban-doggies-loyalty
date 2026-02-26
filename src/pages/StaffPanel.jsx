@@ -15,6 +15,8 @@ function StaffPanel() {
   var _lock = useState(true), isLocked = _lock[0], setIsLocked = _lock[1];
   var _pin = useState(''), pinInput = _pin[0], setPinInput = _pin[1];
   var _pinErr = useState(''), pinError = _pinErr[0], setPinError = _pinErr[1];
+  var _staff = useState(''), selectedStaff = _staff[0], setSelectedStaff = _staff[1];
+  var _branch = useState(''), selectedBranch = _branch[0], setSelectedBranch = _branch[1];
   var _a = useState(''), searchInput = _a[0], setSearchInput = _a[1];
   var _b = useState(false), loading = _b[0], setLoading = _b[1];
   var _c = useState(''), message = _c[0], setMessage = _c[1];
@@ -62,6 +64,10 @@ function StaffPanel() {
   var bgIsDark = isDark(bgColor);
   var heroText = bgIsDark ? '#ffffff' : borderColor;
   var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
+
+  // Staff & branch lists
+  var staffNames = (businessInfo && businessInfo.staffList) ? businessInfo.staffList.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+  var branchNames = (businessInfo && businessInfo.branchList) ? businessInfo.branchList.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
 
   // Smart text colors for glass card panels (white/light backgrounds)
   function isLightColor(hex) {
@@ -264,7 +270,7 @@ function StaffPanel() {
     fetch('/api/add-stamp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', addedBy: 'staff' })
+      body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', addedBy: 'staff', staffName: selectedStaff, branch: selectedBranch })
     })
       .then(function(r) { return r.json(); })
       .then(function(result) {
@@ -534,6 +540,28 @@ function StaffPanel() {
           <h1 className="text-4xl font-black mb-2 tracking-tight" style={{ color: heroText }}>Loyalty Desk</h1>
           <p className="font-light text-lg" style={{ color: heroSub }}>Search by token or customer name</p>
         </div>
+
+        {/* Staff & Branch Selector */}
+        {(staffNames.length > 0 || branchNames.length > 0) && (
+          <div className="glass-card rounded-xl p-3 mb-6 animate-slide-up flex flex-wrap gap-3 items-center justify-center">
+            {staffNames.length > 0 && (
+              <select value={selectedStaff} onChange={function(e) { setSelectedStaff(e.target.value); }}
+                className="px-3 py-2 rounded-lg border text-xs font-medium bg-white"
+                style={{ borderColor: accentColor + '40', color: panelText }}>
+                <option value="">Select Staff</option>
+                {staffNames.map(function(name) { return <option key={name} value={name}>{name}</option>; })}
+              </select>
+            )}
+            {branchNames.length > 0 && (
+              <select value={selectedBranch} onChange={function(e) { setSelectedBranch(e.target.value); }}
+                className="px-3 py-2 rounded-lg border text-xs font-medium bg-white"
+                style={{ borderColor: accentColor + '40', color: panelText }}>
+                <option value="">Select Branch</option>
+                {branchNames.map(function(name) { return <option key={name} value={name}>{name}</option>; })}
+              </select>
+            )}
+          </div>
+        )}
 
         {/* QR Scanner Modal */}
         {showScanner && (
