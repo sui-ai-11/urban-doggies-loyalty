@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
 import CouponsTab from '../components/CouponsTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock } from 'lucide-react';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock, Trash2, Pencil, Download, X } from 'lucide-react';
 
 function CouponsOverview({ couponsList, allClients }) {
   var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
@@ -94,6 +94,10 @@ function AdminPanel() {
     firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: ''
   });
 
+  const [editingClient, setEditingClient] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', mobile: '', email: '', birthday: '', notes: '' });
+  const [importStatus, setImportStatus] = useState(null);
+
   // Load business info for dynamic colors
   useEffect(() => {
     fetch('/api/get-business-info')
@@ -147,6 +151,130 @@ function AdminPanel() {
       }
     } catch (error) { console.error('Error loading clients:', error); }
     finally { setLoading(false); }
+  }
+
+  async function deleteClient(clientID, name) {
+    if (!confirm('Delete "' + name + '" and all their stamps and coupons? This cannot be undone.')) return;
+    try {
+      var r = await fetch('/api/manage-client?clientID=' + clientID, { method: 'DELETE' });
+      var data = await r.json();
+      if (data.success) { setMessage('✅ ' + name + ' deleted'); loadAllClients(); }
+      else setMessage('❌ ' + (data.error || 'Failed'));
+    } catch (e) { setMessage('❌ Failed to delete'); }
+  }
+
+  function startEdit(client) {
+    setEditingClient(client.clientID);
+    setEditForm({
+      name: client.name || '',
+      mobile: client.mobile || '',
+      email: client.email || '',
+      birthday: client.birthday || '',
+      notes: client.notes || '',
+    });
+  }
+
+  async function saveEdit() {
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var bdayMonth = '';
+    if (editForm.birthday) {
+      var d = new Date(editForm.birthday);
+      if (!isNaN(d.getTime())) bdayMonth = months[d.getMonth()];
+    }
+    try {
+      var r = await fetch('/api/manage-client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'edit',
+          clientID: editingClient,
+          name: editForm.name,
+          mobile: editForm.mobile,
+          email: editForm.email,
+          birthday: editForm.birthday,
+          birthdayMonth: bdayMonth,
+          notes: editForm.notes,
+        }),
+      });
+      var data = await r.json();
+      if (data.success) { setMessage('✅ Client updated'); setEditingClient(null); loadAllClients(); }
+      else setMessage('❌ ' + (data.error || 'Failed'));
+    } catch (e) { setMessage('❌ Failed to update'); }
+  }
+
+  function exportCSV() {
+    var headers = ['Name','Token','Mobile','Email','Birthday','Birthday Month','Visits','Status','Date Added'];
+    var rows = allClients.map(function(c) {
+      return [c.name, c.token, c.mobile, c.email, c.birthday, c.birthdayMonth, c.visits, c.status, c.dateAdded].map(function(v) {
+        var s = String(v || '');
+        return s.indexOf(',') > -1 || s.indexOf('"') > -1 ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',');
+    });
+    var csv = headers.join(',') + '\n' + rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'clients_export_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    setMessage('✅ CSV exported');
+  }
+
+  function handleImportCSV(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = async function(ev) {
+      var text = ev.target.result;
+      var lines = text.split('\n').filter(function(l) { return l.trim(); });
+      if (lines.length < 2) { setMessage('❌ CSV is empty'); return; }
+
+      // Parse header
+      var headerLine = lines[0].toLowerCase();
+      var headers = headerLine.split(',').map(function(h) { return h.trim().replace(/"/g, ''); });
+      var nameIdx = headers.findIndex(function(h) { return h === 'name' || h === 'client name' || h === 'fullname' || h === 'full name'; });
+      var mobileIdx = headers.findIndex(function(h) { return h === 'mobile' || h === 'phone' || h === 'mobile number'; });
+      var emailIdx = headers.findIndex(function(h) { return h === 'email' || h === 'email address'; });
+      var bdayIdx = headers.findIndex(function(h) { return h === 'birthday' || h === 'birthdate' || h === 'date of birth'; });
+      var notesIdx = headers.findIndex(function(h) { return h === 'notes' || h === 'note'; });
+
+      if (nameIdx === -1) { setMessage('❌ CSV must have a "Name" column'); return; }
+
+      var clients = [];
+      for (var i = 1; i < lines.length; i++) {
+        var cols = lines[i].split(',').map(function(c) { return c.trim().replace(/"/g, ''); });
+        var name = cols[nameIdx] || '';
+        if (!name) continue;
+        clients.push({
+          name: name,
+          mobile: mobileIdx > -1 ? cols[mobileIdx] || '' : '',
+          email: emailIdx > -1 ? cols[emailIdx] || '' : '',
+          birthday: bdayIdx > -1 ? cols[bdayIdx] || '' : '',
+          notes: notesIdx > -1 ? cols[notesIdx] || '' : '',
+        });
+      }
+
+      if (clients.length === 0) { setMessage('❌ No valid rows found'); return; }
+
+      setImportStatus('Importing ' + clients.length + ' clients...');
+      try {
+        var r = await fetch('/api/manage-client', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'import', clients: clients }),
+        });
+        var data = await r.json();
+        setImportStatus(null);
+        setMessage('✅ ' + data.message);
+        if (data.errors && data.errors.length > 0) {
+          console.log('Import errors:', data.errors);
+        }
+        loadAllClients();
+      } catch (err) { setImportStatus(null); setMessage('❌ Import failed'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   }
 
   async function handleAddClient(e) {
@@ -364,16 +492,33 @@ function AdminPanel() {
             {/* ═══ ALL CLIENTS ═══ */}
             {activeTab === 'clients' && (
               <div className="animate-fade-in">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
                   <h2 className="text-2xl font-bold tracking-tight" style={{ color: panelText }}>
                     All Clients ({filteredClients.length})
                   </h2>
-                  <button onClick={() => setActiveTab('add')}
-                    className="px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                    style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-                    <UserPlus size={18} /> Add New
-                  </button>
+                  <div className="flex gap-2 flex-wrap">
+                    <label className="px-4 py-2.5 rounded-xl font-semibold text-sm cursor-pointer hover:shadow-lg transition-all duration-200 flex items-center gap-2 border-2"
+                      style={{ borderColor: accentColor, color: panelAccent }}>
+                      <Upload size={16} /> Import CSV
+                      <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
+                    </label>
+                    <button onClick={exportCSV}
+                      className="px-4 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2 border-2"
+                      style={{ borderColor: accentColor, color: panelAccent }}>
+                      <Download size={16} /> Export CSV
+                    </button>
+                    <button onClick={() => setActiveTab('add')}
+                      className="px-5 py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                      style={{ backgroundColor: accentColor, color: btnOnAccent }}>
+                      <UserPlus size={18} /> Add New
+                    </button>
+                  </div>
                 </div>
+                {importStatus && (
+                  <div className="mb-4 p-3 rounded-xl bg-blue-50 text-blue-700 text-sm font-semibold text-center border border-blue-200">
+                    {importStatus}
+                  </div>
+                )}
 
                 {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -419,7 +564,7 @@ function AdminPanel() {
                       <table className="w-full">
                         <thead>
                           <tr style={{ backgroundColor: `${borderColor}08` }}>
-                            {['Name', 'Token', 'Mobile', 'Birthday', 'Visits', 'Card'].map(h => (
+                            {['Name', 'Token', 'Mobile', 'Birthday', 'Visits', 'Actions'].map(h => (
                               <th key={h} className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -427,6 +572,35 @@ function AdminPanel() {
                         <tbody className="divide-y divide-gray-100">
                           {filteredClients.map((client, i) => (
                             <tr key={i} className="hover:bg-gray-50 transition-colors duration-150">
+                              {editingClient === client.clientID ? (
+                                <>
+                                  <td className="px-5 py-3">
+                                    <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                                      className="w-full px-2 py-1.5 border rounded-lg text-sm" />
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <span className="font-mono font-bold text-sm" style={{ color: panelAccent }}>{client.token}</span>
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <input type="tel" value={editForm.mobile} onChange={(e) => setEditForm({...editForm, mobile: e.target.value})}
+                                      className="w-full px-2 py-1.5 border rounded-lg text-sm" />
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <input type="date" value={editForm.birthday} onChange={(e) => setEditForm({...editForm, birthday: e.target.value})}
+                                      className="w-full px-2 py-1.5 border rounded-lg text-sm" />
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <span className="font-bold text-sm" style={{ color: panelAccent }}>{client.visits}</span>
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <div className="flex gap-1">
+                                      <button onClick={saveEdit} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-green-500 hover:bg-green-600 transition">Save</button>
+                                      <button onClick={() => setEditingClient(null)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-100 transition">Cancel</button>
+                                    </div>
+                                  </td>
+                                </>
+                              ) : (
+                                <>
                               <td className="px-5 py-4">
                                 <p className="font-semibold text-gray-800 text-sm">{client.name}</p>
                                 <p className="text-xs text-gray-400">{client.email || 'No email'}</p>
@@ -456,8 +630,18 @@ function AdminPanel() {
                                     className="p-1.5 hover:bg-gray-100 rounded-lg transition" title="View card">
                                     <ExternalLink size={16} className="text-gray-400" />
                                   </a>
+                                  <button onClick={() => startEdit(client)}
+                                    className="p-1.5 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                                    <Pencil size={16} className="text-blue-400" />
+                                  </button>
+                                  <button onClick={() => deleteClient(client.clientID, client.name)}
+                                    className="p-1.5 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                    <Trash2 size={16} className="text-red-400" />
+                                  </button>
                                 </div>
                               </td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>
