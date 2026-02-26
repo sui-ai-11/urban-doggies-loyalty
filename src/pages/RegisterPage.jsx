@@ -64,7 +64,18 @@ function RegisterPage() {
   var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var cardBg = (businessInfo && businessInfo.cardBackground) || '#150734';
   var bgIsDark = isDark(bgColor);
-  var heroText = bgIsDark ? '#ffffff' : borderColor;
+  var headingColor = (function() {
+    if (!isDark(borderColor)) return '#1a1a2e';
+    var c = borderColor.replace('#','');
+    var r = parseInt(c.substring(0,2),16)/255, g = parseInt(c.substring(2,4),16)/255, b = parseInt(c.substring(4,6),16)/255;
+    r = r <= 0.03928 ? r/12.92 : Math.pow((r+0.055)/1.055, 2.4);
+    g = g <= 0.03928 ? g/12.92 : Math.pow((g+0.055)/1.055, 2.4);
+    b = b <= 0.03928 ? b/12.92 : Math.pow((b+0.055)/1.055, 2.4);
+    var lumBorder = 0.2126*r + 0.7152*g + 0.0722*b;
+    var contrast = (1.05) / (lumBorder + 0.05);
+    return contrast >= 4.5 ? borderColor : '#1a1a2e';
+  })();
+  var heroText = bgIsDark ? '#ffffff' : headingColor;
   var heroSub = bgIsDark ? 'rgba(255,255,255,0.7)' : '#6b7280';
   var customFieldLabel = (businessInfo && businessInfo.customFieldLabel) || '';
 
@@ -81,11 +92,11 @@ function RegisterPage() {
         <div className="relative z-10 max-w-md mx-auto">
           <div className="glass-card rounded-3xl p-8 shadow-2xl text-center">
             <div className="text-6xl mb-4">✅</div>
-            <h1 className="text-2xl font-black mb-2" style={{ color: borderColor }}>Thank You, {result.client.name}!</h1>
+            <h1 className="text-2xl font-black mb-2" style={{ color: headingColor }}>Thank You, {result.client.name}!</h1>
             <p className="text-gray-500 mb-6">Your registration has been submitted.</p>
 
             <div className="rounded-2xl p-5 mb-6" style={{ backgroundColor: accentColor + '10', border: '2px solid ' + accentColor + '20' }}>
-              <p className="font-bold text-lg mb-1" style={{ color: borderColor }}>⏳ Pending Approval</p>
+              <p className="font-bold text-lg mb-1" style={{ color: headingColor }}>⏳ Pending Approval</p>
               <p className="text-sm text-gray-500">Please show this screen to the staff at the counter to activate your loyalty card.</p>
             </div>
 
@@ -136,7 +147,7 @@ function RegisterPage() {
               style={{ backgroundColor: accentColor }}>
               <span style={{ fontSize: '28px' }}>✨</span>
             </div>
-            <h2 className="text-xl font-bold" style={{ color: borderColor }}>Join Our Loyalty Program</h2>
+            <h2 className="text-xl font-bold" style={{ color: headingColor }}>Join Our Loyalty Program</h2>
             <p className="text-gray-500 text-sm mt-1">Sign up and start earning rewards!</p>
           </div>
 
@@ -175,16 +186,21 @@ function RegisterPage() {
               <p className="text-xs mt-1.5" style={{ color: accentColor }}>📧 Your loyalty card link will be sent to this email</p>
             </div>
 
-            {/* Birthday Month */}
+            {/* Birthday */}
             <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday Month</label>
-              <select value={form.birthdayMonth}
-                onChange={function(e) { updateForm('birthdayMonth', e.target.value); }}
-                className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm bg-white"
-                style={{ borderColor: accentColor + '40' }}>
-                <option value="">Select month</option>
-                {months.map(function(m) { return <option key={m} value={m}>{m}</option>; })}
-              </select>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Birthday</label>
+              <input type="date" value={form.birthday}
+                onChange={function(e) {
+                  var val = e.target.value;
+                  var month = '';
+                  if (val) {
+                    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                    month = months[parseInt(val.split('-')[1]) - 1] || '';
+                  }
+                  setForm(Object.assign({}, form, { birthday: val, birthdayMonth: month }));
+                }}
+                className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
+                style={{ borderColor: accentColor + '40' }} />
             </div>
 
             {/* Custom field — only show if business has a label for it */}
