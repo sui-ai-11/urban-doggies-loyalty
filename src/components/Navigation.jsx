@@ -12,16 +12,16 @@ function Navigation({ currentPage }) {
       .catch(err => console.error('Nav error:', err));
   }, []);
 
-  const accentColor = businessInfo?.accentColor || '#4a4a5a';
-  const borderColor = businessInfo?.borderColor || '#1a1a2e';
+  const accentColor = businessInfo?.accentColor || '#6b7280';
+  const borderColor = businessInfo?.borderColor || '#374151';
 
   // Smart nav colors — if borderColor is light, use dark fallback
   function isLightHex(hex) {
     const c = (hex || '#000').replace('#','');
     return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
   }
-  const navBg = isLightHex(borderColor) ? '#1a1a2e' : borderColor;
-  const activeLinkColor = isLightHex(accentColor) ? '#1a1a2e' : '#ffffff';
+  const navBg = isLightHex(borderColor) ? '#374151' : borderColor;
+  const activeLinkColor = isLightHex(accentColor) ? '#374151' : '#ffffff';
 
   const links = [
     { key: 'home', href: '/#/', label: 'Home', icon: Home },
