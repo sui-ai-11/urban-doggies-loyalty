@@ -166,7 +166,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
       .catch(function(err) { showToast('Error: ' + err.message); });
   }
 
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#6b7280';
   var borderColor = (businessInfo && businessInfo.borderColor) || '#1a1a2e';
   function isLightC(hex) { var c = (hex || '#000').replace('#',''); return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6; }
   var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
