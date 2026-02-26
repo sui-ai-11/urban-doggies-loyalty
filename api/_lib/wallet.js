@@ -43,7 +43,7 @@ async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted
       return;
     }
 
-    var objectId = ISSUER_ID + '.' + clientToken + '_v2';
+    var objectId = ISSUER_ID + '.' + clientToken + '_v3';
     var apiBase = 'https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/';
 
     // First try to GET the object to see if it exists
@@ -79,7 +79,6 @@ async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted
       },
       textModulesData: [
         { header: 'Total Visits', body: String(totalVisits), id: 'total_visits' },
-        { header: 'Next Reward', body: nextReward || 'Keep collecting!', id: 'next_reward' },
       ],
     };
 
