@@ -37,15 +37,6 @@ export default async function handler(req, res) {
       .order('visited_at', { ascending: false })
       .limit(1);
 
-    if (recentVisits && recentVisits.length > 0) {
-      var lastVisit = new Date(recentVisits[0].visited_at);
-      var now = new Date();
-      var diffMinutes = (now - lastVisit) / (1000 * 60);
-      if (diffMinutes < 0.167) {
-        return res.status(429).json({ error: 'Please wait at least 10 seconds between stamps.' });
-      }
-    }
-
     // Add visit
     var visitID = generateID('VIS_');
     var { error: visitErr } = await supabase.from('visits').insert({
