@@ -54,6 +54,8 @@ export default async function handler(req, res) {
       customFieldLabel: data.custom_field_label,
       adminPin: data.admin_pin,
       staffPin: data.staff_pin,
+      staffList: data.staff_list || '',
+      branchList: data.branch_list || '',
     });
   } catch (err) {
     console.error('get-business-info error:', err);
