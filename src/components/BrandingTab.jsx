@@ -2,17 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { Palette, Save, Check, RefreshCw, Star, Gift, Users } from 'lucide-react';
 import { colorPalettes } from '../palettes-data';
 
-const BrandingTab = () => {
-  const [businessInfo, setBusinessInfo] = useState(null);
+const BrandingTab = ({ businessInfo: parentBiz, onUpdate }) => {
+  const [businessInfo, setBusinessInfo] = useState(parentBiz || null);
   const [selectedPalette, setSelectedPalette] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [customMode, setCustomMode] = useState(false);
+  const [customColors, setCustomColors] = useState({
+    accent: '#17BEBB',
+    border: '#1F3A93',
+    background: '#17BEBB',
+    card: '#F5F1E8',
+  });
 
   useEffect(() => {
-    fetch('/api/get-business-info')
-      .then(r => r.json())
-      .then(data => setBusinessInfo(data))
-      .catch(err => console.error('Error loading business info:', err));
+    if (!parentBiz) {
+      fetch('/api/get-business-info')
+        .then(r => r.json())
+        .then(data => setBusinessInfo(data))
+        .catch(err => console.error('Error loading business info:', err));
+    }
+    if (parentBiz || businessInfo) {
+      var bi = parentBiz || businessInfo;
+      setCustomColors({
+        accent: bi.accentColor || '#17BEBB',
+        border: bi.borderColor || '#1F3A93',
+        background: bi.backgroundColor || '#17BEBB',
+        card: bi.cardBackground || '#F5F1E8',
+      });
+    }
   }, []);
 
   const handleApplyPalette = async () => {
@@ -33,6 +51,7 @@ const BrandingTab = () => {
         setSaved(true);
         const updatedData = await fetch('/api/get-business-info').then(r => r.json());
         setBusinessInfo(updatedData);
+        if (onUpdate) onUpdate(updatedData);
         setTimeout(() => setSaved(false), 3000);
       }
     } catch (error) {
@@ -42,12 +61,53 @@ const BrandingTab = () => {
     }
   };
 
+  const handleApplyCustom = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/update-business-colors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          backgroundColor: customColors.background,
+          accentColor: customColors.accent,
+          borderColor: customColors.border,
+          cardBackground: customColors.card,
+        }),
+      });
+      if (response.ok) {
+        setSaved(true);
+        const updatedData = await fetch('/api/get-business-info').then(r => r.json());
+        setBusinessInfo(updatedData);
+        if (onUpdate) onUpdate(updatedData);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (error) {
+      console.error('Error saving custom colors:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const accentColor = businessInfo?.accentColor || '#7f5af0';
   const borderColor = businessInfo?.borderColor || '#2cb67d';
 
-  const current = selectedPalette || colorPalettes.find(p =>
+  const matchedPalette = colorPalettes.find(p =>
     p.backgroundColor === businessInfo?.backgroundColor
   ) || colorPalettes[0];
+
+  const customPreview = {
+    id: 'custom',
+    name: 'Custom',
+    backgroundColor: customColors.background,
+    accentColor: customColors.accent,
+    borderColor: customColors.border,
+    cardBackground: customColors.card,
+    highlight: customColors.accent,
+    buttonText: '#ffffff',
+    headline: customColors.border,
+  };
+
+  const current = customMode ? customPreview : (selectedPalette || matchedPalette);
 
   return (
     <div className="animate-fade-in">
@@ -136,22 +196,33 @@ const BrandingTab = () => {
           </div>
         </div>
 
-        {/* Color Chips */}
+        {/* Color Chips — clickable when in custom mode */}
         <div className="px-6 py-4 bg-white border-t border-gray-100">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Palette Colors</p>
-          <div className="grid grid-cols-5 gap-2">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+            {customMode ? 'Click any color to customize' : 'Palette Colors'}
+          </p>
+          <div className="grid grid-cols-4 gap-3">
             {[
-              { label: 'Background', color: current.backgroundColor },
-              { label: 'Accent', color: current.accentColor },
-              { label: 'Nav/Text', color: current.borderColor },
-              { label: 'Card', color: current.cardBackground, border: true },
-              { label: 'Highlight', color: current.highlight || current.accentColor },
-            ].map(({ label, color, border }) => (
-              <div key={label} className="text-center">
-                <div className={`h-8 rounded-lg mb-1 ${border ? 'border border-gray-200' : ''}`}
-                  style={{ backgroundColor: color }} />
-                <p className="text-[9px] font-semibold text-gray-400">{label}</p>
-                <p className="text-[8px] font-mono text-gray-300">{color}</p>
+              { key: 'background', label: 'Background', color: current.backgroundColor },
+              { key: 'accent', label: 'Accent', color: current.accentColor },
+              { key: 'border', label: 'Nav/Text', color: current.borderColor },
+              { key: 'card', label: 'Card', color: current.cardBackground, border: true },
+            ].map(({ key, label, color, border }) => (
+              <div key={label} className="text-center relative">
+                {customMode ? (
+                  <label className="cursor-pointer block">
+                    <div className={`h-10 rounded-lg mb-1 hover:ring-2 hover:ring-offset-1 transition ${border ? 'border border-gray-200' : ''}`}
+                      style={{ backgroundColor: color, ringColor: color }} />
+                    <input type="color" value={color}
+                      onChange={(e) => setCustomColors({...customColors, [key]: e.target.value})}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-10" />
+                  </label>
+                ) : (
+                  <div className={`h-10 rounded-lg mb-1 ${border ? 'border border-gray-200' : ''}`}
+                    style={{ backgroundColor: color }} />
+                )}
+                <p className="text-[10px] font-semibold text-gray-400">{label}</p>
+                <p className="text-[9px] font-mono text-gray-300">{color}</p>
               </div>
             ))}
           </div>
@@ -173,7 +244,34 @@ const BrandingTab = () => {
         </button>
       )}
 
+      {/* Mode Toggle */}
+      <div className="flex gap-3 mb-5">
+        <button onClick={() => setCustomMode(false)}
+          className="px-5 py-2.5 rounded-xl font-bold text-sm transition"
+          style={{ backgroundColor: !customMode ? accentColor : '#f3f4f6', color: !customMode ? '#fff' : '#6b7280' }}>
+          Preset Palettes
+        </button>
+        <button onClick={() => setCustomMode(true)}
+          className="px-5 py-2.5 rounded-xl font-bold text-sm transition"
+          style={{ backgroundColor: customMode ? accentColor : '#f3f4f6', color: customMode ? '#fff' : '#6b7280' }}>
+          Custom Colors
+        </button>
+      </div>
+
+      {/* Custom Color Apply Button */}
+      {customMode && (
+        <button onClick={handleApplyCustom} disabled={saving}
+          className="w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 flex items-center justify-center gap-2 mb-6"
+          style={{ backgroundColor: customColors.accent, color: '#fff' }}>
+          {saving ? <><RefreshCw size={16} className="animate-spin" /> Saving...</> :
+           saved ? <><Check size={16} /> Applied!</> :
+           <><Save size={16} /> Apply Custom Colors</>}
+        </button>
+      )}
+
       {/* Palette Grid */}
+      {!customMode && (
+      <>
       <h3 className="text-lg font-bold mb-4" style={{ color: borderColor }}>Choose a Palette</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {colorPalettes.map((palette) => {
@@ -237,6 +335,8 @@ const BrandingTab = () => {
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 };
