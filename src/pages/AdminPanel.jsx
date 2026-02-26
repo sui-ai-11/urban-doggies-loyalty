@@ -1,4 +1,4 @@
-import { supabase, getTenant } from './_lib/supabase.js';
+import React, { useState, useEffect } from 'react';
 
 function generateToken(length) {
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
