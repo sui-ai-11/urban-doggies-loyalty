@@ -56,8 +56,8 @@ function StaffPanel() {
   }, [showScanner]);
 
   var bgColor = (businessInfo && businessInfo.backgroundColor) || '#1a1a2e';
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
-  var borderColor = (businessInfo && businessInfo.borderColor) || '#2cb67d';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#6b7280';
+  var borderColor = (businessInfo && businessInfo.borderColor) || '#374151';
   var cardBg = (businessInfo && businessInfo.cardBackground) || '#ffffff';
   var bgIsDark = isDark(bgColor);
   var heroText = bgIsDark ? '#ffffff' : borderColor;
@@ -377,8 +377,8 @@ function StaffPanel() {
 
   if (!businessInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-600"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
       </div>
     );
   }
@@ -443,12 +443,6 @@ function StaffPanel() {
         </div>
       </div>
     );
-  }
-
-  if (!businessInfo) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
-    </div>;
   }
 
   return (
