@@ -7,7 +7,10 @@ async function getAccessToken() {
   var clientEmail = process.env.GOOGLE_WALLET_CLIENT_EMAIL;
   var privateKey = (process.env.GOOGLE_WALLET_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 
-  if (!clientEmail || !privateKey) return null;
+  if (!clientEmail || !privateKey) {
+    console.log('Wallet credentials missing');
+    return null;
+  }
 
   var now = Math.floor(Date.now() / 1000);
   var token = jwt.sign({
@@ -25,17 +28,41 @@ async function getAccessToken() {
   });
 
   var data = await response.json();
+  if (!data.access_token) {
+    console.log('OAuth token error:', JSON.stringify(data));
+  }
   return data.access_token || null;
 }
 
-// Update a loyalty object's stamps/visits on Google Wallet
+// Create or update a loyalty object via REST API
 async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted, activeCoupons) {
   try {
     var accessToken = await getAccessToken();
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.log('No access token, skipping wallet update');
+      return;
+    }
 
     var objectId = ISSUER_ID + '.' + clientToken;
+    var apiBase = 'https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/';
 
+    // First try to GET the object to see if it exists
+    var getResponse = await fetch(apiBase + objectId, {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+
+    if (getResponse.status === 404) {
+      console.log('Wallet object not found for', clientToken, '— skipping (user hasnt saved to wallet yet)');
+      return;
+    }
+
+    if (!getResponse.ok) {
+      var errText = await getResponse.text();
+      console.log('Wallet GET failed:', getResponse.status, errText);
+      return;
+    }
+
+    // Object exists — PATCH it
     var patchBody = {
       loyaltyPoints: {
         label: 'Stamps',
@@ -50,23 +77,20 @@ async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted
       ],
     };
 
-    var response = await fetch(
-      'https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/' + objectId,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'Bearer ' + accessToken,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(patchBody),
-      }
-    );
+    var patchResponse = await fetch(apiBase + objectId, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patchBody),
+    });
 
-    if (!response.ok) {
-      var errText = await response.text();
-      console.log('Wallet update failed (may not exist yet):', response.status, errText);
+    if (!patchResponse.ok) {
+      var patchErr = await patchResponse.text();
+      console.log('Wallet PATCH failed:', patchResponse.status, patchErr);
     } else {
-      console.log('Wallet pass updated for', clientToken);
+      console.log('Wallet pass updated for', clientToken, '— stamps:', stamps, 'visits:', totalVisits);
     }
   } catch (err) {
     // Don't fail the stamp operation if wallet update fails
