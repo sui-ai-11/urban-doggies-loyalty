@@ -48,6 +48,8 @@ export default async function handler(req, res) {
       customFieldLabel: 'custom_field_label',
       adminPin: 'admin_pin',
       staffPin: 'staff_pin',
+      staffList: 'staff_list',
+      branchList: 'branch_list',
     };
 
     var updates = { updated_at: new Date().toISOString() };
