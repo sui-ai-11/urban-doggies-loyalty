@@ -306,9 +306,9 @@ function AdminPanel() {
   }
 
   // Dynamic colors
-  const bgColor = businessInfo?.backgroundColor || '#1a1a2e';
-  const accentColor = businessInfo?.accentColor || '#4a4a5a';
-  const borderColor = businessInfo?.borderColor || '#2a2a3a';
+  const bgColor = businessInfo?.backgroundColor || '#f9fafb';
+  const accentColor = businessInfo?.accentColor || '#6b7280';
+  const borderColor = businessInfo?.borderColor || '#374151';
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
 
   // Smart text colors for admin panels (white/light card backgrounds)
@@ -317,17 +317,17 @@ function AdminPanel() {
     return (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 > 0.6;
   }
   // For text on white panels: use borderColor if dark enough, otherwise use a dark fallback
-  const panelText = isLight(borderColor) ? '#1a1a2e' : borderColor;
+  const panelText = isLight(borderColor) ? '#f9fafb' : borderColor;
   // For accent on white panels: use accentColor if dark enough, otherwise darken it
-  const panelAccent = isLight(accentColor) ? '#1a1a2e' : accentColor;
-  const btnOnAccent = isLight(accentColor) ? '#1a1a2e' : '#ffffff';
-  const btnOnBorder = isLight(borderColor) ? '#1a1a2e' : '#ffffff';
+  const panelAccent = isLight(accentColor) ? '#f9fafb' : accentColor;
+  const btnOnAccent = isLight(accentColor) ? '#f9fafb' : '#ffffff';
+  const btnOnBorder = isLight(borderColor) ? '#f9fafb' : '#ffffff';
 
   // Don't render until we have business colors
   if (!businessInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-gray-400"></div>
       </div>
     );
   }
@@ -360,7 +360,7 @@ function AdminPanel() {
       var c = bgColor.replace('#','');
       bgIsDark = (0.299*parseInt(c.substring(0,2),16) + 0.587*parseInt(c.substring(2,4),16) + 0.114*parseInt(c.substring(4,6),16))/255 < 0.5;
     } catch(e) {}
-    var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#1a1a2e' : borderColor);
+    var navText = bgIsDark ? '#ffffff' : (isLight(borderColor) ? '#f9fafb' : borderColor);
     return (
       <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
         <Navigation currentPage="admin" />
@@ -418,7 +418,7 @@ function AdminPanel() {
                 className="px-3 sm:px-5 py-3 sm:py-4 font-semibold transition-all duration-200 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-xs sm:text-sm"
                 style={{
                   backgroundColor: activeTab === key ? panelText : 'transparent',
-                  color: activeTab === key ? (isLight(panelText) ? '#1a1a2e' : '#FFFFFF') : '#6B7280',
+                  color: activeTab === key ? (isLight(panelText) ? '#f9fafb' : '#FFFFFF') : '#6B7280',
                 }}>
                 <Icon size={18} /> {label}
               </button>
