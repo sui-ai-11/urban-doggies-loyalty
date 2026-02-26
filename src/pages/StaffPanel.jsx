@@ -223,38 +223,31 @@ function StaffPanel() {
           });
       })
       .then(function(result) {
-        if (result.client) {
-          // Single client from token search
+        if (result.client && result.loyalty) {
+          // Full dashboard data from token search
           setClientInfo(buildClientInfo(result));
           setClientCoupons(result.coupons || []);
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
-        } else if (result.clients && result.clients.length > 1) {
-          // Multiple matches
-          setMultipleResults(result.clients);
-          setClientInfo(null);
-          setMessage('Found ' + result.clients.length + ' customers. Please select:');
-        } else if (result.clients && result.clients.length === 1) {
-          // Single match from name search — fetch full loyalty data
-          var c = result.clients[0];
-          fetch('/api/client-dashboard?token=' + c.token)
+        } else if (result.client && !result.loyalty) {
+          // Partial data from search-client — fetch full dashboard
+          fetch('/api/client-dashboard?token=' + result.client.token)
             .then(function(r2) { return r2.ok ? r2.json() : null; })
             .then(function(full) {
               if (full && full.client) {
                 setClientInfo(buildClientInfo(full));
                 setClientCoupons(full.coupons || []);
-              } else {
-                setClientInfo({
-                  name: c.name, token: c.token,
-                  currentVisits: 0, currentProgress: 0, requiredVisits: 10, milestones: [],
-                });
-                setClientCoupons([]);
               }
-              setMultipleResults(null);
-              setMessage('Customer found! Review info and confirm to add stamp.');
             });
+          setMultipleResults(null);
+          setMessage('Customer found! Review info and confirm to add stamp.');
+        } else if (result.multiple) {
+          // Multiple matches
+          setMultipleResults(result.multiple);
+          setClientInfo(null);
+          setMessage('Found ' + result.multiple.length + ' customers. Please select:');
         } else {
-          throw new Error('Customer not found');
+          setMessage('Customer not found');
         }
       })
       .catch(function(error) {
@@ -276,8 +269,8 @@ function StaffPanel() {
       .then(function(r) { return r.json(); })
       .then(function(result) {
         if (result.error) throw new Error(result.error);
-        if (result.rewardEarned) {
-          setMessage('🎉 SUCCESS! ' + result.client.name + ' earned a reward: "' + result.rewardText + '"');
+        if (result.milestoneReward) {
+          setMessage('🎉 SUCCESS! ' + result.client.name + ' earned a reward: "' + result.milestoneReward + '"');
         } else {
           setMessage('✅ Stamp added! ' + result.client.name + ' now has ' + result.totalVisits + ' visits.');
         }
@@ -299,7 +292,7 @@ function StaffPanel() {
         } else {
           setClientInfo(Object.assign({}, clientInfo, { currentVisits: newTotal, currentProgress: newProgress }));
           // Reload coupons in case a reward was auto-created
-          if (result.rewardEarned) {
+          if (result.milestoneReward) {
             fetch('/api/client-dashboard?token=' + clientInfo.token)
               .then(function(r) { return r.json(); })
               .then(function(dashResult) {
