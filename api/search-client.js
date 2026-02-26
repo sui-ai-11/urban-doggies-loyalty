@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     var businessID = await getTenant(req);
-    var query = (req.query.q || '').trim();
+    var query = (req.query.q || req.query.name || '').trim();
 
     if (!query) return res.status(400).json({ error: 'Search query required' });
 
