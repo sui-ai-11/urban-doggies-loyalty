@@ -22,9 +22,9 @@ export default function PortalPage() {
     fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(function(data) { setBusinessInfo(data); }).catch(function() {});
   }, []);
 
-  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#16161a';
-  var accentColor = (businessInfo && businessInfo.accentColor) || '#7f5af0';
-  var borderColor = (businessInfo && businessInfo.borderColor) || '#fffffe';
+  var bgColor = (businessInfo && businessInfo.backgroundColor) || '#f9fafb';
+  var accentColor = (businessInfo && businessInfo.accentColor) || '#6b7280';
+  var borderColor = (businessInfo && businessInfo.borderColor) || '#374151';
   var btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   var bgIsDark = isDark(bgColor);
   // Smart heading color: must be readable on glass card (~white bg)
@@ -113,6 +113,12 @@ export default function PortalPage() {
     return function() { clearInterval(interval); };
   }, [result]);
 
+  if (!businessInfo) {
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+    </div>;
+  }
+
   if (result) {
     if (approvalStatus === 'approved') {
       return (
@@ -141,12 +147,6 @@ export default function PortalPage() {
           </div>
         </div>
       );
-    }
-
-    if (!businessInfo) {
-      return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
-      </div>;
     }
 
     return (
