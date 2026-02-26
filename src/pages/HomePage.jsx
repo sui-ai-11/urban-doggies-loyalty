@@ -31,36 +31,30 @@ function HomePage() {
     fetchBusinessInfo();
   }, []);
 
-  const bgColor = businessInfo?.backgroundColor || '#1a1a2e';
-  const accentColor = businessInfo?.accentColor || '#4a4a5a';
+  const bgColor = businessInfo?.backgroundColor || '#f9fafb';
+  const accentColor = businessInfo?.accentColor || '#6b7280';
   const cardBg = businessInfo?.cardBackground || '#f8f8f8';
-  const borderColor = businessInfo?.borderColor || '#2a2a3a';
-  const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
+  const borderColor = businessInfo?.borderColor || '#374151';
+  const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#f9fafb';
 
   // Dynamic text colors based on background brightness
   const bgIsDark = isDark(bgColor);
   const heroText = bgIsDark ? '#ffffff' : borderColor;
   const heroSubtext = bgIsDark ? 'rgba(255,255,255,0.8)' : `${borderColor}99`;
-  const navText = bgIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#1a1a2e');
+  const navText = bgIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#f9fafb');
 
   // Card text (cards are usually light)
   const cardIsDark = isDark(cardBg);
-  const cardHeading = cardIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#1a1a2e');
+  const cardHeading = cardIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#f9fafb');
   const cardText = cardIsDark ? '#d1d5db' : '#6b7280';
-  const cardSubtext = cardIsDark ? '#9ca3af' : (isDark(accentColor) ? accentColor : '#4a4a5a');
+  const cardSubtext = cardIsDark ? '#9ca3af' : (isDark(accentColor) ? accentColor : '#6b7280');
 
-  if (loading) {
+  if (loading || !businessInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-600"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
       </div>
     );
-  }
-
-  if (!businessInfo) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
-    </div>;
   }
 
   return (
