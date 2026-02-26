@@ -715,12 +715,12 @@ function AdminPanel() {
             )}
 
             {/* ═══ BRANDING ═══ */}
-            {activeTab === 'branding' && <BrandingTab />}
+            {activeTab === 'branding' && <BrandingTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} />}
 
-            {activeTab === 'settings' && <SettingsTab />}
+            {activeTab === 'settings' && <SettingsTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} />}
 
             {/* ═══ COUPONS ═══ */}
-            {activeTab === 'coupons' && <CouponsTab />}
+            {activeTab === 'coupons' && <CouponsTab businessInfo={businessInfo} />}
           </div>
         </div>
 
