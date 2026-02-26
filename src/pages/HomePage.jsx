@@ -32,6 +32,7 @@ function HomePage() {
 
   const bgColor = businessInfo?.backgroundColor || '#f9fafb';
   const accentColor = businessInfo?.accentColor || '#6b7280';
+  const cardBg = businessInfo?.cardBackground || '#f8f8f8';
   const borderColor = businessInfo?.borderColor || '#374151';
   const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
 
@@ -39,6 +40,11 @@ function HomePage() {
   const heroText = bgIsDark ? '#ffffff' : borderColor;
   const heroSubtext = bgIsDark ? 'rgba(255,255,255,0.55)' : '#9ca3af';
   const navText = bgIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#f9fafb');
+
+  const cardIsDark = isDark(cardBg);
+  const cardHeading = cardIsDark ? '#ffffff' : (isDark(borderColor) ? borderColor : '#f9fafb');
+  const cardText = cardIsDark ? '#d1d5db' : '#6b7280';
+  const cardSubtext = cardIsDark ? '#9ca3af' : (isDark(accentColor) ? accentColor : '#6b7280');
 
   if (loading || !businessInfo) {
     return (
@@ -52,19 +58,15 @@ function HomePage() {
     <div className="min-h-screen relative overflow-hidden animate-fade-in" style={{ backgroundColor: bgColor }}>
       {/* Subtle background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-10 blur-3xl"
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full opacity-10 blur-3xl"
              style={{ backgroundColor: accentColor }}></div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — no company name on homepage */}
       <nav style={{ backgroundColor: bgIsDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}` }} className="relative z-10">
         <div className="max-w-5xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
-            <a href="/#/" className="flex items-center gap-2 no-underline">
-              <span className="text-sm font-semibold tracking-tight" style={{ color: navText, opacity: 0.7 }}>
-                {businessInfo?.businessName || 'Home'}
-              </span>
-            </a>
+            <div></div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex gap-1">
@@ -112,20 +114,20 @@ function HomePage() {
         </div>
       </nav>
 
-      {/* Hero — Logo Centered */}
-      <div className="relative z-10 flex flex-col items-center justify-center px-6" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        <div className="text-center animate-slide-up" style={{ marginTop: '-40px' }}>
+      {/* Main Content */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-12 pb-20">
 
-          {/* Large Hero Logo */}
+        {/* Logo + Tagline at top center */}
+        <div className="text-center mb-12 animate-slide-up">
           {businessInfo?.logo ? (
-            <div className="mb-6">
+            <div className="mb-4">
               <img
                 src={businessInfo.logo}
                 alt={businessInfo.businessName}
                 className="mx-auto object-contain"
                 style={{
-                  height: '160px',
-                  maxWidth: '280px',
+                  height: '140px',
+                  maxWidth: '260px',
                   filter: bgIsDark ? 'drop-shadow(0 4px 24px rgba(255,255,255,0.1))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.08))',
                 }}
                 onError={(e) => e.target.style.display = 'none'}
@@ -133,52 +135,80 @@ function HomePage() {
             </div>
           ) : (
             <div
-              className="mx-auto mb-6 rounded-3xl flex items-center justify-center shadow-xl"
+              className="mx-auto mb-4 rounded-3xl flex items-center justify-center shadow-xl"
               style={{
-                width: '120px',
-                height: '120px',
+                width: '100px',
+                height: '100px',
                 backgroundColor: accentColor,
                 color: btnOnAccent,
-                fontSize: '48px',
+                fontSize: '42px',
                 fontWeight: 800,
               }}>
               {businessInfo?.businessName?.charAt(0) || 'B'}
             </div>
           )}
-
-          {/* Business Name */}
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight" style={{ color: heroText }}>
-            {businessInfo?.businessName || 'Business Name'}
-          </h1>
-
-          {/* Tagline */}
-          <p className="text-sm md:text-base font-normal mb-10 tracking-wide" style={{ color: heroSubtext }}>
+          <p className="text-sm font-normal tracking-wide" style={{ color: heroSubtext }}>
             {businessInfo?.tagline || 'Loyalty Rewards Program'}
           </p>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center max-w-sm mx-auto">
-            <a href="/#/staff"
-              className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-sm transition-all hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 no-underline"
-              style={{ backgroundColor: accentColor, color: btnOnAccent }}>
-              <Users className="w-4 h-4" />
+        {/* Action Cards */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16">
+          {/* Staff Card */}
+          <a
+            href="/#/staff"
+            className="glass-card group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
+            style={{ animationDelay: '0.1s', backgroundColor: cardBg }}
+          >
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Users style={{ width: 28, height: 28, color: btnOnAccent }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2 tracking-tight" style={{ color: cardHeading }}>
               Loyalty Desk
-            </a>
-            <a href="/#/admin"
-              className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-sm transition-all hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 no-underline"
-              style={{
-                backgroundColor: bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                color: heroText,
-                border: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}`,
-              }}>
-              <Settings className="w-4 h-4" />
+            </h2>
+            <p className="text-sm font-normal leading-relaxed" style={{ color: cardText }}>
+              Search customers and add stamps
+            </p>
+            <div className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+              For Staff
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
+
+          {/* Admin Card */}
+          <a
+            href="/#/admin"
+            className="glass-card group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
+            style={{ animationDelay: '0.2s', backgroundColor: cardBg }}
+          >
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 shadow-lg"
+              style={{ backgroundColor: accentColor }}
+            >
+              <Settings style={{ width: 28, height: 28, color: btnOnAccent }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2 tracking-tight" style={{ color: cardHeading }}>
               Client Management
-            </a>
-          </div>
+            </h2>
+            <p className="text-sm font-normal leading-relaxed" style={{ color: cardText }}>
+              Manage clients, view analytics & more
+            </p>
+            <div className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+              For Admins
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </a>
         </div>
 
         {/* Footer */}
-        <p className="absolute bottom-6 text-center text-xs w-full" style={{ color: `${heroText}20` }}>
+        <p className="text-center text-xs" style={{ color: `${heroText}20` }}>
           Made by Simple Labs PH
         </p>
       </div>
