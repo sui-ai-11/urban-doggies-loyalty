@@ -431,19 +431,22 @@ function StaffPanel() {
         </nav>
         <div className="flex items-center justify-center p-6" style={{ minHeight: 'calc(100vh - 80px)' }}>
           <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
-            <Lock size={28} color={accentColor} />
-            <h2 className="text-xl font-black mt-3 mb-1" style={{ color: '#1a1a2e' }}>Loyalty Desk</h2>
-            <p className="text-gray-500 text-sm mb-6">Enter PIN to access</p>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              style={{ backgroundColor: accentColor + '15' }}>
+              <Lock size={24} color={accentColor} />
+            </div>
+            <h2 className="text-lg font-bold mt-0 mb-1" style={{ color: '#1a1a2e' }}>Loyalty Desk</h2>
+            <p className="text-gray-400 text-xs mb-5">Enter PIN to access</p>
             <input type="password" value={pinInput}
               onChange={function(e) { setPinInput(e.target.value); setPinError(''); }}
               onKeyDown={function(e) { if (e.key === 'Enter') handlePinSubmit(); }}
               placeholder="Enter PIN"
-              className="w-full px-5 py-4 rounded-2xl border-2 text-center text-2xl tracking-widest font-mono mb-4"
-              style={{ borderColor: accentColor + '40' }}
+              className="w-full px-5 py-3 text-center text-lg tracking-[0.25em] rounded-xl border-2 focus:outline-none mb-4"
+              style={{ borderColor: accentColor + '50', fontFamily: 'system-ui, -apple-system, sans-serif' }}
               autoFocus />
-            {pinError && <p className="text-red-500 text-sm font-semibold mb-3">{pinError}</p>}
+            {pinError && <p className="text-red-500 text-xs font-semibold mb-3">{pinError}</p>}
             <button onClick={handlePinSubmit}
-              className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg"
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:shadow-lg"
               style={{ backgroundColor: accentColor, color: btnOnAccent }}>
               Unlock
             </button>
@@ -944,12 +947,12 @@ function StaffPanel() {
 
         {/* Message Toast */}
         {message && (
-          <div className={'mt-6 p-4 rounded-2xl text-center font-semibold text-sm animate-slide-up ' +
-            (message.indexOf('🎉') > -1 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-800 border border-orange-200'
-            : (message.indexOf('✅') > -1 || message.indexOf('Stamp added') > -1 || message.indexOf('SUCCESS') > -1) ? 'bg-green-50 text-green-800 border border-green-200'
-            : message.indexOf('found') > -1 || message.indexOf('selected') > -1 || message.indexOf('Found') > -1 ? 'bg-blue-50 text-blue-800 border border-blue-200'
-            : message.indexOf('Please') > -1 ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-            : 'bg-red-50 text-red-800 border border-red-200')
+          <div className={'mt-4 px-4 py-3 rounded-xl text-center text-xs font-medium animate-slide-up ' +
+            (message.indexOf('🎉') > -1 ? 'bg-amber-50 text-amber-700 border border-amber-200'
+            : (message.indexOf('✅') > -1 || message.indexOf('Stamp added') > -1 || message.indexOf('SUCCESS') > -1 || message.indexOf('approved') > -1) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : message.indexOf('found') > -1 || message.indexOf('selected') > -1 || message.indexOf('Found') > -1 ? 'bg-sky-50 text-sky-700 border border-sky-200'
+            : message.indexOf('Please') > -1 ? 'bg-amber-50 text-amber-700 border border-amber-200'
+            : 'bg-rose-50 text-rose-700 border border-rose-200')
           }>
             {message}
           </div>
