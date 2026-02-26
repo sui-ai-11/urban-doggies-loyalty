@@ -7,8 +7,8 @@ function isDarkColor(hex) {
   return (0.299 * parseInt(c.substring(0,2),16) + 0.587 * parseInt(c.substring(2,4),16) + 0.114 * parseInt(c.substring(4,6),16)) / 255 < 0.5;
 }
 
-function SettingsTab() {
-  var _a = useState(null), businessInfo = _a[0], setBusinessInfo = _a[1];
+function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
+  var _a = useState(parentBiz || null), businessInfo = _a[0], setBusinessInfo = _a[1];
   var _b = useState([]), coupons = _b[0], setCoupons = _b[1];
   var _c = useState(false), saving = _c[0], setSaving = _c[1];
   var _d = useState(''), toast = _d[0], setToast = _d[1];
@@ -29,9 +29,7 @@ function SettingsTab() {
 
   useEffect(function() {
     // Load business info
-    fetch('/api/get-business-info')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
+    var initData = function(data) {
         setBusinessInfo(data);
         setFields({
           businessName: data.businessName || '',
@@ -79,8 +77,9 @@ function SettingsTab() {
           })(),
           activeTierKey: '1',
         });
-      })
-      .catch(function(err) { console.error(err); });
+      };
+    if (parentBiz) { initData(parentBiz); }
+    else { fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(initData).catch(function(err) { console.error(err); }); }
 
     // Load coupons
     fetch('/api/manage-coupons')
