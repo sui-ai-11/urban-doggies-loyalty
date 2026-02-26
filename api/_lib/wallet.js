@@ -43,7 +43,7 @@ async function updateWalletPass(clientToken, stamps, totalVisits, cardsCompleted
       return;
     }
 
-    var objectId = ISSUER_ID + '.' + clientToken + '_v3';
+    var objectId = ISSUER_ID + '.' + clientToken + '_v4';
     var apiBase = 'https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/';
 
     // First try to GET the object to see if it exists
