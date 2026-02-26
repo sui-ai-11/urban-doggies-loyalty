@@ -88,8 +88,8 @@ const BrandingTab = ({ businessInfo: parentBiz, onUpdate }) => {
     }
   };
 
-  const accentColor = businessInfo?.accentColor || '#7f5af0';
-  const borderColor = businessInfo?.borderColor || '#2cb67d';
+  const accentColor = businessInfo?.accentColor || '#6b7280';
+  const borderColor = businessInfo?.borderColor || '#374151';
 
   const matchedPalette = colorPalettes.find(p =>
     p.backgroundColor === businessInfo?.backgroundColor
