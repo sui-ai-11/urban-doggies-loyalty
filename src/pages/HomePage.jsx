@@ -160,8 +160,15 @@ function HomePage() {
           {/* Staff Card */}
           <a
             href="/#/staff"
-            className="glass-card group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
-            style={{ animationDelay: '0.1s', backgroundColor: cardBg }}
+            className="group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
+            style={{
+              animationDelay: '0.1s',
+              backgroundColor: bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
+              backdropFilter: 'blur(10px)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = accentColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = btnOnAccent); }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'; e.currentTarget.querySelector('[data-card-heading]').style.color = cardHeading; e.currentTarget.querySelector('[data-card-desc]').style.color = cardText; e.currentTarget.querySelector('[data-card-sub]').style.color = cardSubtext; }}
           >
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 shadow-lg"
@@ -169,13 +176,13 @@ function HomePage() {
             >
               <Users style={{ width: 28, height: 28, color: btnOnAccent }} />
             </div>
-            <h2 className="text-xl font-bold mb-2 tracking-tight" style={{ color: cardHeading }}>
+            <h2 data-card-text data-card-heading className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300" style={{ color: cardHeading }}>
               Loyalty Desk
             </h2>
-            <p className="text-sm font-normal leading-relaxed" style={{ color: cardText }}>
+            <p data-card-text data-card-desc className="text-sm font-normal leading-relaxed transition-colors duration-300" style={{ color: cardText }}>
               Search customers and add stamps
             </p>
-            <div className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+            <div data-card-text data-card-sub className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
               For Staff
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -186,8 +193,15 @@ function HomePage() {
           {/* Admin Card */}
           <a
             href="/#/admin"
-            className="glass-card group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
-            style={{ animationDelay: '0.2s', backgroundColor: cardBg }}
+            className="group rounded-2xl p-8 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl animate-slide-up no-underline"
+            style={{
+              animationDelay: '0.2s',
+              backgroundColor: bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${bgIsDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
+              backdropFilter: 'blur(10px)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = accentColor; e.currentTarget.querySelectorAll('[data-card-text]').forEach(el => el.style.color = btnOnAccent); }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = bgIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'; e.currentTarget.querySelector('[data-card-heading]').style.color = cardHeading; e.currentTarget.querySelector('[data-card-desc]').style.color = cardText; e.currentTarget.querySelector('[data-card-sub]').style.color = cardSubtext; }}
           >
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 shadow-lg"
@@ -195,13 +209,13 @@ function HomePage() {
             >
               <Settings style={{ width: 28, height: 28, color: btnOnAccent }} />
             </div>
-            <h2 className="text-xl font-bold mb-2 tracking-tight" style={{ color: cardHeading }}>
+            <h2 data-card-text data-card-heading className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300" style={{ color: cardHeading }}>
               Client Management
             </h2>
-            <p className="text-sm font-normal leading-relaxed" style={{ color: cardText }}>
+            <p data-card-text data-card-desc className="text-sm font-normal leading-relaxed transition-colors duration-300" style={{ color: cardText }}>
               Manage clients, view analytics & more
             </p>
-            <div className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
+            <div data-card-text data-card-sub className="mt-6 inline-flex items-center text-xs font-semibold gap-2 group-hover:gap-3 transition-all" style={{ color: cardSubtext }}>
               For Admins
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
