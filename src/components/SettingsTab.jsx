@@ -174,7 +174,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
   var btnOnAccent = isLightC(accentColor) ? '#1a1a2e' : '#ffffff';
 
   var sections = [
-    { key: 'rewards', label: '⭐ Date Stamp' },
+    { key: 'rewards', label: '⭐ Stamp Card' },
     { key: 'contact', label: '💬 Contact' },
     { key: 'business', label: '🏢 Business' },
   ];
@@ -223,7 +223,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Stamp Card Settings</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Required Visits for Reward', 'stampsRequired', '10', 'number')}
-            {renderInput('Reward Text (auto-issued after completing card)', 'rewardDescription', 'Free service on your next visit!')}
+            {renderInput('Reward Text (auto-issued after completing card)', 'rewardDescription', '')}
             {renderInput('Progress Message', 'progressText', 'Track your visits and earn rewards!')}
 
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Stamp Icon (filled)</h4>
@@ -507,7 +507,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Card Navigation Labels</h4>
-            {renderInput('Tab 1 Label', 'navButton1Text', 'Date Stamp')}
+            {renderInput('Tab 1 Label', 'navButton1Text', 'Stamp Card')}
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Security</h4>
