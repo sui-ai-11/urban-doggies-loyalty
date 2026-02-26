@@ -503,7 +503,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Business Profile</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             {renderInput('Business Name', 'businessName', 'Urban Doggies')}
-            {renderInput('Tagline', 'tagline', 'Digital Loyalty System')}
+            {renderInput('Tagline', 'tagline', '')}
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Card Navigation Labels</h4>
