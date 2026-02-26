@@ -99,7 +99,7 @@ export default async function handler(req, res) {
 
     // Build class suffix from business ID (unique per business)
     var classSuffix = clientBusinessID.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    var objectSuffix = client.token + '_v3';
+    var objectSuffix = client.token + '_v4';
 
     // Determine colors
     var accentHex = (biz.accent_color || '#17BEBB').replace('#', '');
@@ -144,24 +144,11 @@ export default async function handler(req, res) {
       state: 'ACTIVE',
       accountId: client.token,
       accountName: client.name,
-      loyaltyPoints: {
-        label: 'Progress',
-        balance: {
-          string: stars + ' ' + currentCardStamps + '/' + stampsRequired,
-        },
-      },
       barcode: {
         type: 'QR_CODE',
         value: client.token,
         alternateText: client.token,
       },
-      textModulesData: [
-        {
-          header: 'Total Visits',
-          body: String(totalVisits),
-          id: 'total_visits',
-        },
-      ],
       linksModuleData: {
         uris: [
           {
