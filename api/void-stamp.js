@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     // Update Google Wallet pass (non-blocking)
     var currentCardStamps = totalVisits % stampsRequired;
     var cardsCompleted = Math.floor(totalVisits / stampsRequired);
-    updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0)
+    updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0, stampsRequired, 'Keep collecting!')
       .catch(function(e) { console.log('Wallet update skipped:', e.message); });
 
     return res.status(200).json({
