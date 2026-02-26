@@ -226,7 +226,7 @@ function HomePage() {
 
         {/* Footer */}
         <p className="text-center text-xs" style={{ color: `${heroText}20` }}>
-          Made by Simple Labs PH
+          Stampcard by Simple Labs PH
         </p>
       </div>
     </div>
