@@ -92,7 +92,7 @@ function CustomerCard() {
   // Pending approval screen
   if (clientData && clientData.status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#16161a' }}>
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#f9fafb' }}>
         <div className="glass-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
           <div className="text-5xl mb-4">⏳</div>
           <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
