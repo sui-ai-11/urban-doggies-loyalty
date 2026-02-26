@@ -99,7 +99,7 @@ export default async function handler(req, res) {
 
     // Build class suffix from business ID (unique per business)
     var classSuffix = clientBusinessID.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    var objectSuffix = client.token + '_v2';
+    var objectSuffix = client.token + '_v3';
 
     // Determine colors
     var accentHex = (biz.accent_color || '#17BEBB').replace('#', '');
@@ -160,11 +160,6 @@ export default async function handler(req, res) {
           header: 'Total Visits',
           body: String(totalVisits),
           id: 'total_visits',
-        },
-        {
-          header: 'Next Reward',
-          body: nextReward,
-          id: 'next_reward',
         },
       ],
       linksModuleData: {
