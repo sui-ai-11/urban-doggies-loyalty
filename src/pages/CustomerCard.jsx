@@ -18,6 +18,8 @@ function CustomerCard() {
   const [error, setError] = useState(null);
   const [clientData, setClientData] = useState(null);
   const [activeView, setActiveView] = useState('stamp');
+  const [walletUrl, setWalletUrl] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
 
   // Support hash route, direct path, and bare query
   const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -393,6 +395,42 @@ function CustomerCard() {
               {/* Total visits */}
               <div className="mt-4 text-center">
                 <p className="text-xs" style={{ color: subtextColor }}>Total lifetime visits: <span className="font-bold" style={{ color: accentColor }}>{totalVisits}</span></p>
+              </div>
+
+              {/* Add to Google Wallet */}
+              <div className="mt-5 text-center">
+                {walletUrl ? (
+                  <a href={walletUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:shadow-lg hover:scale-[1.02]"
+                    style={{ backgroundColor: '#000', color: '#fff' }}>
+                    <img src="https://pay.google.com/about/static_kix/images/logos/google-pay-logo.png" alt="G" className="h-5 w-auto" 
+                      onError={function(e) { e.target.style.display = 'none'; }} />
+                    Add to Google Wallet
+                  </a>
+                ) : (
+                  <button onClick={function() {
+                    setWalletLoading(true);
+                    fetch('/api/wallet-pass?token=' + token)
+                      .then(function(r) { return r.json(); })
+                      .then(function(data) {
+                        if (data.saveUrl) { setWalletUrl(data.saveUrl); }
+                        setWalletLoading(false);
+                      })
+                      .catch(function() { setWalletLoading(false); });
+                  }}
+                    disabled={walletLoading}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all hover:shadow-lg hover:scale-[1.02] disabled:opacity-50"
+                    style={{ backgroundColor: '#000', color: '#fff' }}>
+                    {walletLoading ? (
+                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Loading...</>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        Add to Google Wallet
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
