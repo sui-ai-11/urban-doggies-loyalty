@@ -94,11 +94,14 @@ export default async function handler(req, res) {
       milestoneReward = rewardDescription;
     }
 
-    // Update Google Wallet pass (non-blocking)
+    // Update Google Wallet pass (best-effort, don't block response)
     var currentCardStamps = totalVisits % stampsRequired;
     var cardsCompleted = Math.floor(totalVisits / stampsRequired);
-    updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0)
-      .catch(function(e) { console.log('Wallet update skipped:', e.message); });
+    try {
+      await updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0);
+    } catch (e) {
+      console.log('Wallet update skipped:', e.message);
+    }
 
     return res.status(200).json({
       success: true,
