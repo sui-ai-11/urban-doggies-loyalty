@@ -100,6 +100,9 @@ export default async function handler(req, res) {
       adImageUrl: biz.ad_image_url,
     } : {};
 
+    var stampsRequired = (biz && biz.stamps_required) || 10;
+    var currentProgress = totalVisits % stampsRequired;
+
     return res.status(200).json({
       client: {
         clientID: client.id,
@@ -111,7 +114,14 @@ export default async function handler(req, res) {
         birthdayMonth: client.birthday_month || '',
         status: client.status || 'approved',
       },
-      business: businessData,
+      business: Object.assign({}, businessData, {
+        requiredVisits: stampsRequired,
+      }),
+      loyalty: {
+        totalVisits: totalVisits,
+        currentProgress: currentProgress,
+        stampsRequired: stampsRequired,
+      },
       visits: (visits || []).map(function(v) {
         return {
           visitID: v.id,
