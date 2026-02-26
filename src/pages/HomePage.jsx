@@ -57,6 +57,12 @@ function HomePage() {
     );
   }
 
+  if (!businessInfo) {
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+    </div>;
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden animate-fade-in" style={{ backgroundColor: bgColor }}>
       {/* Decorative Background Elements */}
