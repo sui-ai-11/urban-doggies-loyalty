@@ -1,4 +1,5 @@
 import { supabase, getTenant } from './_lib/supabase.js';
+import { updateWalletPass } from './_lib/wallet.js';
 
 function generateID(prefix) {
   return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -92,6 +93,12 @@ export default async function handler(req, res) {
       });
       milestoneReward = rewardDescription;
     }
+
+    // Update Google Wallet pass (non-blocking)
+    var currentCardStamps = totalVisits % stampsRequired;
+    var cardsCompleted = Math.floor(totalVisits / stampsRequired);
+    updateWalletPass(client.token, currentCardStamps, totalVisits, cardsCompleted, 0)
+      .catch(function(e) { console.log('Wallet update skipped:', e.message); });
 
     return res.status(200).json({
       success: true,
