@@ -120,7 +120,7 @@ function HomePage() {
         {/* Logo + Tagline at top center */}
         <div className="text-center mb-12 animate-slide-up">
           {businessInfo?.logo ? (
-            <div className="mb-3">
+            <div style={{ marginBottom: '6px' }}>
               <img
                 src={businessInfo.logo}
                 alt={businessInfo.businessName}
@@ -135,10 +135,11 @@ function HomePage() {
             </div>
           ) : (
             <div
-              className="mx-auto mb-3 rounded-3xl flex items-center justify-center shadow-xl"
+              className="mx-auto rounded-3xl flex items-center justify-center shadow-xl"
               style={{
                 width: '200px',
                 height: '200px',
+                marginBottom: '6px',
                 backgroundColor: accentColor,
                 color: btnOnAccent,
                 fontSize: '80px',
@@ -147,7 +148,7 @@ function HomePage() {
               {businessInfo?.businessName?.charAt(0) || 'B'}
             </div>
           )}
-          <p className="text-sm font-normal tracking-wide" style={{ color: heroSubtext }}>
+          <p className="font-light tracking-widest uppercase" style={{ color: heroSubtext, fontSize: '0.7rem', letterSpacing: '0.2em' }}>
             {businessInfo?.tagline || 'Loyalty Rewards Program'}
           </p>
         </div>
