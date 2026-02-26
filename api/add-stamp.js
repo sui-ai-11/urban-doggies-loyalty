@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   try {
     var businessID = await getTenant(req);
-    var { token, addedBy } = req.body;
+    var { token, addedBy, staffName, branch } = req.body;
 
     if (!token) return res.status(400).json({ error: 'Token is required' });
 
@@ -43,6 +43,8 @@ export default async function handler(req, res) {
       client_id: client.id,
       business_id: businessID,
       added_by: addedBy || 'staff',
+      staff_name: staffName || '',
+      branch: branch || '',
       notes: '',
       status: 'active',
     });
@@ -116,6 +118,8 @@ export default async function handler(req, res) {
             type: matchedMilestone.type || 'reward',
             text: matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
             notes: 'Auto-reward at stamp ' + stampInCard + ' (Card ' + currentCycle + ')',
+            staff_name: staffName || '',
+            branch: branch || '',
           });
           milestoneReward = matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
         }
@@ -135,6 +139,8 @@ export default async function handler(req, res) {
         type: 'reward',
         text: rewardDescription,
         notes: 'Auto-reward for completing card',
+        staff_name: staffName || '',
+        branch: branch || '',
       });
       milestoneReward = rewardDescription;
     }
