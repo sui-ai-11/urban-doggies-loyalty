@@ -54,6 +54,36 @@ function HomePage() {
     );
   }
 
+  // Landing page for bare domain (stampcard.org)
+  if (businessInfo?.isLanding) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center px-6 animate-fade-in">
+        <div className="text-center" style={{ marginTop: '-40px' }}>
+          <div className="mb-4">
+            <span className="text-5xl md:text-6xl font-black tracking-tight text-white">Stamp</span>
+            <span className="text-5xl md:text-6xl font-black tracking-tight text-violet-400">Card</span>
+          </div>
+          <p className="text-slate-400 text-sm md:text-base mb-10 tracking-wide">
+            White-label digital loyalty cards for your business
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="https://urbandoggies.stampcard.org" 
+              className="px-8 py-3 rounded-xl font-semibold text-sm bg-violet-500 text-white hover:bg-violet-600 transition-all hover:shadow-lg no-underline">
+              See Demo
+            </a>
+            <a href="mailto:hello@simplelabs.ph"
+              className="px-8 py-3 rounded-xl font-semibold text-sm bg-white/10 text-white border border-white/15 hover:bg-white/20 transition-all no-underline">
+              Get Started
+            </a>
+          </div>
+        </div>
+        <p className="absolute bottom-6 text-center text-xs text-slate-600">
+          Made by Simple Labs PH
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden animate-fade-in" style={{ backgroundColor: bgColor }}>
       {/* Subtle background glow */}
@@ -226,7 +256,7 @@ function HomePage() {
 
         {/* Footer */}
         <p className="text-center text-xs" style={{ color: `${heroText}20` }}>
-          Stampcard by Simple Labs PH
+          Made by Simple Labs PH
         </p>
       </div>
     </div>
