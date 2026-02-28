@@ -8,6 +8,12 @@ export default async function handler(req, res) {
 
   try {
     var businessID = await getTenant(req);
+    
+    // No tenant = bare domain = show landing page
+    if (!businessID) {
+      return res.status(200).json({ isLanding: true });
+    }
+
     var { data, error } = await supabase
       .from('businesses')
       .select('*')
