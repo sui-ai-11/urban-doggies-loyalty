@@ -7,7 +7,13 @@ const supabase = createClient(
 
 async function getTenant(req) {
   var host = req.headers.host || req.headers['x-forwarded-host'] || '';
+  // Remove port for local dev
   host = host.split(':')[0];
+
+  // Bare domain (no subdomain) — return null for landing page
+  if (host === 'stampcard.org' || host === 'www.stampcard.org') {
+    return null;
+  }
   
   var { data } = await supabase
     .from('tenants')
@@ -16,7 +22,7 @@ async function getTenant(req) {
     .eq('active', true)
     .single();
   
-  return data ? data.business_id : 'BIZ_001';
+  return data ? data.business_id : null;
 }
 
 export { supabase, getTenant };
