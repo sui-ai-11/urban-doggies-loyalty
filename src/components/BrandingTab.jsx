@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Palette, Save, Check, RefreshCw, Star, Gift, Users } from 'lucide-react';
 import { colorPalettes } from '../palettes-data';
 
-const BrandingTab = ({ businessInfo: parentBiz, onUpdate }) => {
+const BrandingTab = ({ businessInfo: parentBiz, onUpdate, sessionToken }) => {
+  function authFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + (sessionToken || '') });
+    return fetch(url, opts);
+  }
   const [businessInfo, setBusinessInfo] = useState(parentBiz || null);
   const [selectedPalette, setSelectedPalette] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -37,7 +42,7 @@ const BrandingTab = ({ businessInfo: parentBiz, onUpdate }) => {
     if (!selectedPalette) return;
     setSaving(true);
     try {
-      const response = await fetch('/api/update-business-colors', {
+      const response = await authFetch('/api/update-business-colors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -64,7 +69,7 @@ const BrandingTab = ({ businessInfo: parentBiz, onUpdate }) => {
   const handleApplyCustom = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/update-business-colors', {
+      const response = await authFetch('/api/update-business-colors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
