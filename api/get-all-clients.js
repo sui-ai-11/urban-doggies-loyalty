@@ -138,13 +138,14 @@ export default async function handler(req, res) {
       }
     });
     var active30 = 0, active60 = 0, active90 = 0, inactive = 0;
+    var active30Ids = [], active60Ids = [], active90Ids = [], inactiveIds = [];
     approvedClients.forEach(function(c) {
       var last = lastVisitByClient[c.clientID];
-      if (!last) { inactive++; return; }
-      if (last >= thirtyDaysAgo) active30++;
-      else if (last >= sixtyDaysAgo) active60++;
-      else if (last >= ninetyDaysAgo) active90++;
-      else inactive++;
+      if (!last) { inactive++; inactiveIds.push(c.clientID); return; }
+      if (last >= thirtyDaysAgo) { active30++; active30Ids.push(c.clientID); }
+      else if (last >= sixtyDaysAgo) { active60++; active60Ids.push(c.clientID); }
+      else if (last >= ninetyDaysAgo) { active90++; active90Ids.push(c.clientID); }
+      else { inactive++; inactiveIds.push(c.clientID); }
     });
 
     // New registrations (last 4 weeks)
@@ -195,6 +196,10 @@ export default async function handler(req, res) {
       active60: active60,
       active90: active90,
       inactive: inactive,
+      active30Ids: active30Ids,
+      active60Ids: active60Ids,
+      active90Ids: active90Ids,
+      inactiveIds: inactiveIds,
       weeklyRegistrations: weeklyRegistrations.reverse(),
       couponsIssued: couponsIssued,
       couponsRedeemed: couponsRedeemed,
