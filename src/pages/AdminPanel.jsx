@@ -75,9 +75,11 @@ function AdminPanel() {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activityFilter, setActivityFilter] = useState(null);
   const [allClients, setAllClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  const defaultAnalytics = { totalClients: 0, totalVisits: 0, stampsToday: 0, rewardsIssued: 0, repeatRate: 0, repeatClients: 0, avgVisits: '0', avgDaysBetween: 0, active30: 0, active60: 0, active90: 0, inactive: 0, weeklyRegistrations: [0,0,0,0], couponsIssued: 0, couponsRedeemed: 0, couponsVoided: 0, couponsActive: 0, redemptionRate: 0, branchStats: {} };
+  const [analytics, setAnalytics] = useState(defaultAnalytics);
   const [breeds, setBreeds] = useState([]);
   const [birthdayMonths, setBirthdayMonths] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -116,6 +118,10 @@ function AdminPanel() {
 
   useEffect(() => {
     let filtered = [...allClients];
+    if (activityFilter && analytics) {
+      var ids = analytics[activityFilter + 'Ids'] || [];
+      filtered = filtered.filter(c => ids.includes(c.clientID));
+    }
     if (searchQuery) {
       var q = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
@@ -136,7 +142,7 @@ function AdminPanel() {
       }
     });
     setFilteredClients(filtered);
-  }, [allClients, searchQuery, selectedMonth, sortBy]);
+  }, [allClients, searchQuery, selectedMonth, sortBy, activityFilter, analytics]);
 
   async function loadAllClients() {
     try {
@@ -147,7 +153,7 @@ function AdminPanel() {
         setAllClients(data.clients || []);
         setBreeds(data.breeds || []);
         setBirthdayMonths(data.birthdayMonths || []);
-        setAnalytics(data.analytics || {});
+        setAnalytics(Object.assign({}, defaultAnalytics, data.analytics || {}));
       }
     } catch (error) { console.error('Error loading clients:', error); }
     finally { setLoading(false); }
@@ -429,17 +435,17 @@ function AdminPanel() {
           <div className="p-6 md:p-8">
 
             {/* ═══ DASHBOARD ═══ */}
-            {activeTab === 'dashboard' && analytics && (
+            {activeTab === 'dashboard' && (
               <div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Analytics Dashboard</h2>
 
                 {/* Top Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: 'Total Clients', value: analytics.totalClients, icon: '👥' },
-                    { label: 'Total Visits', value: analytics.totalVisits, icon: '📊' },
-                    { label: 'Stamps Today', value: analytics.stampsToday, icon: '🏷️' },
-                    { label: 'Rewards Issued', value: analytics.rewardsIssued, icon: '🎁' },
+                    { label: 'Total Clients', value: (analytics && analytics.totalClients) || 0, icon: '👥' },
+                    { label: 'Total Visits', value: (analytics && analytics.totalVisits) || 0, icon: '📊' },
+                    { label: 'Stamps Today', value: (analytics && analytics.stampsToday) || 0, icon: '🏷️' },
+                    { label: 'Rewards Issued', value: (analytics && analytics.rewardsIssued) || 0, icon: '🎁' },
                   ].map((card, i) => (
                     <div key={i} className="rounded-xl p-4 bg-white border border-gray-100 shadow-sm">
                       <div className="flex items-center justify-between mb-1">
@@ -481,18 +487,19 @@ function AdminPanel() {
                     <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>🟢 Client Activity</h3>
                     <div className="space-y-3">
                       {[
-                        { label: 'Active (30 days)', value: analytics.active30, color: '#22c55e' },
-                        { label: 'Slowing (31-60 days)', value: analytics.active60, color: '#f59e0b' },
-                        { label: 'At Risk (61-90 days)', value: analytics.active90, color: '#f97316' },
-                        { label: 'Inactive (90+ days)', value: analytics.inactive, color: '#ef4444' },
+                        { label: 'Active (30 days)', value: analytics.active30, color: '#22c55e', key: 'active30' },
+                        { label: 'Slowing (31-60 days)', value: analytics.active60, color: '#f59e0b', key: 'active60' },
+                        { label: 'At Risk (61-90 days)', value: analytics.active90, color: '#f97316', key: 'active90' },
+                        { label: 'Inactive (90+ days)', value: analytics.inactive, color: '#ef4444', key: 'inactive' },
                       ].map((row, i) => (
-                        <div key={i} className="flex items-center justify-between">
+                        <button key={i} className="flex items-center justify-between w-full hover:bg-gray-50 rounded-lg px-2 py-1 transition"
+                          onClick={() => { setActivityFilter(row.key); setActiveTab('clients'); }}>
                           <div className="flex items-center gap-2">
                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: row.color }}></div>
                             <span className="text-xs text-gray-600">{row.label}</span>
                           </div>
                           <span className="text-sm font-bold" style={{ color: panelText }}>{row.value}</span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                     {analytics.totalClients > 0 && (
@@ -613,6 +620,14 @@ function AdminPanel() {
             {/* ═══ ALL CLIENTS ═══ */}
             {activeTab === 'clients' && (
               <div className="animate-fade-in">
+                {activityFilter && (
+                  <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4">
+                    <span className="text-xs font-medium text-amber-700">
+                      Filtered: {activityFilter === 'active30' ? 'Active (30 days)' : activityFilter === 'active60' ? 'Slowing (31-60 days)' : activityFilter === 'active90' ? 'At Risk (61-90 days)' : 'Inactive (90+ days)'}
+                    </span>
+                    <button onClick={() => setActivityFilter(null)} className="text-xs font-bold text-amber-600 hover:text-amber-800 transition">✕ Clear</button>
+                  </div>
+                )}
                 <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
                   <h2 className="text-2xl font-bold tracking-tight" style={{ color: panelText }}>
                     All Clients ({filteredClients.length})
