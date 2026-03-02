@@ -484,23 +484,23 @@ function AdminPanel() {
                 {/* Top Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: 'Total Clients', value: (analytics && analytics.totalClients) || 0, icon: '👥' },
-                    { label: 'Total Visits', value: (analytics && analytics.totalVisits) || 0, icon: '📊' },
-                    { label: 'Stamps Today', value: (analytics && analytics.stampsToday) || 0, icon: '🏷️' },
-                    { label: 'Rewards Issued', value: (analytics && analytics.rewardsIssued) || 0, icon: '🎁' },
+                    { label: 'Total Clients', value: (analytics && analytics.totalClients) || 0, icon: '👥', bg: borderColor, text: btnOnBorder },
+                    { label: 'Total Visits', value: (analytics && analytics.totalVisits) || 0, icon: '📊', bg: accentColor, text: btnOnAccent },
+                    { label: 'Stamps Today', value: (analytics && analytics.stampsToday) || 0, icon: '🏷️', bg: borderColor + 'CC', text: btnOnBorder },
+                    { label: 'Rewards Issued', value: (analytics && analytics.rewardsIssued) || 0, icon: '🎁', bg: accentColor + 'CC', text: btnOnAccent },
                   ].map((card, i) => (
-                    <div key={i} className="rounded-xl p-4 bg-white border border-gray-100 shadow-sm">
+                    <div key={i} className="rounded-xl p-4 shadow-sm transition-all hover:scale-105" style={{ backgroundColor: card.bg }}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xl">{card.icon}</span>
-                        <span className="text-2xl font-black" style={{ color: panelText }}>{card.value}</span>
+                        <span className="text-2xl font-black" style={{ color: card.text }}>{card.value}</span>
                       </div>
-                      <p className="text-xs text-gray-400 font-medium">{card.label}</p>
+                      <p className="text-xs font-medium" style={{ color: card.text, opacity: 0.7 }}>{card.label}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Retention & Frequency */}
-                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                <div className="rounded-xl p-5 shadow-sm mb-6" style={{ backgroundColor: accentColor + '10', border: '1px solid ' + accentColor + '20' }}>
                   <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>📈 Retention & Frequency</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
@@ -555,7 +555,7 @@ function AdminPanel() {
                   </div>
 
                   {/* New Registrations */}
-                  <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm">
+                  <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: borderColor + '08', border: '1px solid ' + borderColor + '15' }}>
                     <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>📅 New Registrations (Last 4 Weeks)</h3>
                     <div className="flex items-end gap-3 h-32">
                       {(analytics.weeklyRegistrations || [0,0,0,0]).map((count, i) => {
@@ -575,7 +575,7 @@ function AdminPanel() {
                 </div>
 
                 {/* Coupon Breakdown */}
-                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                <div className="rounded-xl p-5 shadow-sm mb-6" style={{ backgroundColor: borderColor + '10', border: '1px solid ' + borderColor + '20' }}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold" style={{ color: panelText }}>🎫 Coupon Performance</h3>
                     <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: accentColor + '15', color: accentColor }}>
@@ -621,7 +621,7 @@ function AdminPanel() {
                 )}
 
                 {/* Top Customers */}
-                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                <div className="rounded-xl p-5 shadow-sm mb-6" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '15' }}>
                   <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>🏆 Top Customers</h3>
                   <div className="space-y-2">
                     {allClients.sort((a, b) => b.visits - a.visits).slice(0, 10).map((client, i) => (
@@ -643,15 +643,15 @@ function AdminPanel() {
                 </div>
 
                 {/* Coupons Quick Link */}
-                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm">
+                <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: accentColor, border: 'none' }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold" style={{ color: panelText }}>🎁 Manage Coupons</h3>
-                      <p className="text-xs text-gray-400 mt-1">{couponsList ? couponsList.length : 0} total coupons</p>
+                      <h3 className="text-sm font-bold" style={{ color: btnOnAccent }}>🎁 Manage Coupons</h3>
+                      <p className="text-xs mt-1" style={{ color: btnOnAccent, opacity: 0.7 }}>{couponsList ? couponsList.length : 0} total coupons</p>
                     </div>
                     <button onClick={() => setActiveTab('coupons')}
-                      className="text-xs font-bold px-4 py-2 rounded-lg transition"
-                      style={{ color: '#fff', backgroundColor: accentColor }}>
+                      className="text-xs font-bold px-4 py-2 rounded-lg transition hover:opacity-90"
+                      style={{ color: accentColor, backgroundColor: btnOnAccent }}>
                       View All →
                     </button>
                   </div>
