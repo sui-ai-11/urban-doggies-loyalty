@@ -74,6 +74,9 @@ function AdminPanel() {
   const [isLocked, setIsLocked] = useState(true);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
+  const [sessionToken, setSessionToken] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activityFilter, setActivityFilter] = useState(null);
   const [allClients, setAllClients] = useState([]);
@@ -106,7 +109,7 @@ function AdminPanel() {
       .then(r => r.json())
       .then(data => setBusinessInfo(data))
       .catch(err => console.error('Error loading business info:', err));
-    fetch('/api/manage-coupons')
+    authFetch('/api/manage-coupons')
       .then(r => r.json())
       .then(data => setCouponsList(data.coupons || []))
       .catch(err => console.error('Error loading coupons:', err));
@@ -147,7 +150,7 @@ function AdminPanel() {
   async function loadAllClients() {
     try {
       setLoading(true);
-      const response = await fetch('/api/get-all-clients');
+      const response = await authFetch('/api/get-all-clients');
       const data = await response.json();
       if (response.ok) {
         setAllClients(data.clients || []);
@@ -162,7 +165,7 @@ function AdminPanel() {
   async function deleteClient(clientID, name) {
     if (!confirm('Delete "' + name + '" and all their stamps and coupons? This cannot be undone.')) return;
     try {
-      var r = await fetch('/api/manage-client?clientID=' + clientID, { method: 'DELETE' });
+      var r = await authFetch('/api/manage-client?clientID=' + clientID, { method: 'DELETE' });
       var data = await r.json();
       if (data.success) { setMessage('✅ ' + name + ' deleted'); loadAllClients(); }
       else setMessage('❌ ' + (data.error || 'Failed'));
@@ -188,7 +191,7 @@ function AdminPanel() {
       if (!isNaN(d.getTime())) bdayMonth = months[d.getMonth()];
     }
     try {
-      var r = await fetch('/api/manage-client', {
+      var r = await authFetch('/api/manage-client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -265,7 +268,7 @@ function AdminPanel() {
 
       setImportStatus('Importing ' + clients.length + ' clients...');
       try {
-        var r = await fetch('/api/manage-client', {
+        var r = await authFetch('/api/manage-client', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'import', clients: clients }),
@@ -291,7 +294,7 @@ function AdminPanel() {
     var fullName = newClient.firstName.trim() + ' ' + newClient.lastName.trim();
     try {
       setLoading(true); setMessage('');
-      const response = await fetch('/api/add-client', {
+      const response = await authFetch('/api/add-client', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessID: 'BIZ_001', clientName: fullName, mobile: newClient.mobile.trim(), email: newClient.email || '', birthday: newClient.birthday || '', birthdayMonth: newClient.birthdayMonth || '' })
       });
@@ -312,6 +315,15 @@ function AdminPanel() {
   }
 
   // Dynamic colors
+  // Authenticated fetch helper
+  function authFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, {
+      'Authorization': 'Bearer ' + sessionToken,
+    });
+    return fetch(url, opts);
+  }
+
   const bgColor = businessInfo?.backgroundColor || '#f9fafb';
   const accentColor = businessInfo?.accentColor || '#6b7280';
   const borderColor = businessInfo?.borderColor || '#374151';
@@ -348,16 +360,44 @@ function AdminPanel() {
   ];
 
   // Default PIN — can be changed via settings later
-  var adminPin = (businessInfo && businessInfo.adminPin) || '1234';
+  var adminPin = (businessInfo && businessInfo.adminPin) || '123456';
 
   function checkPin() {
-    if (pinInput === adminPin) {
-      setIsLocked(false);
-      setPinError('');
-    } else {
-      setPinError('Incorrect PIN');
-      setPinInput('');
+    if (lockUntil && new Date() < lockUntil) {
+      var mins = Math.ceil((lockUntil - new Date()) / 60000);
+      setPinError('Too many attempts. Try again in ' + mins + ' min');
+      return;
     }
+    if (lockUntil && new Date() >= lockUntil) {
+      setLockUntil(null);
+      setPinAttempts(0);
+    }
+    fetch('/api/auth-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinInput, role: 'admin' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.sessionToken) {
+          setSessionToken(data.sessionToken);
+          setIsLocked(false);
+          setPinError('');
+          setPinAttempts(0);
+        } else {
+          var newAttempts = pinAttempts + 1;
+          setPinAttempts(newAttempts);
+          if (newAttempts >= 5) {
+            setLockUntil(new Date(Date.now() + 15 * 60 * 1000));
+            setPinError('Too many attempts. Locked for 15 minutes');
+            setPinInput('');
+          } else {
+            setPinError('Incorrect PIN (' + (5 - newAttempts) + ' attempts left)');
+            setPinInput('');
+          }
+        }
+      })
+      .catch(function() { setPinError('Connection error'); });
   }
 
   if (isLocked) {
@@ -379,10 +419,12 @@ function AdminPanel() {
           <h2 className="text-lg font-bold mb-1" style={{ color: panelText }}>Client Management</h2>
           <p className="text-gray-400 text-xs mb-5">Enter PIN to access</p>
           <input type="password" value={pinInput}
-            onChange={(e) => { setPinInput(e.target.value); setPinError(''); }}
+            onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6)); setPinError(''); }}
             onKeyDown={(e) => { if (e.key === 'Enter') checkPin(); }}
-            placeholder="Enter PIN"
-            className="w-full px-5 py-3 text-center text-lg tracking-[0.25em] rounded-xl border-2 focus:outline-none mb-4"
+            placeholder="Enter 6-digit PIN"
+            maxLength={6}
+            disabled={lockUntil && new Date() < lockUntil}
+            className="w-full px-5 py-3 text-center text-lg tracking-[0.25em] rounded-xl border-2 focus:outline-none mb-4 disabled:opacity-50"
             style={{ borderColor: pinError ? '#ef4444' : accentColor + '50', fontFamily: 'system-ui, -apple-system, sans-serif' }}
             autoFocus
             inputMode="numeric"
@@ -851,12 +893,12 @@ function AdminPanel() {
             )}
 
             {/* ═══ BRANDING ═══ */}
-            {activeTab === 'branding' && <BrandingTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} />}
+            {activeTab === 'branding' && <BrandingTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} sessionToken={sessionToken} />}
 
-            {activeTab === 'settings' && <SettingsTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} />}
+            {activeTab === 'settings' && <SettingsTab businessInfo={businessInfo} onUpdate={(data) => setBusinessInfo(data)} sessionToken={sessionToken} />}
 
             {/* ═══ COUPONS ═══ */}
-            {activeTab === 'coupons' && <CouponsTab businessInfo={businessInfo} />}
+            {activeTab === 'coupons' && <CouponsTab businessInfo={businessInfo} sessionToken={sessionToken} />}
           </div>
         </div>
 
