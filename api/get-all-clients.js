@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     // Get all coupons for analytics
     var { data: coupons, error: cpErr } = await supabase
       .from('coupons')
-      .select('id, client_id, redeemed, voided, created_at, branch, staff_name')
+      .select('id, client_id, redeemed, created_at, branch, staff_name')
       .eq('business_id', businessID);
 
     if (cpErr) return res.status(500).json({ error: cpErr.message });
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
     var couponsAll = coupons || [];
     var couponsIssued = couponsAll.length;
     var couponsRedeemed = couponsAll.filter(function(c) { return c.redeemed === 'TRUE' || c.redeemed === true; }).length;
-    var couponsVoided = couponsAll.filter(function(c) { return c.voided === 'TRUE' || c.voided === true; }).length;
+    var couponsVoided = couponsAll.filter(function(c) { return c.redeemed === 'VOIDED'; }).length;
     var couponsActive = couponsIssued - couponsRedeemed - couponsVoided;
     var redemptionRate = couponsIssued > 0 ? Math.round((couponsRedeemed / couponsIssued) * 100) : 0;
 
