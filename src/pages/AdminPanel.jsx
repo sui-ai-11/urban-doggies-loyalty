@@ -433,56 +433,177 @@ function AdminPanel() {
               <div className="animate-fade-in">
                 <h2 className="text-2xl font-bold mb-6 tracking-tight" style={{ color: panelText }}>Analytics Dashboard</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                {/* Top Stats Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: 'Total Clients', value: analytics.totalClients, icon: <Users size={28} />, color: panelText },
-                    { label: 'Stamps Today', value: analytics.stampsToday, icon: '🏷️', color: accentColor },
-                    { label: 'Rewards Issued', value: analytics.rewardsIssued, icon: '⭐', color: '#F59E0B' },
+                    { label: 'Total Clients', value: analytics.totalClients, icon: '👥' },
+                    { label: 'Total Visits', value: analytics.totalVisits, icon: '📊' },
+                    { label: 'Stamps Today', value: analytics.stampsToday, icon: '🏷️' },
+                    { label: 'Rewards Issued', value: analytics.rewardsIssued, icon: '🎁' },
                   ].map((card, i) => (
-                    <div key={i} className="rounded-2xl p-6 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                      style={{ background: `linear-gradient(135deg, ${card.color}, ${card.color}CC)` }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-3xl">{typeof card.icon === 'string' ? card.icon : card.icon}</span>
-                        <p className="text-4xl font-black">{card.value}</p>
+                    <div key={i} className="rounded-xl p-4 bg-white border border-gray-100 shadow-sm">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xl">{card.icon}</span>
+                        <span className="text-2xl font-black" style={{ color: panelText }}>{card.value}</span>
                       </div>
-                      <p className="text-white text-opacity-90 font-semibold text-sm">{card.label}</p>
+                      <p className="text-xs text-gray-400 font-medium">{card.label}</p>
                     </div>
                   ))}
                 </div>
 
+                {/* Retention & Frequency */}
+                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                  <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>📈 Retention & Frequency</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-black" style={{ color: accentColor }}>{analytics.repeatRate}%</p>
+                      <p className="text-xs text-gray-400 mt-1">Repeat Visit Rate</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-black" style={{ color: accentColor }}>{analytics.avgVisits}</p>
+                      <p className="text-xs text-gray-400 mt-1">Avg Visits / Client</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-black" style={{ color: accentColor }}>{analytics.avgDaysBetween || '—'}</p>
+                      <p className="text-xs text-gray-400 mt-1">Avg Days Between</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-black" style={{ color: accentColor }}>{analytics.repeatClients}</p>
+                      <p className="text-xs text-gray-400 mt-1">Repeat Clients</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active vs Inactive + New Registrations */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  {/* Active/Inactive */}
+                  <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>🟢 Client Activity</h3>
+                    <div className="space-y-3">
+                      {[
+                        { label: 'Active (30 days)', value: analytics.active30, color: '#22c55e' },
+                        { label: 'Slowing (31-60 days)', value: analytics.active60, color: '#f59e0b' },
+                        { label: 'At Risk (61-90 days)', value: analytics.active90, color: '#f97316' },
+                        { label: 'Inactive (90+ days)', value: analytics.inactive, color: '#ef4444' },
+                      ].map((row, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: row.color }}></div>
+                            <span className="text-xs text-gray-600">{row.label}</span>
+                          </div>
+                          <span className="text-sm font-bold" style={{ color: panelText }}>{row.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {analytics.totalClients > 0 && (
+                      <div className="mt-4 h-3 rounded-full overflow-hidden flex bg-gray-100">
+                        {analytics.active30 > 0 && <div style={{ width: `${(analytics.active30/analytics.totalClients)*100}%`, backgroundColor: '#22c55e' }}></div>}
+                        {analytics.active60 > 0 && <div style={{ width: `${(analytics.active60/analytics.totalClients)*100}%`, backgroundColor: '#f59e0b' }}></div>}
+                        {analytics.active90 > 0 && <div style={{ width: `${(analytics.active90/analytics.totalClients)*100}%`, backgroundColor: '#f97316' }}></div>}
+                        {analytics.inactive > 0 && <div style={{ width: `${(analytics.inactive/analytics.totalClients)*100}%`, backgroundColor: '#ef4444' }}></div>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* New Registrations */}
+                  <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>📅 New Registrations (Last 4 Weeks)</h3>
+                    <div className="flex items-end gap-3 h-32">
+                      {(analytics.weeklyRegistrations || [0,0,0,0]).map((count, i) => {
+                        var max = Math.max(...(analytics.weeklyRegistrations || [1]));
+                        var height = max > 0 ? Math.max((count / max) * 100, 8) : 8;
+                        var labels = ['4 wks ago', '3 wks ago', '2 wks ago', 'This week'];
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                            <span className="text-xs font-bold mb-1" style={{ color: panelText }}>{count}</span>
+                            <div className="w-full rounded-t-lg transition-all" style={{ height: `${height}%`, backgroundColor: i === 3 ? accentColor : accentColor + '40' }}></div>
+                            <span className="text-[9px] text-gray-400 mt-1.5">{labels[i]}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coupon Breakdown */}
+                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold" style={{ color: panelText }}>🎫 Coupon Performance</h3>
+                    <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: accentColor + '15', color: accentColor }}>
+                      {analytics.redemptionRate}% redemption rate
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[
+                      { label: 'Issued', value: analytics.couponsIssued, color: '#6b7280' },
+                      { label: 'Active', value: analytics.couponsActive, color: '#3b82f6' },
+                      { label: 'Redeemed', value: analytics.couponsRedeemed, color: '#22c55e' },
+                      { label: 'Voided', value: analytics.couponsVoided, color: '#ef4444' },
+                    ].map((item, i) => (
+                      <div key={i} className="text-center py-3 rounded-lg" style={{ backgroundColor: item.color + '10' }}>
+                        <p className="text-xl font-black" style={{ color: item.color }}>{item.value}</p>
+                        <p className="text-[10px] font-medium text-gray-400 mt-1">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Branch Comparison */}
+                {Object.keys(analytics.branchStats || {}).length > 1 && (
+                  <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                    <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>🏢 Branch Comparison</h3>
+                    <div className="space-y-3">
+                      {Object.entries(analytics.branchStats).sort(function(a, b) { return b[1].visits - a[1].visits; }).map(function([branch, data], i) {
+                        var maxVisits = Math.max(...Object.values(analytics.branchStats).map(function(b) { return b.visits; }));
+                        return (
+                          <div key={i}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-semibold text-gray-700">{branch}</span>
+                              <span className="text-xs text-gray-400">{data.visits} visits · {data.coupons || 0} coupons</span>
+                            </div>
+                            <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                              <div className="h-full rounded-full transition-all" style={{ width: `${maxVisits > 0 ? (data.visits/maxVisits)*100 : 0}%`, backgroundColor: accentColor }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Top Customers */}
-                <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: `${bgColor}10` }}>
-                  <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>🏆 Top Customers</h3>
+                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm mb-6">
+                  <h3 className="text-sm font-bold mb-4" style={{ color: panelText }}>🏆 Top Customers</h3>
                   <div className="space-y-2">
                     {allClients.sort((a, b) => b.visits - a.visits).slice(0, 10).map((client, i) => (
-                      <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4 transition-all duration-200 hover:shadow-md">
+                      <div key={i} className="flex items-center justify-between rounded-lg p-3 hover:bg-gray-50 transition">
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-xl text-gray-300 w-8">{i + 1}</span>
+                          <span className="font-bold text-sm text-gray-300 w-6">{i + 1}</span>
                           <div>
-                            <p className="font-bold text-gray-800">{client.name}</p>
-                            <p className="text-xs text-gray-500">Cards completed: {Math.floor(client.visits / (client.requiredVisits || 10))}</p>
+                            <p className="font-semibold text-sm text-gray-800">{client.name}</p>
+                            <p className="text-[10px] text-gray-400">Cards: {Math.floor(client.visits / (client.requiredVisits || 10))}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-xl font-bold" style={{ color: panelAccent }}>{client.visits}</span>
-                          <p className="text-xs text-gray-400">total visits</p>
+                          <span className="text-lg font-bold" style={{ color: accentColor }}>{client.visits}</span>
+                          <p className="text-[10px] text-gray-400">visits</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Coupons Summary */}
-                <div className="rounded-2xl p-6" style={{ backgroundColor: `${bgColor}10` }}>
+                {/* Coupons Quick Link */}
+                <div className="rounded-xl p-5 bg-white border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-bold" style={{ color: panelText }}>🎁 Coupons</h3>
-                      <p className="text-sm text-gray-400 mt-1">{couponsList ? couponsList.length : 0} total coupons issued</p>
+                      <h3 className="text-sm font-bold" style={{ color: panelText }}>🎁 Manage Coupons</h3>
+                      <p className="text-xs text-gray-400 mt-1">{couponsList ? couponsList.length : 0} total coupons</p>
                     </div>
                     <button onClick={() => setActiveTab('coupons')}
-                      className="text-sm font-bold px-4 py-2 rounded-xl transition"
+                      className="text-xs font-bold px-4 py-2 rounded-lg transition"
                       style={{ color: '#fff', backgroundColor: accentColor }}>
-                      Manage →
+                      View All →
                     </button>
                   </div>
                 </div>
