@@ -7,7 +7,12 @@ function isDarkColor(hex) {
   return (0.299 * parseInt(c.substring(0,2),16) + 0.587 * parseInt(c.substring(2,4),16) + 0.114 * parseInt(c.substring(4,6),16)) / 255 < 0.5;
 }
 
-function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
+function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
+  function authFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + (sessionToken || '') });
+    return fetch(url, opts);
+  }
   var _a = useState(parentBiz || null), businessInfo = _a[0], setBusinessInfo = _a[1];
   var _b = useState([]), coupons = _b[0], setCoupons = _b[1];
   var _c = useState(false), saving = _c[0], setSaving = _c[1];
@@ -60,8 +65,8 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           callLabel: data.callLabel || '',
           feedbackLabel: data.feedbackLabel || '',
           feedbackUrl: data.feedbackUrl || '',
-          adminPin: data.adminPin || '1234',
-          staffPin: data.staffPin || '0000',
+          adminPin: data.adminPin || '123456',
+          staffPin: data.staffPin || '000000',
           staffList: data.staffList || '',
           branchList: data.branchList || '',
           milestones: (function() {
@@ -84,13 +89,13 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
     else { fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(initData).catch(function(err) { console.error(err); }); }
 
     // Load coupons
-    fetch('/api/manage-coupons')
+    authFetch('/api/manage-coupons')
       .then(function(r) { return r.json(); })
       .then(function(data) { setCoupons(data.coupons || []); })
       .catch(function(err) { console.error(err); });
 
     // Load clients
-    fetch('/api/get-all-clients')
+    authFetch('/api/get-all-clients')
       .then(function(r) { return r.json(); })
       .then(function(data) { setClients(data.clients || []); })
       .catch(function(err) { console.error(err); });
@@ -118,7 +123,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
       payload = Object.assign({}, fields);
     }
 
-    fetch('/api/update-business-settings', {
+    authFetch('/api/update-business-settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -135,7 +140,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
   function addCoupon() {
     if (!newCoupon.text.trim()) { showToast('Coupon text is required'); return; }
     setSaving(true);
-    fetch('/api/manage-coupons', {
+    authFetch('/api/manage-coupons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCoupon),
@@ -146,7 +151,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           showToast('Coupon created!');
           setNewCoupon({ clientID: '', type: 'reward', text: '', expiryDate: '', notes: '', birthdayMonth: '' });
           // Reload coupons
-          return fetch('/api/manage-coupons').then(function(r) { return r.json(); });
+          return authFetch('/api/manage-coupons').then(function(r) { return r.json(); });
         }
       })
       .then(function(data) { if (data) setCoupons(data.coupons || []); })
@@ -161,7 +166,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
       .then(function(data) {
         if (data.success) {
           showToast('Coupon removed');
-          return fetch('/api/manage-coupons').then(function(r) { return r.json(); });
+          return authFetch('/api/manage-coupons').then(function(r) { return r.json(); });
         }
       })
       .then(function(data) { if (data) setCoupons(data.coupons || []); })
@@ -477,7 +482,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
                 toSave.milestone2Description = card1Ms[1].description || '';
               }
               setSaving(true);
-              fetch('/api/update-business-settings', {
+              authFetch('/api/update-business-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(toSave),
@@ -513,8 +518,8 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
             {renderInput('Tab 3 Label', 'navButton3Text', 'Contact')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Security</h4>
-            {renderInput('Admin PIN', 'adminPin', '1234')}
-            {renderInput('Staff PIN', 'staffPin', '0000')}
+            {renderInput('Admin PIN (6 digits)', 'adminPin', '123456')}
+            {renderInput('Staff PIN (6 digits)', 'staffPin', '000000')}
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Staff & Branches</h4>
             {renderInput('Staff Names (comma-separated)', 'staffList', '')}
             {renderInput('Branch Names (comma-separated)', 'branchList', '')}
