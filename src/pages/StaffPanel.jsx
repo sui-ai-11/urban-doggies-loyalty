@@ -15,6 +15,9 @@ function StaffPanel() {
   var _lock = useState(true), isLocked = _lock[0], setIsLocked = _lock[1];
   var _pin = useState(''), pinInput = _pin[0], setPinInput = _pin[1];
   var _pinErr = useState(''), pinError = _pinErr[0], setPinError = _pinErr[1];
+  var _attempts = useState(0), pinAttempts = _attempts[0], setPinAttempts = _attempts[1];
+  var _lockUntil = useState(null), lockUntil = _lockUntil[0], setLockUntil = _lockUntil[1];
+  var _session = useState(''), sessionToken = _session[0], setSessionToken = _session[1];
   var _staff = useState(''), selectedStaff = _staff[0], setSelectedStaff = _staff[1];
   var _branch = useState(''), selectedBranch = _branch[0], setSelectedBranch = _branch[1];
   var _a = useState(''), searchInput = _a[0], setSearchInput = _a[1];
@@ -33,7 +36,7 @@ function StaffPanel() {
   var scanIntervalRef = useRef(null);
 
   function loadPending() {
-    fetch('/api/approve-client')
+    authFetch('/api/approve-client')
       .then(function(r) { return r.json(); })
       .then(function(data) { setPendingClients(data.pending || []); })
       .catch(function(err) { console.error('Error loading pending:', err); });
@@ -56,6 +59,15 @@ function StaffPanel() {
       document.body.appendChild(script);
     }
   }, [showScanner]);
+
+  // Authenticated fetch helper
+  function authFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, {
+      'Authorization': 'Bearer ' + sessionToken,
+    });
+    return fetch(url, opts);
+  }
 
   var bgColor = (businessInfo && businessInfo.backgroundColor) || '#1a1a2e';
   var accentColor = (businessInfo && businessInfo.accentColor) || '#6b7280';
@@ -222,7 +234,7 @@ function StaffPanel() {
       .then(function(r) {
         if (r.ok) return r.json();
         // Token not found — try name search
-        return fetch('/api/search-client?name=' + encodeURIComponent(query))
+        return authFetch('/api/search-client?name=' + encodeURIComponent(query))
           .then(function(r2) {
             if (!r2.ok) throw new Error('Customer not found');
             return r2.json();
@@ -267,7 +279,7 @@ function StaffPanel() {
     if (!clientInfo) return;
     setLoading(true);
     setMessage('');
-    fetch('/api/add-stamp', {
+    authFetch('/api/add-stamp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', addedBy: 'staff', staffName: selectedStaff, branch: selectedBranch })
@@ -331,7 +343,7 @@ function StaffPanel() {
     if (!confirm('Void last stamp for ' + clientInfo.name + '? This will also revoke any milestone rewards above the new stamp count.')) return;
     setLoading(true);
     setMessage('');
-    fetch('/api/void-stamp', {
+    authFetch('/api/void-stamp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: clientInfo.token, businessID: 'BIZ_001', voidedBy: 'staff' })
@@ -397,15 +409,44 @@ function StaffPanel() {
     );
   }
 
-  var staffPin = businessInfo.staffPin || '0000';
+  var staffPin = businessInfo.staffPin || '000000';
 
   function handlePinSubmit() {
-    if (pinInput === staffPin) {
-      setIsLocked(false);
-      setPinError('');
-    } else {
-      setPinError('Incorrect PIN');
+    // Check lockout
+    if (lockUntil && new Date() < lockUntil) {
+      var mins = Math.ceil((lockUntil - new Date()) / 60000);
+      setPinError('Too many attempts. Try again in ' + mins + ' min');
+      return;
     }
+    if (lockUntil && new Date() >= lockUntil) {
+      setLockUntil(null);
+      setPinAttempts(0);
+    }
+    fetch('/api/auth-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinInput, role: 'staff' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.sessionToken) {
+          setSessionToken(data.sessionToken);
+          setIsLocked(false);
+          setPinError('');
+          setPinAttempts(0);
+        } else {
+          var newAttempts = pinAttempts + 1;
+          setPinAttempts(newAttempts);
+          if (newAttempts >= 5) {
+            setLockUntil(new Date(Date.now() + 15 * 60 * 1000));
+            setPinError('Too many attempts. Locked for 15 minutes');
+            setPinInput('');
+          } else {
+            setPinError('Incorrect PIN (' + (5 - newAttempts) + ' attempts left)');
+          }
+        }
+      })
+      .catch(function() { setPinError('Connection error'); });
   }
 
   if (isLocked) {
@@ -444,11 +485,13 @@ function StaffPanel() {
             <h2 className="text-lg font-bold mt-0 mb-1" style={{ color: '#1a1a2e' }}>Loyalty Desk</h2>
             <p className="text-gray-400 text-xs mb-5">Enter PIN to access</p>
             <input type="password" value={pinInput}
-              onChange={function(e) { setPinInput(e.target.value); setPinError(''); }}
+              onChange={function(e) { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6)); setPinError(''); }}
               onKeyDown={function(e) { if (e.key === 'Enter') handlePinSubmit(); }}
-              placeholder="Enter PIN"
-              className="w-full px-5 py-3 text-center text-lg tracking-[0.25em] rounded-xl border-2 focus:outline-none mb-4"
-              style={{ borderColor: accentColor + '50', fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              placeholder="Enter 6-digit PIN"
+              maxLength={6}
+              disabled={lockUntil && new Date() < lockUntil}
+              className="w-full px-5 py-3 text-center text-lg tracking-[0.25em] rounded-xl border-2 focus:outline-none mb-4 disabled:opacity-50"
+              style={{ borderColor: pinError ? '#ef4444' : accentColor + '50', fontFamily: 'system-ui, -apple-system, sans-serif' }}
               autoFocus />
             {pinError && <p className="text-red-500 text-xs font-semibold mb-3">{pinError}</p>}
             <button onClick={handlePinSubmit}
@@ -607,12 +650,12 @@ function StaffPanel() {
                     <div>
                       <p className="font-bold text-sm" style={{ color: panelText }}>{client.name}</p>
                       <p className="text-xs text-gray-400">
-                        {client.mobile || 'No mobile'} · {client.token}
+                        {client.token}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={function() {
-                        fetch('/api/approve-client', {
+                        authFetch('/api/approve-client', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ clientID: client.clientID, action: 'approve' }),
@@ -631,7 +674,7 @@ function StaffPanel() {
                       </button>
                       <button onClick={function() {
                         if (confirm('Reject ' + client.name + "'s registration?")) {
-                          fetch('/api/approve-client', {
+                          authFetch('/api/approve-client', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ clientID: client.clientID, action: 'reject' }),
@@ -714,7 +757,6 @@ function StaffPanel() {
                       <div>
                         <p className="font-bold text-lg" style={{ color: panelText }}>{customer.name}</p>
                         <p className="text-xs text-gray-500 mt-1">Token: <span className="font-mono font-bold" style={{ color: panelAccent }}>{customer.token}</span></p>
-                        {customer.email && <p className="text-xs text-gray-500">Email: {customer.email}</p>}
                       </div>
                       <span style={{ color: accentColor, fontSize: '20px' }}>›</span>
                     </div>
@@ -795,7 +837,7 @@ function StaffPanel() {
                             <button onClick={function() {
                               var thisCoupon = milestoneCoupon;
                               if (!confirm('Mark "' + m.label + '" as claimed/given?')) return;
-                              fetch('/api/manage-coupons', {
+                              authFetch('/api/manage-coupons', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ action: 'redeem', couponID: thisCoupon.couponID }),
@@ -826,7 +868,7 @@ function StaffPanel() {
                               if (!confirm('Issue & claim milestone "' + mLabel + '"?')) return;
 
                               // Step 1: Create the coupon
-                              fetch('/api/manage-coupons', {
+                              authFetch('/api/manage-coupons', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -844,7 +886,7 @@ function StaffPanel() {
                                     return;
                                   }
                                   // Step 2: Redeem it
-                                  fetch('/api/manage-coupons', {
+                                  authFetch('/api/manage-coupons', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ action: 'redeem', couponID: createData.couponID }),
@@ -909,7 +951,7 @@ function StaffPanel() {
                         </div>
                         <button onClick={function() {
                           if (!confirm('Mark "' + (coupon.text || 'coupon') + '" as claimed?')) return;
-                          fetch('/api/manage-coupons', {
+                          authFetch('/api/manage-coupons', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'redeem', couponID: coupon.couponID }),
