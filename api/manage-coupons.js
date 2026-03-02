@@ -1,3 +1,4 @@
+import { verifySession } from './_lib/auth.js';
 import { supabase, getTenant } from './_lib/supabase.js';
 
 function generateID(prefix) {
@@ -7,8 +8,12 @@ function generateID(prefix) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // Auth check
+    var session = await verifySession(req);
+    if (!session) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     var businessID = await getTenant(req);
