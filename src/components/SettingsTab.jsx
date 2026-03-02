@@ -37,7 +37,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
           logo: data.logo || '',
           stampsRequired: data.stampsRequired || 10,
           rewardDescription: data.rewardDescription || '',
-          progressText: data.progressText || '',
+          progressText: data.progressText || 'Track your visits and earn rewards!',
           milestone1Label: data.milestone1Label || '',
           milestone2Label: data.milestone2Label || '',
           milestone1Description: data.milestone1Description || '',
@@ -504,7 +504,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate }) {
         <div>
           <h3 className="text-lg font-bold mb-4" style={{ color: panelText }}>Business Profile</h3>
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            {renderInput('Business Name', 'businessName', 'Urban Doggies')}
+            {renderInput('Business Name', 'businessName', '')}
             {renderInput('Tagline', 'tagline', '')}
             {renderInput('Logo URL', 'logo', 'https://...')}
             {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
