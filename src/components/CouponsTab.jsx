@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, User, Plus, Filter, Check, X, Search } from 'lucide-react';
 
-function CouponsTab({ businessInfo: parentBiz }) {
+function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
+  function authFetch(url, options) {
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, { 'Authorization': 'Bearer ' + (sessionToken || '') });
+    return fetch(url, opts);
+  }
   var _a = useState([]), coupons = _a[0], setCoupons = _a[1];
   var _b = useState([]), clients = _b[0], setClients = _b[1];
   var _c = useState(parentBiz || null), businessInfo = _c[0], setBusinessInfo = _c[1];
@@ -24,18 +29,18 @@ function CouponsTab({ businessInfo: parentBiz }) {
 
   useEffect(function() {
     if (!parentBiz) fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
-    fetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); }).catch(function() {});
+    authFetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); }).catch(function() {});
     loadCoupons();
   }, []);
 
   function loadCoupons() {
-    fetch('/api/manage-coupons').then(function(r) { return r.json(); }).then(function(data) { setCoupons(data.coupons || []); }).catch(function() {});
+    authFetch('/api/manage-coupons').then(function(r) { return r.json(); }).then(function(data) { setCoupons(data.coupons || []); }).catch(function() {});
   }
 
   function addCoupon() {
     if (!newCoupon.text.trim()) { setMessage('❌ Coupon text is required'); return; }
     setSaving(true);
-    fetch('/api/manage-coupons', {
+    authFetch('/api/manage-coupons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCoupon),
@@ -56,7 +61,7 @@ function CouponsTab({ businessInfo: parentBiz }) {
 
   function redeemCoupon(couponID, text) {
     if (!confirm('Mark "' + text + '" as claimed?')) return;
-    fetch('/api/manage-coupons', {
+    authFetch('/api/manage-coupons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'redeem', couponID: couponID }),
@@ -71,7 +76,7 @@ function CouponsTab({ businessInfo: parentBiz }) {
 
   function voidCoupon(couponID, text) {
     if (!confirm('Void "' + text + '"? This cannot be undone.')) return;
-    fetch('/api/manage-coupons', {
+    authFetch('/api/manage-coupons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'void', couponID: couponID }),
