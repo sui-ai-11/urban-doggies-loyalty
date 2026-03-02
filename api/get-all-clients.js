@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     // Get all coupons for analytics
     var { data: coupons, error: cpErr } = await supabase
       .from('coupons')
-      .select('id, client_id, redeemed, created_at, branch, staff_name')
+      .select('id, client_id, redeemed, branch, staff_name')
       .eq('business_id', businessID);
 
     if (cpErr) return res.status(500).json({ error: cpErr.message });
