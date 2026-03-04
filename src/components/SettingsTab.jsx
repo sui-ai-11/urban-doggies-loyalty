@@ -87,7 +87,10 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
       };
     if (parentBiz) { initData(parentBiz); }
     else { fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(initData).catch(function(err) { console.error(err); }); }
+  }, [parentBiz]);
 
+  useEffect(function() {
+    if (!sessionToken) return;
     // Load coupons
     authFetch('/api/manage-coupons')
       .then(function(r) { return r.json(); })
@@ -99,7 +102,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
       .then(function(r) { return r.json(); })
       .then(function(data) { setClients(data.clients || []); })
       .catch(function(err) { console.error(err); });
-  }, []);
+  }, [sessionToken]);
 
   function showToast(msg) {
     setToast(msg);
