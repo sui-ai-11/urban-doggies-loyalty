@@ -93,6 +93,10 @@ function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedBreed, setSelectedBreed] = useState('all');
+  const [allBreeds, setAllBreeds] = useState([]);
+  const [selectedBreed, setSelectedBreed] = useState('all');
+  const [allBreeds, setAllBreeds] = useState([]);
   const [sortBy, setSortBy] = useState('name');
 
   const [newClient, setNewClient] = useState({
@@ -142,6 +146,8 @@ function AdminPanel() {
       );
     }
     if (selectedMonth !== 'all') filtered = filtered.filter(c => c.birthdayMonth === selectedMonth);
+    if (selectedBreed !== 'all') filtered = filtered.filter(c => (c.breeds || []).some(b => b === selectedBreed));
+    if (selectedBreed !== 'all') filtered = filtered.filter(c => c.breeds && c.breeds.includes(selectedBreed));
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name': return a.name.localeCompare(b.name);
@@ -151,7 +157,7 @@ function AdminPanel() {
       }
     });
     setFilteredClients(filtered);
-  }, [allClients, searchQuery, selectedMonth, sortBy, activityFilter, analytics]);
+  }, [allClients, searchQuery, selectedMonth, selectedBreed, sortBy, activityFilter, analytics]);
 
   async function loadAllClients() {
     try {
@@ -162,6 +168,8 @@ function AdminPanel() {
         setAllClients(data.clients || []);
         setBreeds(data.breeds || []);
         setBirthdayMonths(data.birthdayMonths || []);
+        setAllBreeds(data.allBreeds || []);
+        setAllBreeds(data.breeds || []);
         setAnalytics(Object.assign({}, defaultAnalytics, data.analytics || {}));
       }
     } catch (error) { console.error('Error loading clients:', error); }
@@ -809,6 +817,19 @@ function AdminPanel() {
                       )}
                     </select>
                   </div>
+                  {hasPetsFeature && allBreeds.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Breed</label>
+                      <select value={selectedBreed} onChange={(e) => setSelectedBreed(e.target.value)}
+                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
+                        style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
+                        <option value="all">All Breeds</option>
+                        {allBreeds.map(b =>
+                          <option key={b} value={b}>{b}</option>
+                        )}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {/* Clients Table */}
