@@ -40,6 +40,21 @@ export default async function handler(req, res) {
 
     if (cpErr) return res.status(500).json({ error: cpErr.message });
 
+    // Get all pets for breed info
+    var { data: allPets, error: petErr } = await supabase
+      .from('pets')
+      .select('client_id, name, type, breed')
+      .eq('business_id', businessID);
+
+    // Build pets by client
+    var petsByClient = {};
+    var allBreeds = {};
+    (allPets || []).forEach(function(p) {
+      if (!petsByClient[p.client_id]) petsByClient[p.client_id] = [];
+      petsByClient[p.client_id].push({ name: p.name, type: p.type, breed: p.breed });
+      if (p.breed) allBreeds[p.breed] = true;
+    });
+
     // Count visits per client
     var visitCounts = {};
     (visits || []).forEach(function(v) {
@@ -47,6 +62,18 @@ export default async function handler(req, res) {
     });
 
     var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    // Get all pets for this business
+    var { data: allPets } = await supabase
+      .from('pets')
+      .select('client_id, name, type, breed, birthday_month')
+      .eq('business_id', businessID);
+
+    var petsByClient = {};
+    (allPets || []).forEach(function(p) {
+      if (!petsByClient[p.client_id]) petsByClient[p.client_id] = [];
+      petsByClient[p.client_id].push(p);
+    });
 
     var origin = req.headers.origin || req.headers.referer || 'https://stampcard.org';
 
@@ -87,6 +114,10 @@ export default async function handler(req, res) {
           visits: visitCounts[c.id] || 0,
           requiredVisits: 10,
           cardLink: origin.replace(/\/$/, '') + '/#/card?token=' + c.token,
+          pets: petsByClient[c.id] || [],
+          breeds: (petsByClient[c.id] || []).map(function(p) { return p.breed; }).filter(Boolean),
+          pets: petsByClient[c.id] || [],
+          breeds: (petsByClient[c.id] || []).map(function(p) { return p.breed; }).filter(Boolean),
         };
       });
 
@@ -217,6 +248,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       clients: result,
       birthdayMonths: birthdayMonths,
+      allBreeds: [...new Set((allPets || []).map(function(p) { return p.breed; }).filter(Boolean))].sort(),
+      breeds: Object.keys(allBreeds).sort(),
       analytics: analytics,
     });
   } catch (err) {
