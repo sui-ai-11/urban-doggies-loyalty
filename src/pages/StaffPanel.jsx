@@ -18,6 +18,8 @@ function StaffPanel() {
   var _attempts = useState(0), pinAttempts = _attempts[0], setPinAttempts = _attempts[1];
   var _lockUntil = useState(null), lockUntil = _lockUntil[0], setLockUntil = _lockUntil[1];
   var _session = useState(''), sessionToken = _session[0], setSessionToken = _session[1];
+  var sessionRef = useRef('');
+  useEffect(function() { sessionRef.current = sessionToken; }, [sessionToken]);
   var _staff = useState(''), selectedStaff = _staff[0], setSelectedStaff = _staff[1];
   var _branch = useState(''), selectedBranch = _branch[0], setSelectedBranch = _branch[1];
   var _a = useState(''), searchInput = _a[0], setSearchInput = _a[1];
@@ -69,7 +71,7 @@ function StaffPanel() {
   function authFetch(url, options) {
     var opts = options || {};
     opts.headers = Object.assign({}, opts.headers || {}, {
-      'Authorization': 'Bearer ' + sessionToken,
+      'Authorization': 'Bearer ' + sessionRef.current,
     });
     return fetch(url, opts);
   }
