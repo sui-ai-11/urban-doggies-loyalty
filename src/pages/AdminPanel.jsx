@@ -830,7 +830,8 @@ function AdminPanel() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {filteredClients.map((client, i) => (
-                            <tr key={i} className="hover:bg-gray-50 transition-colors duration-150">
+                            <React.Fragment key={i}>
+                            <tr className="hover:bg-gray-50 transition-colors duration-150">
                               {editingClient === client.clientID ? (
                                 <>
                                   <td className="px-5 py-3">
@@ -1050,6 +1051,7 @@ function AdminPanel() {
                                 </td>
                               </tr>
                             )}
+                            </React.Fragment>
                           ))}
                         </tbody>
                       </table>
