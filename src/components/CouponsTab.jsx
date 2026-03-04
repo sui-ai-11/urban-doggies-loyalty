@@ -31,9 +31,13 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
 
   useEffect(function() {
     if (!parentBiz) fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
-    authFetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); setAllBreeds(data.allBreeds || []); }).catch(function() {});
-    loadCoupons();
   }, []);
+
+  useEffect(function() {
+    if (!sessionToken) return;
+    authFetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); setAllBreeds(data.breeds || []); }).catch(function() {});
+    loadCoupons();
+  }, [sessionToken]);
 
   function loadCoupons() {
     authFetch('/api/manage-coupons').then(function(r) { return r.json(); }).then(function(data) { setCoupons(data.coupons || []); }).catch(function() {});
