@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
 import CouponsTab from '../components/CouponsTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock, Trash2, Pencil, Download, X, PawPrint } from 'lucide-react';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock, Trash2, Pencil, Download, X } from 'lucide-react';
 
 function CouponsOverview({ couponsList, allClients }) {
   var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
@@ -898,7 +898,7 @@ function AdminPanel() {
                                     <button onClick={() => togglePets(client.clientID)}
                                       className="p-1.5 hover:bg-purple-50 rounded-lg transition" title="Pets"
                                       style={{ backgroundColor: expandedPetsClient === client.clientID ? accentColor + '20' : 'transparent' }}>
-                                      <PawPrint size={16} style={{ color: expandedPetsClient === client.clientID ? accentColor : '#a78bfa' }} />
+                                      <span style={{ fontSize: "14px" }}>🐾</span>
                                     </button>
                                   )}
                                   <button onClick={() => deleteClient(client.clientID, client.name)}
@@ -917,7 +917,7 @@ function AdminPanel() {
                                   <div className="rounded-xl p-4" style={{ border: '1px solid ' + accentColor + '20' }}>
                                     <div className="flex items-center justify-between mb-3">
                                       <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: panelText }}>
-                                        <PawPrint size={16} style={{ color: accentColor }} /> Pets for {client.name}
+                                        <span style={{ fontSize: "14px" }}>🐾</span> Pets for {client.name}
                                       </h4>
                                     </div>
 
