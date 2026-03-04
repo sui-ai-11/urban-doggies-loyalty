@@ -62,6 +62,7 @@ export default async function handler(req, res) {
       staffPin: data.staff_pin,
       staffList: data.staff_list || '',
       branchList: data.branch_list || '',
+      features: data.features || {},
     });
   } catch (err) {
     console.error('get-business-info error:', err);
