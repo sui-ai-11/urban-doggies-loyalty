@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
@@ -77,6 +77,8 @@ function AdminPanel() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
   const [sessionToken, setSessionToken] = useState('');
+  const sessionRef = useRef('');
+  useEffect(() => { sessionRef.current = sessionToken; }, [sessionToken]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activityFilter, setActivityFilter] = useState(null);
   const [allClients, setAllClients] = useState([]);
@@ -172,7 +174,7 @@ function AdminPanel() {
         setAllClients(data.clients || []);
         setBreeds(data.breeds || []);
         setBirthdayMonths(data.birthdayMonths || []);
-        setAllBreeds(data.allBreeds || []);
+        setAllBreeds(data.breeds || []);
         setAllBreeds(data.breeds || []);
         setAnalytics(Object.assign({}, defaultAnalytics, data.analytics || {}));
       }
@@ -412,7 +414,7 @@ function AdminPanel() {
   function authFetch(url, options) {
     var opts = options || {};
     opts.headers = Object.assign({}, opts.headers || {}, {
-      'Authorization': 'Bearer ' + sessionToken,
+      'Authorization': 'Bearer ' + sessionRef.current,
     });
     return fetch(url, opts);
   }
