@@ -91,10 +91,7 @@ function AdminPanel() {
   const [couponsList, setCouponsList] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBreed, setSelectedBreed] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
-  const [selectedBreed, setSelectedBreed] = useState('all');
-  const [allBreeds, setAllBreeds] = useState([]);
   const [selectedBreed, setSelectedBreed] = useState('all');
   const [allBreeds, setAllBreeds] = useState([]);
   const [sortBy, setSortBy] = useState('name');
