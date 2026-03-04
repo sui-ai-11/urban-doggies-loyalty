@@ -116,13 +116,20 @@ function AdminPanel() {
       .then(r => r.json())
       .then(data => setBusinessInfo(data))
       .catch(err => console.error('Error loading business info:', err));
+  }, []);
+
+  // Load protected data only after auth
+  useEffect(() => {
+    if (!sessionToken) return;
     authFetch('/api/manage-coupons')
       .then(r => r.json())
       .then(data => setCouponsList(data.coupons || []))
       .catch(err => console.error('Error loading coupons:', err));
-  }, []);
+    loadAllClients();
+  }, [sessionToken]);
 
   useEffect(() => {
+    if (!sessionToken) return;
     if (activeTab === 'dashboard' || activeTab === 'clients') loadAllClients();
   }, [activeTab]);
 
