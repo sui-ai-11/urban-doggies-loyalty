@@ -9,6 +9,7 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
   }
   var _a = useState([]), coupons = _a[0], setCoupons = _a[1];
   var _b = useState([]), clients = _b[0], setClients = _b[1];
+  var _br = useState([]), allBreeds = _br[0], setAllBreeds = _br[1];
   var _c = useState(parentBiz || null), businessInfo = _c[0], setBusinessInfo = _c[1];
   var _d = useState(false), saving = _d[0], setSaving = _d[1];
   var _e = useState(''), message = _e[0], setMessage = _e[1];
@@ -18,6 +19,7 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
   var _sc = useState(''), selectedClient = _sc[0], setSelectedClient = _sc[1];
   var _fs = useState('all'), filterStatus = _fs[0], setFilterStatus = _fs[1];
   var _ft = useState('all'), filterType = _ft[0], setFilterType = _ft[1];
+  var _fb = useState('all'), filterBreed = _fb[0], setFilterBreed = _fb[1];
   var _cs = useState(''), clientSearch = _cs[0], setClientSearch = _cs[1];
 
   var accentColor = (businessInfo && businessInfo.accentColor) || '#17BEBB';
@@ -29,7 +31,7 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
 
   useEffect(function() {
     if (!parentBiz) fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
-    authFetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); }).catch(function() {});
+    authFetch('/api/get-all-clients').then(function(r) { return r.json(); }).then(function(data) { setClients(data.clients || []); setAllBreeds(data.allBreeds || []); }).catch(function() {});
     loadCoupons();
   }, []);
 
@@ -131,8 +133,9 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
     if (c.status === 'active') clientCouponCounts[c.clientID].active++;
   });
 
-  // Filter clients by search
+  // Filter clients by search and breed
   var filteredClients = clients.filter(function(c) {
+    if (filterBreed !== 'all' && (!c.breeds || !c.breeds.includes(filterBreed))) return false;
     if (!clientSearch.trim()) return true;
     var q = clientSearch.toLowerCase();
     return (c.name || '').toLowerCase().indexOf(q) > -1 || (c.token || '').toLowerCase().indexOf(q) > -1;
@@ -263,13 +266,23 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
         <div>
           {!selectedClient ? (
             <div>
-              <div className="relative mb-4">
+              <div className="relative mb-3">
                 <Search size={16} className="absolute left-3 top-3 text-gray-400" />
                 <input type="text" value={clientSearch}
                   onChange={function(e) { setClientSearch(e.target.value); }}
                   placeholder="Search clients..."
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm" />
               </div>
+              {allBreeds.length > 0 && (
+                <div className="mb-4">
+                  <select value={filterBreed} onChange={function(e) { setFilterBreed(e.target.value); }}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-xs"
+                    style={{ borderColor: accentColor + '40' }}>
+                    <option value="all">All Breeds</option>
+                    {allBreeds.map(function(b) { return <option key={b} value={b}>{b}</option>; })}
+                  </select>
+                </div>
+              )}
               <div className="space-y-1.5 max-h-96 overflow-y-auto">
                 {filteredClients.map(function(c) {
                   var counts = clientCouponCounts[c.clientID] || { total: 0, active: 0 };
