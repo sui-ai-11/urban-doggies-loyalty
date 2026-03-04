@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import BrandingTab from '../components/BrandingTab';
 import SettingsTab from '../components/SettingsTab';
 import CouponsTab from '../components/CouponsTab';
-import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock, Trash2, Pencil, Download, X } from 'lucide-react';
+import { BarChart3, Users, UserPlus, Upload, Copy, ExternalLink, Search, Filter, Palette, Settings, Gift, Lock, Trash2, Pencil, Download, X, PawPrint } from 'lucide-react';
 
 function CouponsOverview({ couponsList, allClients }) {
   var _s = React.useState(null), expandedGroup = _s[0], setExpandedGroup = _s[1];
@@ -100,6 +100,12 @@ function AdminPanel() {
   });
 
   const [editingClient, setEditingClient] = useState(null);
+  const [expandedPetsClient, setExpandedPetsClient] = useState(null);
+  const [clientPets, setClientPets] = useState([]);
+  const [petForm, setPetForm] = useState({ name: '', type: 'dog', breed: '', birthdayMonth: '', instructions: '', profileImage: '' });
+  const [editingPet, setEditingPet] = useState(null);
+  const [petLoading, setPetLoading] = useState(false);
+  const hasPetsFeature = businessInfo?.features?.pets === true;
   const [editForm, setEditForm] = useState({ name: '', mobile: '', email: '', birthday: '', notes: '' });
   const [importStatus, setImportStatus] = useState(null);
 
@@ -160,6 +166,81 @@ function AdminPanel() {
       }
     } catch (error) { console.error('Error loading clients:', error); }
     finally { setLoading(false); }
+  }
+
+  // === PET MANAGEMENT ===
+  async function loadPets(clientID) {
+    setPetLoading(true);
+    try {
+      var r = await authFetch('/api/manage-pets?clientID=' + clientID);
+      var data = await r.json();
+      setClientPets(data.pets || []);
+    } catch (e) { console.error('Load pets error:', e); }
+    finally { setPetLoading(false); }
+  }
+
+  function togglePets(clientID) {
+    if (expandedPetsClient === clientID) {
+      setExpandedPetsClient(null);
+      setClientPets([]);
+      setEditingPet(null);
+    } else {
+      setExpandedPetsClient(clientID);
+      loadPets(clientID);
+      setEditingPet(null);
+      setPetForm({ name: '', type: 'dog', breed: '', birthdayMonth: '', instructions: '', profileImage: '' });
+    }
+  }
+
+  async function addPet(clientID) {
+    if (!petForm.name.trim()) return;
+    try {
+      await authFetch('/api/manage-pets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientID, ...petForm }),
+      });
+      setPetForm({ name: '', type: 'dog', breed: '', birthdayMonth: '', instructions: '', profileImage: '' });
+      loadPets(clientID);
+    } catch (e) { console.error('Add pet error:', e); }
+  }
+
+  async function updatePet(petID, clientID) {
+    try {
+      await authFetch('/api/manage-pets', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ petID, ...petForm }),
+      });
+      setEditingPet(null);
+      loadPets(clientID);
+    } catch (e) { console.error('Update pet error:', e); }
+  }
+
+  async function deletePet(petID, petName, clientID) {
+    if (!confirm('Delete pet "' + petName + '"?')) return;
+    try {
+      await authFetch('/api/manage-pets?petID=' + petID, { method: 'DELETE' });
+      loadPets(clientID);
+    } catch (e) { console.error('Delete pet error:', e); }
+  }
+
+  async function uploadPetImage(file) {
+    return new Promise(function(resolve) {
+      var reader = new FileReader();
+      reader.onload = async function() {
+        try {
+          var r = await authFetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageData: reader.result, fileName: file.name }),
+          });
+          var data = await r.json();
+          resolve(data.url || '');
+        } catch (e) { resolve(''); }
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   async function deleteClient(clientID, name) {
@@ -812,6 +893,13 @@ function AdminPanel() {
                                     className="p-1.5 hover:bg-blue-50 rounded-lg transition" title="Edit">
                                     <Pencil size={16} className="text-blue-400" />
                                   </button>
+                                  {hasPetsFeature && (
+                                    <button onClick={() => togglePets(client.clientID)}
+                                      className="p-1.5 hover:bg-purple-50 rounded-lg transition" title="Pets"
+                                      style={{ backgroundColor: expandedPetsClient === client.clientID ? accentColor + '20' : 'transparent' }}>
+                                      <PawPrint size={16} style={{ color: expandedPetsClient === client.clientID ? accentColor : '#a78bfa' }} />
+                                    </button>
+                                  )}
                                   <button onClick={() => deleteClient(client.clientID, client.name)}
                                     className="p-1.5 hover:bg-red-50 rounded-lg transition" title="Delete">
                                     <Trash2 size={16} className="text-red-400" />
@@ -821,6 +909,147 @@ function AdminPanel() {
                                 </>
                               )}
                             </tr>
+                            {/* Expandable Pets Row */}
+                            {hasPetsFeature && expandedPetsClient === client.clientID && (
+                              <tr>
+                                <td colSpan="6" className="px-5 py-4" style={{ backgroundColor: accentColor + '08' }}>
+                                  <div className="rounded-xl p-4" style={{ border: '1px solid ' + accentColor + '20' }}>
+                                    <div className="flex items-center justify-between mb-3">
+                                      <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: panelText }}>
+                                        <PawPrint size={16} style={{ color: accentColor }} /> Pets for {client.name}
+                                      </h4>
+                                    </div>
+
+                                    {petLoading ? (
+                                      <p className="text-xs text-gray-400">Loading...</p>
+                                    ) : (
+                                      <>
+                                        {/* Existing Pets */}
+                                        <div className="space-y-3 mb-4">
+                                          {clientPets.map(function(pet) {
+                                            var isEditing = editingPet === pet.id;
+                                            return (
+                                              <div key={pet.id} className="bg-white rounded-lg p-3 flex gap-3 items-start" style={{ border: '1px solid ' + accentColor + '15' }}>
+                                                {/* Profile Image */}
+                                                <div className="flex-shrink-0">
+                                                  {pet.profile_image ? (
+                                                    <img src={pet.profile_image} alt={pet.name} className="w-14 h-14 rounded-lg object-cover" />
+                                                  ) : (
+                                                    <div className="w-14 h-14 rounded-lg flex items-center justify-center text-lg" style={{ backgroundColor: accentColor + '15' }}>
+                                                      {pet.type === 'cat' ? '🐱' : pet.type === 'other' ? '🐾' : '🐶'}
+                                                    </div>
+                                                  )}
+                                                </div>
+
+                                                {isEditing ? (
+                                                  <div className="flex-1 space-y-2">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                      <input type="text" value={petForm.name} onChange={(e) => setPetForm({...petForm, name: e.target.value})}
+                                                        placeholder="Pet name" className="px-2 py-1.5 border rounded text-xs" />
+                                                      <select value={petForm.type} onChange={(e) => setPetForm({...petForm, type: e.target.value})}
+                                                        className="px-2 py-1.5 border rounded text-xs">
+                                                        <option value="dog">Dog</option>
+                                                        <option value="cat">Cat</option>
+                                                        <option value="other">Other</option>
+                                                      </select>
+                                                      <input type="text" value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
+                                                        placeholder="Breed" className="px-2 py-1.5 border rounded text-xs" />
+                                                      <select value={petForm.birthdayMonth} onChange={(e) => setPetForm({...petForm, birthdayMonth: e.target.value})}
+                                                        className="px-2 py-1.5 border rounded text-xs">
+                                                        <option value="">Birthday Month</option>
+                                                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map(function(m) { return <option key={m} value={m}>{m}</option>; })}
+                                                      </select>
+                                                    </div>
+                                                    <textarea value={petForm.instructions} onChange={(e) => setPetForm({...petForm, instructions: e.target.value})}
+                                                      placeholder="Special instructions..." className="w-full px-2 py-1.5 border rounded text-xs" rows={2} />
+                                                    <div className="flex items-center gap-2">
+                                                      <label className="px-2 py-1 bg-gray-100 rounded text-xs cursor-pointer hover:bg-gray-200 transition">
+                                                        📷 Photo
+                                                        <input type="file" accept="image/*" className="hidden" onChange={async function(e) {
+                                                          if (e.target.files[0]) { var url = await uploadPetImage(e.target.files[0]); if (url) setPetForm({...petForm, profileImage: url}); }
+                                                        }} />
+                                                      </label>
+                                                      {petForm.profileImage && <span className="text-[10px] text-green-500">✓ Photo set</span>}
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                      <button onClick={() => updatePet(pet.id, client.clientID)}
+                                                        className="px-3 py-1 rounded text-xs font-bold text-white bg-green-500 hover:bg-green-600 transition">Save</button>
+                                                      <button onClick={() => setEditingPet(null)}
+                                                        className="px-3 py-1 rounded text-xs font-bold text-gray-500 hover:bg-gray-100 transition">Cancel</button>
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                      <span className="font-bold text-sm" style={{ color: panelText }}>{pet.name}</span>
+                                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: accentColor + '15', color: accentColor }}>
+                                                        {pet.type || 'dog'}
+                                                      </span>
+                                                    </div>
+                                                    {pet.breed && <p className="text-xs text-gray-500">{pet.breed}</p>}
+                                                    {pet.birthday_month && <p className="text-[10px] text-gray-400">🎂 {pet.birthday_month}</p>}
+                                                    {pet.instructions && <p className="text-xs text-gray-500 mt-1 italic">"{pet.instructions}"</p>}
+                                                    <div className="flex gap-1 mt-2">
+                                                      <button onClick={() => { setEditingPet(pet.id); setPetForm({ name: pet.name, type: pet.type || 'dog', breed: pet.breed || '', birthdayMonth: pet.birthday_month || '', instructions: pet.instructions || '', profileImage: pet.profile_image || '' }); }}
+                                                        className="text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-50 text-blue-500 transition">Edit</button>
+                                                      <button onClick={() => deletePet(pet.id, pet.name, client.clientID)}
+                                                        className="text-[10px] font-bold px-2 py-1 rounded hover:bg-red-50 text-red-400 transition">Delete</button>
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                          {clientPets.length === 0 && <p className="text-xs text-gray-400">No pets registered yet</p>}
+                                        </div>
+
+                                        {/* Add New Pet Form */}
+                                        {!editingPet && (
+                                          <div className="bg-white rounded-lg p-3" style={{ border: '1px dashed ' + accentColor + '30' }}>
+                                            <p className="text-xs font-bold mb-2" style={{ color: panelText }}>Add New Pet</p>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+                                              <input type="text" value={petForm.name} onChange={(e) => setPetForm({...petForm, name: e.target.value})}
+                                                placeholder="Pet name *" className="px-2 py-1.5 border rounded text-xs" />
+                                              <select value={petForm.type} onChange={(e) => setPetForm({...petForm, type: e.target.value})}
+                                                className="px-2 py-1.5 border rounded text-xs">
+                                                <option value="dog">Dog</option>
+                                                <option value="cat">Cat</option>
+                                                <option value="other">Other</option>
+                                              </select>
+                                              <input type="text" value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
+                                                placeholder="Breed" className="px-2 py-1.5 border rounded text-xs" />
+                                              <select value={petForm.birthdayMonth} onChange={(e) => setPetForm({...petForm, birthdayMonth: e.target.value})}
+                                                className="px-2 py-1.5 border rounded text-xs">
+                                                <option value="">Birthday Month</option>
+                                                {['January','February','March','April','May','June','July','August','September','October','November','December'].map(function(m) { return <option key={m} value={m}>{m}</option>; })}
+                                              </select>
+                                            </div>
+                                            <textarea value={petForm.instructions} onChange={(e) => setPetForm({...petForm, instructions: e.target.value})}
+                                              placeholder="Special instructions (e.g. 'sensitive skin, use gentle shampoo')" className="w-full px-2 py-1.5 border rounded text-xs mb-2" rows={2} />
+                                            <div className="flex items-center gap-2">
+                                              <label className="px-2 py-1 bg-gray-100 rounded text-xs cursor-pointer hover:bg-gray-200 transition">
+                                                📷 Photo
+                                                <input type="file" accept="image/*" className="hidden" onChange={async function(e) {
+                                                  if (e.target.files[0]) { var url = await uploadPetImage(e.target.files[0]); if (url) setPetForm({...petForm, profileImage: url}); }
+                                                }} />
+                                              </label>
+                                              {petForm.profileImage && <span className="text-[10px] text-green-500">✓ Photo uploaded</span>}
+                                              <div className="flex-1"></div>
+                                              <button onClick={() => addPet(client.clientID)}
+                                                disabled={!petForm.name.trim()}
+                                                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white transition disabled:opacity-50"
+                                                style={{ backgroundColor: accentColor }}>
+                                                + Add Pet
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
                           ))}
                         </tbody>
                       </table>
