@@ -47,8 +47,13 @@ function StaffPanel() {
       .then(function(r) { return r.json(); })
       .then(function(data) { setBusinessInfo(data); })
       .catch(function(err) { console.error('Error:', err); });
-    loadPending();
   }, []);
+
+  // Load protected data after auth
+  useEffect(function() {
+    if (!sessionToken) return;
+    loadPending();
+  }, [sessionToken]);
 
   // Load jsQR when scanner opens
   useEffect(function() {
