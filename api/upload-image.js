@@ -18,8 +18,10 @@ export default async function handler(req, res) {
     var businessID = await getTenant(req);
     if (!businessID) return res.status(400).json({ error: 'No tenant' });
 
-    var { imageData, fileName } = req.body;
+    var { imageData, fileName, bucket } = req.body;
     if (!imageData) return res.status(400).json({ error: 'imageData required' });
+
+    var bucketName = bucket || 'pet-images';
 
     // imageData is base64 string like "data:image/jpeg;base64,/9j/4AAQ..."
     var matches = imageData.match(/^data:([^;]+);base64,(.+)$/);
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
     var storagePath = businessID + '/' + Date.now() + '_' + (fileName || 'image') + '.' + ext;
 
     var { data, error } = await supabase.storage
-      .from('pet-images')
+      .from(bucketName)
       .upload(storagePath, buffer, {
         contentType: mimeType,
         upsert: true,
@@ -43,7 +45,7 @@ export default async function handler(req, res) {
     if (error) return res.status(500).json({ error: error.message });
 
     var { data: urlData } = supabase.storage
-      .from('pet-images')
+      .from(bucketName)
       .getPublicUrl(storagePath);
 
     return res.status(200).json({ success: true, url: urlData.publicUrl });
