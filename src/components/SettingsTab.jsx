@@ -555,7 +555,47 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
                 className="w-full mt-2 px-4 py-2 border-2 rounded-xl focus:outline-none text-xs text-gray-400"
                 style={{ borderColor: accentColor + '30' }} />
             </div>
-            {renderInput('Ad/Promo Image URL', 'adImageUrl', 'https://...')}
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Ad / Promo Image</label>
+              <div className="flex items-center gap-3">
+                {fields.adImageUrl && (
+                  <img src={fields.adImageUrl} alt="Ad" className="h-12 w-auto rounded-lg" referrerPolicy="no-referrer"
+                    onError={function(e) { e.target.style.display = 'none'; }} />
+                )}
+                <label className="px-4 py-2.5 rounded-xl font-semibold text-sm cursor-pointer hover:shadow-lg transition-all border-2 flex items-center gap-2"
+                  style={{ borderColor: accentColor, color: panelAccent }}>
+                  📷 Upload Image
+                  <input type="file" accept="image/*" className="hidden" onChange={async function(e) {
+                    if (!e.target.files[0]) return;
+                    var file = e.target.files[0];
+                    if (file.size > 2 * 1024 * 1024) { showToast('File too large. Max 2MB.'); return; }
+                    showToast('Uploading...');
+                    var reader = new FileReader();
+                    reader.onload = async function() {
+                      try {
+                        var r = await authFetch('/api/upload-image', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ imageData: reader.result, fileName: 'promo', bucket: 'logos' }),
+                        });
+                        var data = await r.json();
+                        if (data.url) { setFields(Object.assign({}, fields, { adImageUrl: data.url })); showToast('Image uploaded!'); }
+                        else showToast('Upload failed');
+                      } catch(err) { showToast('Upload error'); }
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
+                {fields.adImageUrl && (
+                  <button onClick={function() { setFields(Object.assign({}, fields, { adImageUrl: '' })); }}
+                    className="text-xs text-red-400 hover:text-red-600">Remove</button>
+                )}
+              </div>
+              <input type="text" value={fields.adImageUrl || ''} onChange={function(e) { setFields(Object.assign({}, fields, { adImageUrl: e.target.value })); }}
+                placeholder="Or paste image URL"
+                className="w-full mt-2 px-4 py-2 border-2 rounded-xl focus:outline-none text-xs text-gray-400"
+                style={{ borderColor: accentColor + '30' }} />
+            </div>
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Card Navigation Labels</h4>
             {renderInput('Tab 1 Label', 'navButton1Text', 'Stamp Card')}
             {renderInput('Tab 2 Label', 'navButton2Text', 'Rewards')}
