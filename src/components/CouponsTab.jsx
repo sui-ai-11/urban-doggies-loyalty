@@ -28,6 +28,8 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
   var panelText = isLightC(borderColor) ? '#1a1a2e' : borderColor;
   var panelAccent = isLightC(accentColor) ? '#1a1a2e' : accentColor;
   var btnOnAccent = isLightC(accentColor) ? '#1a1a2e' : '#ffffff';
+  var hasPetsFeature = businessInfo && businessInfo.features && businessInfo.features.pets === true;
+  var presetBreeds = ['Akita','Alaskan Malamute','American Bulldog','Basset Hound','Beagle','Belgian Malinois','Belgian Tervuren','Bichon Frise','Border Collie','Boston Terrier','Boxer','Bullmastiff','Chihuahua (Short-haired)','Chihuahua (Long-haired)','Chow-chow','Cocker Spaniel','Coton de Tulear','Dachshund (Wire-haired)','Dachshund (Long-haired)','Dalmatian','Doberman Pinscher','English Bulldog','French Bulldog','German Pointer (Short-haired)','German Pointer (Wire-haired)','German Shepherd','Golden Retriever','Great Dane','Havanese','Jack Russell','Japanese Chin','Japanese Spitz','Labrador','Lhasa Apso','Maltese','Mini-Pinscher','Norwich Terrier','Pekingese','Pitbull','Pomeranian','Poodle (Toy)','Poodle (Standard)','Pug','Rottweiler','Samoyed','Schnauzer (Mini)','Schnauzer (Standard)','Scottish Terrier','Shar-pei','Shetland Collie','Shiba Inu','Shih Tzu','Siberian Husky','Springer Spaniel','St. Bernard','Welsh Corgi','West Highland Terrier','Wire Fox Terrier','Yorkshire Terrier','Cat','Other'];
 
   useEffect(function() {
     if (!parentBiz) fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(setBusinessInfo).catch(function() {});
@@ -277,13 +279,13 @@ function CouponsTab({ businessInfo: parentBiz, sessionToken }) {
                   placeholder="Search clients..."
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm" />
               </div>
-              {allBreeds.length > 0 && (
+              {hasPetsFeature && (
                 <div className="mb-4">
                   <select value={filterBreed} onChange={function(e) { setFilterBreed(e.target.value); }}
                     className="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-xs"
                     style={{ borderColor: accentColor + '40' }}>
                     <option value="all">All Breeds</option>
-                    {allBreeds.map(function(b) { return <option key={b} value={b}>{b}</option>; })}
+                    {presetBreeds.map(function(b) { return <option key={b} value={b}>{b}</option>; })}
                   </select>
                 </div>
               )}
