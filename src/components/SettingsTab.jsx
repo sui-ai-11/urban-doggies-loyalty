@@ -370,7 +370,7 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
                     return (
                       <div key={idx} className="rounded-xl p-4 mb-3" style={{ backgroundColor: accentColor + '08', border: '1px solid ' + accentColor + '20' }}>
                         <div className="flex items-center justify-between mb-3">
-                          <h5 className="font-bold text-sm" style={{ color: panelText }}>Milestone {idx + 1}</h5>
+                          <h5 className="font-bold text-sm px-3 py-1 rounded-full" style={{ backgroundColor: accentColor, color: btnOnAccent }}>Milestone {idx + 1}</h5>
                           <button onClick={function() {
                             var newTiers = Object.assign({}, allTiers);
                             var ms2 = (newTiers[activeTier] || []).slice();
