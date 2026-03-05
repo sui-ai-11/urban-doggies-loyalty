@@ -191,6 +191,7 @@ function CustomerCard() {
           <div className="flex items-center justify-center gap-3 mb-2">
             {business.logo ? (
               <img src={business.logo} alt={business.name} className="h-20 w-auto"
+                referrerPolicy="no-referrer"
                 onError={(e) => (e.target.style.display = 'none')} />
             ) : (
               <div className="flex flex-col items-center">
