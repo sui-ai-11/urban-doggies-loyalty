@@ -666,7 +666,22 @@ function SettingsTab({ businessInfo: parentBiz, onUpdate, sessionToken }) {
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Chat Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
             {renderInput('Button Label', 'navButton1Contact', 'Message us via Viber')}
-            {renderInput('Chat Link', 'chatLink', 'viber://chat?number=%2B6312345678')}
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Viber Number</label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400 font-mono">+</span>
+                <input type="tel" value={(fields.chatLink || '').replace('viber://chat?number=%2B', '').replace('viber://chat?number=', '')}
+                  onChange={function(e) {
+                    var num = e.target.value.replace(/[^0-9]/g, '');
+                    var link = num ? 'viber://chat?number=%2B' + num : '';
+                    setFields(Object.assign({}, fields, { chatLink: link }));
+                  }}
+                  placeholder="639171234567"
+                  className="flex-1 px-4 py-2.5 border-2 rounded-xl focus:outline-none text-sm"
+                  style={{ borderColor: accentColor + '40' }} />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">Enter number with country code (e.g. 639171234567 for PH)</p>
+            </div>
 
             <h4 className="font-bold text-sm mt-6 mb-3" style={{ color: panelText }}>Call Button</h4>
             <p className="text-xs text-gray-400 mb-3">Leave empty to hide this button from customers</p>
