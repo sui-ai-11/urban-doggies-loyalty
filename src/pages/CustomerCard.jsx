@@ -304,11 +304,13 @@ function CustomerCard() {
                   }
                 } catch(e) {}
                 if (milestones.length === 0) {
-                  // Fallback to legacy milestone fields
-                  milestones = [
-                    { position: business.milestone1Position || Math.floor(totalStamps / 2), icon: business.milestone1Icon || '🎁', label: business.milestone1Label || '10% OFF', description: business.milestone1Description || '' },
-                    { position: business.milestone2Position || totalStamps, icon: business.milestone2Icon || '🏆', label: business.milestone2Label || 'FREE SERVICE', description: business.milestone2Description || '' },
-                  ];
+                  // Fallback to legacy milestone fields — only if labels are actually configured
+                  if (business.milestone1Label || business.milestone2Label) {
+                    milestones = [
+                      business.milestone1Label ? { position: business.milestone1Position || Math.floor(totalStamps / 2), icon: business.milestone1Icon || '🎁', label: business.milestone1Label, description: business.milestone1Description || '' } : null,
+                      business.milestone2Label ? { position: business.milestone2Position || totalStamps, icon: business.milestone2Icon || '🏆', label: business.milestone2Label, description: business.milestone2Description || '' } : null,
+                    ].filter(Boolean);
+                  }
                 }
                 const milestoneMap = {};
                 milestones.forEach(m => { milestoneMap[m.position] = m; });
