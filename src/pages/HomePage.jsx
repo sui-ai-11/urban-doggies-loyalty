@@ -154,12 +154,15 @@ function HomePage() {
               <img
                 src={businessInfo.logo}
                 alt={businessInfo.businessName}
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
                 className="mx-auto object-contain"
                 style={{
-                  height: '280px',
-                  maxWidth: '400px',
+                  height: 'min(280px, 40vw)',
+                  maxWidth: '90vw',
                   filter: bgIsDark ? 'drop-shadow(0 4px 24px rgba(255,255,255,0.1))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.08))',
                 }}
+                onError={(e) => { e.target.style.display = 'none'; }}
                 onError={(e) => e.target.style.display = 'none'}
               />
             </div>
