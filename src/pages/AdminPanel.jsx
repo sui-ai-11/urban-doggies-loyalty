@@ -109,6 +109,7 @@ function AdminPanel() {
   const [editingPet, setEditingPet] = useState(null);
   const [petLoading, setPetLoading] = useState(false);
   const hasPetsFeature = businessInfo?.features?.pets === true;
+  const presetBreeds = ['Akita','Alaskan Malamute','American Bulldog','Basset Hound','Beagle','Belgian Malinois','Belgian Tervuren','Bichon Frise','Border Collie','Boston Terrier','Boxer','Bullmastiff','Chihuahua (Short-haired)','Chihuahua (Long-haired)','Chow-chow','Cocker Spaniel','Coton de Tulear','Dachshund (Wire-haired)','Dachshund (Long-haired)','Dalmatian','Doberman Pinscher','English Bulldog','French Bulldog','German Pointer (Short-haired)','German Pointer (Wire-haired)','German Shepherd','Golden Retriever','Great Dane','Havanese','Jack Russell','Japanese Chin','Japanese Spitz','Labrador','Lhasa Apso','Maltese','Mini-Pinscher','Norwich Terrier','Pekingese','Pitbull','Pomeranian','Poodle (Toy)','Poodle (Standard)','Pug','Rottweiler','Samoyed','Schnauzer (Mini)','Schnauzer (Standard)','Scottish Terrier','Shar-pei','Shetland Collie','Shiba Inu','Shih Tzu','Siberian Husky','Springer Spaniel','St. Bernard','Welsh Corgi','West Highland Terrier','Wire Fox Terrier','Yorkshire Terrier','Cat','Other'];
   const [editForm, setEditForm] = useState({ name: '', mobile: '', email: '', birthday: '', notes: '' });
   const [importStatus, setImportStatus] = useState(null);
 
@@ -823,14 +824,14 @@ function AdminPanel() {
                       )}
                     </select>
                   </div>
-                  {hasPetsFeature && allBreeds.length > 0 && (
+                  {hasPetsFeature && (
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Breed</label>
                       <select value={selectedBreed} onChange={(e) => setSelectedBreed(e.target.value)}
                         className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none text-sm"
                         style={{ borderColor: `${accentColor}60`, boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                         <option value="all">All Breeds</option>
-                        {allBreeds.map(b =>
+                        {presetBreeds.map(b =>
                           <option key={b} value={b}>{b}</option>
                         )}
                       </select>
@@ -891,6 +892,15 @@ function AdminPanel() {
                               <td className="px-5 py-4">
                                 <p className="font-semibold text-gray-800 text-sm">{client.name}</p>
                                 <p className="text-xs text-gray-400">{client.email || 'No email'}</p>
+                                {hasPetsFeature && client.pets && client.pets.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {client.pets.map(function(pet, pi) {
+                                      return <span key={pi} className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: accentColor + '12', color: accentColor }}>
+                                        {pet.type === 'cat' ? '🐱' : '🐶'} {pet.name}{pet.breed ? ' · ' + pet.breed : ''}
+                                      </span>;
+                                    })}
+                                  </div>
+                                )}
                               </td>
                               <td className="px-5 py-4">
                                 <span className="font-mono font-bold text-sm" style={{ color: panelAccent }}>{client.token}</span>
@@ -980,8 +990,11 @@ function AdminPanel() {
                                                         <option value="cat">Cat</option>
                                                         <option value="other">Other</option>
                                                       </select>
-                                                      <input type="text" value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
-                                                        placeholder="Breed" className="px-2 py-1.5 border rounded text-xs" />
+                                                      <select value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
+                                                        className="px-2 py-1.5 border rounded text-xs">
+                                                        <option value="">Select Breed</option>
+                                                        {presetBreeds.map(function(b) { return <option key={b} value={b}>{b}</option>; })}
+                                                      </select>
                                                       <select value={petForm.birthdayMonth} onChange={(e) => setPetForm({...petForm, birthdayMonth: e.target.value})}
                                                         className="px-2 py-1.5 border rounded text-xs">
                                                         <option value="">Birthday Month</option>
@@ -1044,8 +1057,11 @@ function AdminPanel() {
                                                 <option value="cat">Cat</option>
                                                 <option value="other">Other</option>
                                               </select>
-                                              <input type="text" value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
-                                                placeholder="Breed" className="px-2 py-1.5 border rounded text-xs" />
+                                              <select value={petForm.breed} onChange={(e) => setPetForm({...petForm, breed: e.target.value})}
+                                                className="px-2 py-1.5 border rounded text-xs">
+                                                <option value="">Select Breed</option>
+                                                {presetBreeds.map(function(b) { return <option key={b} value={b}>{b}</option>; })}
+                                              </select>
                                               <select value={petForm.birthdayMonth} onChange={(e) => setPetForm({...petForm, birthdayMonth: e.target.value})}
                                                 className="px-2 py-1.5 border rounded text-xs">
                                                 <option value="">Birthday Month</option>
