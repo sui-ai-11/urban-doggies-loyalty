@@ -110,23 +110,25 @@ export default async function handler(req, res) {
 
         // Check if current stamp hits a milestone
         var matchedMilestone = milestones.find(function(m) {
-          return m.at === stampInCard || m.at === totalVisits;
+          var pos = m.at || m.position || 0;
+          return pos === stampInCard;
         });
 
         if (matchedMilestone) {
+          var msLabel = matchedMilestone.label || matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
           var couponID = generateID('CPN_');
           await supabase.from('coupons').insert({
             id: couponID,
             business_id: businessID,
             client_id: client.id,
             client_name: client.name,
-            type: matchedMilestone.type || matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
-            text: matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
+            type: msLabel,
+            text: msLabel,
             notes: 'milestone_' + stampInCard + '_cycle_' + currentCycle,
             staff_name: staffName || '',
             branch: branch || '',
           });
-          milestoneReward = matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
+          milestoneReward = msLabel;
         }
       } catch (e) {
         console.log('Milestone parse error:', e.message);
