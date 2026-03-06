@@ -58,82 +58,58 @@ export default async function handler(req, res) {
     // Revoke any milestone coupons that are above the new stamp count
     var { data: biz } = await supabase
       .from('businesses')
-      .select('milestones_json, stamps_required')
+      .select('stamps_required')
       .eq('id', businessID)
       .single();
 
     var stampsRequired = (biz && biz.stamps_required) || 10;
-    var currentStampInCard = totalVisits % stampsRequired;
-    if (currentStampInCard === 0 && totalVisits > 0) currentStampInCard = stampsRequired;
+    var currentProgress = totalVisits % stampsRequired;
     var currentCycle = Math.floor(totalVisits / stampsRequired) + 1;
-    if (totalVisits > 0 && totalVisits % stampsRequired === 0) currentCycle = Math.floor(totalVisits / stampsRequired);
-
-    // Parse milestones (supports tiered and array format)
-    var milestones = [];
-    try {
-      var raw = (biz && biz.milestones_json) || '{}';
-      var parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (Array.isArray(parsed)) {
-        milestones = parsed;
-      } else if (typeof parsed === 'object') {
-        // Tiered format: get milestones for current cycle
-        var tierKey = String(currentCycle);
-        if (parsed[tierKey]) milestones = parsed[tierKey];
-        else if (parsed['3+'] && currentCycle >= 3) milestones = parsed['3+'];
-        else {
-          var keys = Object.keys(parsed).sort();
-          if (keys.length > 0) milestones = parsed[keys[keys.length - 1]] || [];
-        }
-      }
-    } catch(e) {}
-
-    // Void ALL unclaimed coupons for this client that were auto-issued as milestones
-    // if stamp count dropped below their milestone position
-    if (milestones.length > 0) {
-      for (var i = 0; i < milestones.length; i++) {
-        var ms = milestones[i];
-        var msAt = ms.at || ms.position || 0;
-        if (msAt > currentStampInCard) {
-          // This milestone is now above the stamp count — void its coupon if unclaimed
-          var label = ms.label || ms.reward || '';
-          if (label) {
-            await supabase
-              .from('coupons')
-              .update({ redeemed: 'VOIDED', notes: 'Auto-voided: stamp voided below milestone' })
-              .eq('client_id', client.id)
-              .eq('business_id', businessID)
-              .eq('redeemed', 'FALSE')
-              .ilike('type', '%' + label + '%');
-
-            // Also try matching on text field
-            await supabase
-              .from('coupons')
-              .update({ redeemed: 'VOIDED', notes: 'Auto-voided: stamp voided below milestone' })
-              .eq('client_id', client.id)
-              .eq('business_id', businessID)
-              .eq('redeemed', 'FALSE')
-              .ilike('text', '%' + label + '%');
-          }
-        }
-      }
+    if (totalVisits > 0 && totalVisits % stampsRequired === 0) {
+      currentProgress = stampsRequired;
+      currentCycle = Math.floor(totalVisits / stampsRequired);
     }
 
-    // Also void any reward coupon if card completion was undone
-    // (if stamp was at stampsRequired and now dropped below)
-    if (currentStampInCard < stampsRequired) {
+    // Get all unclaimed coupons for this client
+    var { data: clientCoupons } = await supabase
+      .from('coupons')
+      .select('id, notes')
+      .eq('client_id', client.id)
+      .eq('business_id', businessID)
+      .eq('redeemed', 'FALSE');
+
+    // Check each coupon for milestone tags
+    (clientCoupons || []).forEach(async function(coupon) {
+      var notes = coupon.notes || '';
+      var match = notes.match(/milestone_(\d+)_cycle_(\d+)/);
+      if (!match) return;
+
+      var msPosition = parseInt(match[1]);
+      var msCycle = parseInt(match[2]);
+
+      // Void if position is now above current progress, or cycle is above current
+      if ((msCycle === currentCycle && msPosition > currentProgress) || msCycle > currentCycle) {
+        await supabase
+          .from('coupons')
+          .update({ redeemed: 'VOIDED', notes: notes + ' | auto-voided: stamp voided' })
+          .eq('id', coupon.id);
+      }
+    });
+
+    // Also void card completion reward if card is no longer complete
+    if (currentProgress < stampsRequired && currentProgress > 0) {
       var { data: rewardCoupons } = await supabase
         .from('coupons')
-        .select('id')
+        .select('id, notes')
         .eq('client_id', client.id)
         .eq('business_id', businessID)
         .eq('redeemed', 'FALSE')
         .ilike('notes', '%completing card%');
 
       if (rewardCoupons && rewardCoupons.length > 0) {
-        // Only void the most recent one
         await supabase
           .from('coupons')
-          .update({ redeemed: 'VOIDED', notes: 'Auto-voided: stamp voided, card no longer complete' })
+          .update({ redeemed: 'VOIDED', notes: rewardCoupons[rewardCoupons.length - 1].notes + ' | auto-voided: card no longer complete' })
           .eq('id', rewardCoupons[rewardCoupons.length - 1].id);
       }
     }
