@@ -120,9 +120,9 @@ export default async function handler(req, res) {
             business_id: businessID,
             client_id: client.id,
             client_name: client.name,
-            type: matchedMilestone.type || 'reward',
+            type: matchedMilestone.type || matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
             text: matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward',
-            notes: 'Auto-reward at stamp ' + stampInCard + ' (Card ' + currentCycle + ')',
+            notes: 'milestone_' + stampInCard + '_cycle_' + currentCycle,
             staff_name: staffName || '',
             branch: branch || '',
           });
@@ -150,6 +150,37 @@ export default async function handler(req, res) {
       milestoneReward = rewardDescription;
     }
 
+
+    // Referral reward: on first stamp, issue 50% OFF to referrer
+    if (totalVisits === 1 && client.referred_by) {
+      var { data: biz } = await supabase
+        .from('businesses')
+        .select('features')
+        .eq('id', businessID)
+        .single();
+
+      if (biz && biz.features && biz.features.referrals) {
+        // Find the referrer by token
+        var { data: referrer } = await supabase
+          .from('clients')
+          .select('id, name, token')
+          .eq('business_id', businessID)
+          .eq('token', client.referred_by)
+          .single();
+
+        if (referrer) {
+          var refCouponID = 'CPN_REF_' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+          await supabase.from('coupons').insert({
+            id: refCouponID,
+            business_id: businessID,
+            client_id: referrer.id,
+            type: '50% OFF Next Grooming — Referral Reward',
+            redeemed: 'FALSE',
+            notes: 'Referral reward: ' + client.name + ' completed first visit',
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       success: true,
