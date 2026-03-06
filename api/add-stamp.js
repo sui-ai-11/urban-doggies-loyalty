@@ -86,7 +86,8 @@ export default async function handler(req, res) {
     // Try tiered milestones first
     if (milestonesJson) {
       try {
-        var parsed = JSON.parse(milestonesJson);
+        // JSONB column may already be parsed object, or could be string
+        var parsed = typeof milestonesJson === 'string' ? JSON.parse(milestonesJson) : milestonesJson;
         var milestones = [];
 
         if (Array.isArray(parsed)) {
