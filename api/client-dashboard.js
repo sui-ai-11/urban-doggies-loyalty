@@ -98,6 +98,7 @@ export default async function handler(req, res) {
       callLabel: biz.call_label,
       feedbackLabel: biz.feedback_label,
       adImageUrl: biz.ad_image_url,
+      features: biz.features || {},
     } : {};
 
     var stampsRequired = (biz && biz.stamps_required) || 10;
