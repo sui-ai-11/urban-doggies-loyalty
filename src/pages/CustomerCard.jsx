@@ -441,6 +441,57 @@ function CustomerCard() {
             </div>
           )}
 
+          {/* ═══ SHARE & EARN ═══ */}
+          {activeView === 'stamp' && business.features && business.features.referrals && (
+            <div className="mt-6 rounded-2xl p-5" style={{ backgroundColor: accentColor + '10', border: '1px solid ' + accentColor + '25' }}>
+              <h3 className="text-lg font-bold mb-2" style={{ color: headingColor }}>🎁 Share & Earn</h3>
+              <p className="text-sm mb-3" style={{ color: subtextColor }}>
+                Refer a friend and get <strong style={{ color: accentColor }}>50% OFF</strong> your next grooming! Your friend gets <strong style={{ color: accentColor }}>10% OFF</strong> as a welcome bonus. They can earn the same reward when they start referring too!
+              </p>
+
+              {client.referralCount > 0 && (
+                <p className="text-xs font-bold mb-3" style={{ color: accentColor }}>
+                  🏆 You've referred {client.referralCount} friend{client.referralCount !== 1 ? 's' : ''}!
+                </p>
+              )}
+
+              <div className="rounded-xl p-3 mb-3" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }}>
+                <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: subtextColor }}>Your Referral Code</p>
+                <p className="text-xl font-black tracking-widest" style={{ color: headingColor }}>{client.token}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={function() {
+                    var link = window.location.origin + '/#/register?ref=' + client.token;
+                    navigator.clipboard.writeText(link).then(function() {
+                      alert('Referral link copied!');
+                    });
+                  }}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm transition hover:shadow-lg"
+                  style={{ backgroundColor: accentColor, color: btnOnAccent }}>
+                  📋 Copy Link
+                </button>
+                <button
+                  onClick={function() {
+                    var link = window.location.origin + '/#/register?ref=' + client.token;
+                    var msg = 'Get groomed at ' + (business.businessName || 'our shop') + '! Use my referral link and get 10% OFF your first visit. I get 50% OFF my next grooming too! Start referring and earn the same rewards. 🐾 ' + link;
+                    if (navigator.share) {
+                      navigator.share({ text: msg }).catch(function() {});
+                    } else {
+                      navigator.clipboard.writeText(msg).then(function() {
+                        alert('Message copied! Paste it in Viber or any chat.');
+                      });
+                    }
+                  }}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm transition hover:shadow-lg"
+                  style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)', color: headingColor }}>
+                  💬 Share
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ═══ REWARDS VIEW ═══ */}
           {activeView === 'rewards' && (
             <div className="animate-fade-in">
@@ -451,7 +502,7 @@ function CustomerCard() {
 
               {coupons && coupons.length > 0 ? (
                 <div className="space-y-3">
-                  {coupons.filter(c => c.redeemed !== 'VOIDED').slice().sort((a, b) => {
+                  {coupons.filter(c => c.redeemed !== 'VOIDED' && (c.notes || '').indexOf('milestone_') === -1).slice().sort((a, b) => {
                     var aActive = a.redeemed !== 'TRUE' && !(a.expiryDate && new Date(a.expiryDate) < new Date()) ? 0 : 1;
                     var bActive = b.redeemed !== 'TRUE' && !(b.expiryDate && new Date(b.expiryDate) < new Date()) ? 0 : 1;
                     return aActive - bActive;
