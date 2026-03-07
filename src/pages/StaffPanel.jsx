@@ -33,6 +33,8 @@ function StaffPanel() {
   var _g = useState(false), scanning = _g[0], setScanning = _g[1];
   var _h = useState(null), businessInfo = _h[0], setBusinessInfo = _h[1];
   var _i = useState([]), pendingClients = _i[0], setPendingClients = _i[1];
+  var _prepaid = useState({ balance: 0, transactions: [] }), prepaidData = _prepaid[0], setPrepaidData = _prepaid[1];
+  var _prepaidAmt = useState(''), prepaidAmount = _prepaidAmt[0], setPrepaidAmount = _prepaidAmt[1];
   var videoRef = useRef(null);
   var canvasRef = useRef(null);
   var scanIntervalRef = useRef(null);
@@ -179,6 +181,7 @@ function StaffPanel() {
     );
     
     return {
+      clientID: result.client.clientID,
       name: result.client.name,
       token: result.client.token,
       email: result.client.email,
@@ -213,6 +216,7 @@ function StaffPanel() {
         if (result.client) {
           setClientInfo(buildClientInfo(result));
           setClientCoupons(result.coupons || []);
+          if (businessInfo && businessInfo.features && businessInfo.features.prepaid && result.client.clientID) loadPrepaid(result.client.clientID);
           setMessage('Customer found! Review info and confirm to add stamp.');
         }
       })
@@ -252,6 +256,7 @@ function StaffPanel() {
           // Full dashboard data from token search
           setClientInfo(buildClientInfo(result));
           setClientCoupons(result.coupons || []);
+          if (businessInfo && businessInfo.features && businessInfo.features.prepaid && result.client.clientID) loadPrepaid(result.client.clientID);
           setMultipleResults(null);
           setMessage('Customer found! Review info and confirm to add stamp.');
         } else if (result.client && !result.loyalty) {
@@ -343,6 +348,35 @@ function StaffPanel() {
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
+  }
+
+  // Prepaid credits
+  function loadPrepaid(clientID) {
+    authFetch('/api/manage-transactions?clientID=' + clientID)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { setPrepaidData({ balance: data.balance || 0, transactions: data.transactions || [] }); })
+      .catch(function() {});
+  }
+
+  function handlePrepaidTransaction(clientID, type) {
+    var amt = parseFloat(prepaidAmount);
+    if (!amt || amt <= 0) { setMessage('⚠️ Enter a valid amount'); return; }
+    authFetch('/api/manage-transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientID: clientID, type: type, amount: amt, staffName: selectedStaff, branch: selectedBranch }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          setMessage('✅ ' + (type === 'credit' ? 'Credit added' : 'Amount deducted') + ': ₱' + amt.toLocaleString());
+          setPrepaidAmount('');
+          loadPrepaid(clientID);
+        } else {
+          setMessage('❌ ' + (data.error || 'Failed'));
+        }
+      })
+      .catch(function() { setMessage('❌ Transaction failed'); });
   }
 
   function voidLastStamp() {
@@ -939,6 +973,47 @@ function StaffPanel() {
                 ↩ Void
               </button>
             </div>
+
+            {/* Prepaid Credits */}
+            {businessInfo && businessInfo.features && businessInfo.features.prepaid && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Prepaid Credits</p>
+                <div className="bg-white rounded-xl p-3 border border-gray-100">
+                  <div className="text-center mb-3 py-2 rounded-lg" style={{ backgroundColor: accentColor + '10' }}>
+                    <p className="text-2xl font-black" style={{ color: accentColor }}>₱{prepaidData.balance.toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-400">Available balance</p>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <input type="number" value={prepaidAmount}
+                      onChange={function(e) { setPrepaidAmount(e.target.value); }}
+                      placeholder="Amount"
+                      className="flex-1 px-3 py-2 border rounded-lg text-sm text-center" />
+                    <button onClick={function() { handlePrepaidTransaction(clientInfo.clientID, 'credit'); }}
+                      className="px-3 py-2 rounded-lg text-xs font-bold text-white bg-green-500 hover:bg-green-600 transition">
+                      + Add
+                    </button>
+                    <button onClick={function() { handlePrepaidTransaction(clientInfo.clientID, 'debit'); }}
+                      className="px-3 py-2 rounded-lg text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition">
+                      − Use
+                    </button>
+                  </div>
+                  {prepaidData.transactions.length > 0 && (
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {prepaidData.transactions.slice(0, 10).map(function(tx, i) {
+                        return (
+                          <div key={i} className="flex items-center justify-between text-xs py-1 px-2 rounded" style={{ backgroundColor: '#f9fafb' }}>
+                            <span className="text-gray-400">{tx.date}</span>
+                            <span className="font-bold" style={{ color: tx.type === 'credit' ? '#22c55e' : '#ef4444' }}>
+                              {tx.type === 'credit' ? '+' : '-'}₱{tx.amount.toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Active Coupons */}
             {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED' && (c.notes || '').indexOf('milestone_') === -1; }).length > 0 && (
