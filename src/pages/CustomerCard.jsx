@@ -475,9 +475,12 @@ function CustomerCard() {
           {activeView === 'stamp' && business.features && business.features.referrals && (
             <div className="mt-6 rounded-2xl p-5" style={{ backgroundColor: accentColor + '10', border: '1px solid ' + accentColor + '25' }}>
               <h3 className="text-lg font-bold mb-2" style={{ color: headingColor }}>🐾 Refer a Friend</h3>
-              <p className="text-sm mb-3" style={{ color: subtextColor }}>
-                Refer a friend and get <strong style={{ color: accentColor }}>50% OFF</strong> your next grooming! Your friend gets <strong style={{ color: accentColor }}>10% OFF</strong> as a welcome bonus. They can earn the same reward when they start referring too!
-              </p>
+                <p className="text-sm mb-1" style={{ color: subtextColor }}>
+                  Know someone who'd love our grooming services?
+                </p>
+                <p className="text-sm mb-3" style={{ color: subtextColor }}>
+                  Send them your referral link — once they book and complete their first grooming, you'll receive <strong style={{ color: accentColor }}>50% OFF</strong> your next service! Your friend also gets <strong style={{ color: accentColor }}>10% OFF</strong> as a welcome treat. The best part? They can share and get the same rewards too! 🐾
+                </p>
 
               {client.referralCount > 0 && (
                 <p className="text-xs font-bold mb-3" style={{ color: accentColor }}>
@@ -505,7 +508,7 @@ function CustomerCard() {
                 <button
                   onClick={function() {
                     var link = window.location.origin + '/#/portal?ref=' + client.token;
-                    var msg = 'Get groomed at ' + (business.businessName || 'our shop') + '! Use my referral link and get 10% OFF your first visit. I get 50% OFF my next grooming too! Start referring and earn the same rewards. 🐾 ' + link;
+                    var msg = '🐾 Hey! I've been getting my fur babies groomed at ' + (business.businessName || 'our shop') + ' and they're amazing! Use my referral link to sign up — you'll get 10% OFF your first grooming. Once you book and complete your visit, I get 50% OFF too! ' + link;
                     if (navigator.share) {
                       navigator.share({ text: msg }).catch(function() {});
                     } else {
