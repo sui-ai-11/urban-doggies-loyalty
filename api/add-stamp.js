@@ -144,13 +144,13 @@ export default async function handler(req, res) {
 
     // Referral reward: on first stamp, issue 50% OFF to referrer
     if (totalVisits === 1 && client.referred_by) {
-      var { data: biz } = await supabase
+      var { data: refBiz } = await supabase
         .from('businesses')
         .select('features')
         .eq('id', businessID)
         .single();
 
-      if (biz && biz.features && biz.features.referrals) {
+      if (refBiz && refBiz.features && refBiz.features.referrals) {
         // Find the referrer by token
         var { data: referrer } = await supabase
           .from('clients')
