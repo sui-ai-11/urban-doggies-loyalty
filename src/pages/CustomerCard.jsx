@@ -142,6 +142,7 @@ function CustomerCard() {
   const business = clientData.business || {};
   const loyalty = clientData.loyalty || {};
   const coupons = clientData.coupons || [];
+  const prepaid = clientData.prepaid || { balance: 0, transactions: [] };
   const accentColor = business.accentColor || '#4a4a5a';
   const btnOnAccent = isDark(accentColor) ? '#ffffff' : '#1a1a2e';
   const borderColor = business.borderColor || '#1F3A93';
@@ -438,6 +439,35 @@ function CustomerCard() {
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ═══ PREPAID CREDITS ═══ */}
+          {activeView === 'stamp' && business.features && business.features.prepaid && (prepaid.balance > 0 || prepaid.transactions.length > 0) && (
+            <div className="mt-6 rounded-2xl p-5" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', border: '1px solid ' + accentColor + '25' }}>
+              <h3 className="text-lg font-bold mb-3" style={{ color: headingColor }}>💳 Prepaid Balance</h3>
+              <div className="text-center mb-4 py-3 rounded-xl" style={{ backgroundColor: accentColor + '15' }}>
+                <p className="text-3xl font-black" style={{ color: accentColor }}>₱{prepaid.balance.toLocaleString()}</p>
+                <p className="text-xs mt-1" style={{ color: subtextColor }}>Available credits</p>
+              </div>
+              {prepaid.transactions.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: subtextColor }}>Recent Transactions</p>
+                  <div className="space-y-1.5" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {prepaid.transactions.slice(0, 20).map(function(tx, i) {
+                      var isCredit = tx.type === 'credit';
+                      return (
+                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg" style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.03)' : '#f9fafb' }}>
+                          <span className="text-xs" style={{ color: subtextColor }}>{tx.date}</span>
+                          <span className="text-sm font-bold" style={{ color: isCredit ? '#22c55e' : '#ef4444' }}>
+                            {isCredit ? '+' : '-'}₱{tx.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
