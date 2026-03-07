@@ -493,7 +493,7 @@ function CustomerCard() {
               <div className="flex gap-2">
                 <button
                   onClick={function() {
-                    var link = window.location.origin + '/#/register?ref=' + client.token;
+                    var link = window.location.origin + '/#/portal?ref=' + client.token;
                     navigator.clipboard.writeText(link).then(function() {
                       alert('Referral link copied!');
                     });
@@ -504,7 +504,7 @@ function CustomerCard() {
                 </button>
                 <button
                   onClick={function() {
-                    var link = window.location.origin + '/#/register?ref=' + client.token;
+                    var link = window.location.origin + '/#/portal?ref=' + client.token;
                     var msg = 'Get groomed at ' + (business.businessName || 'our shop') + '! Use my referral link and get 10% OFF your first visit. I get 50% OFF my next grooming too! Start referring and earn the same rewards. 🐾 ' + link;
                     if (navigator.share) {
                       navigator.share({ text: msg }).catch(function() {});
