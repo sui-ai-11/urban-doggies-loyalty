@@ -99,7 +99,7 @@ function CustomerCard() {
           <div className="text-5xl mb-4">⏳</div>
           <h1 className="text-2xl font-black mb-2 text-white">Pending Approval</h1>
           <p className="text-gray-400 mb-4">Hi {clientData.client.name}! Your registration is being reviewed.</p>
-          <p className="text-gray-500 text-sm">Please show this to the staff at the counter.</p>
+          <p className="text-gray-500 text-sm">Your card is being reviewed. We'll notify you once approved!</p>
           <div className="mt-6 flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             <p className="text-gray-500 text-xs">Checking automatically…</p>
@@ -244,7 +244,7 @@ function CustomerCard() {
                   <p className="text-center mt-3 font-mono font-bold text-lg tracking-widest" style={{ color: accentColor }}>
                     {client.token}
                   </p>
-                  <p className="text-center text-gray-400 text-xs mt-1">Show this to staff to earn stamps</p>
+                  <p className="text-center text-gray-400 text-xs mt-1">Your stamp card — earn stamps with every visit</p>
                 </div>
               </div>
 
@@ -269,7 +269,7 @@ function CustomerCard() {
                 <p className="text-xs mt-2 text-center" style={{ color: subtextColor }}>
                   {loyalty?.nextRewardIn > 0
                     ? `${loyalty.nextRewardIn} more visit${loyalty.nextRewardIn > 1 ? 's' : ''} until your next reward!`
-                    : '🎉 Reward earned! Show this to staff to claim.'}
+                    : '🎉 Reward earned! Message us to claim.'}
                 </p>
               </div>
 
@@ -386,7 +386,7 @@ function CustomerCard() {
                           {milestoneClaimed ? (
                             <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0">✓ Claimed</span>
                           ) : reached ? (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ backgroundColor: accentColor + '20', color: accentColor }}>Show to staff</span>
+                            <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ backgroundColor: accentColor + '20', color: accentColor }}>Ready to claim</span>
                           ) : null}
                         </div>
                         );
@@ -474,7 +474,7 @@ function CustomerCard() {
           {/* ═══ SHARE & EARN ═══ */}
           {activeView === 'stamp' && business.features && business.features.referrals && (
             <div className="mt-6 rounded-2xl p-5" style={{ backgroundColor: accentColor + '10', border: '1px solid ' + accentColor + '25' }}>
-              <h3 className="text-lg font-bold mb-2" style={{ color: headingColor }}>🎁 Share & Earn</h3>
+              <h3 className="text-lg font-bold mb-2" style={{ color: headingColor }}>🐾 Refer a Friend</h3>
               <p className="text-sm mb-3" style={{ color: subtextColor }}>
                 Refer a friend and get <strong style={{ color: accentColor }}>50% OFF</strong> your next grooming! Your friend gets <strong style={{ color: accentColor }}>10% OFF</strong> as a welcome bonus. They can earn the same reward when they start referring too!
               </p>
