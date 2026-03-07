@@ -59,6 +59,37 @@ export default async function handler(req, res) {
 
       if (updateErr) return res.status(500).json({ error: updateErr.message });
 
+      // If approved and was referred, issue 10% welcome bonus
+      if (newStatus === 'approved') {
+        var { data: clientData } = await supabase
+          .from('clients')
+          .select('referred_by, name, token')
+          .eq('id', clientID)
+          .single();
+
+        if (clientData && clientData.referred_by) {
+          // Check if business has referrals feature
+          var { data: biz } = await supabase
+            .from('businesses')
+            .select('features')
+            .eq('id', businessID)
+            .single();
+
+          if (biz && biz.features && biz.features.referrals) {
+            // Issue welcome bonus to the new client
+            var couponID = 'CPN_' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+            await supabase.from('coupons').insert({
+              id: couponID,
+              business_id: businessID,
+              client_id: clientID,
+              type: '10% OFF Welcome Bonus',
+              redeemed: 'FALSE',
+              notes: 'Referred by ' + clientData.referred_by,
+            });
+          }
+        }
+      }
+
       return res.status(200).json({ success: true, status: newStatus });
     }
 
