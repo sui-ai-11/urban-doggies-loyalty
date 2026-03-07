@@ -935,7 +935,7 @@ function AdminPanel() {
                                     <button onClick={() => togglePets(client.clientID)}
                                       className="p-1.5 hover:bg-purple-50 rounded-lg transition" title="Pets"
                                       style={{ backgroundColor: expandedPetsClient === client.clientID ? accentColor + '20' : 'transparent' }}>
-                                      <span style={{ fontSize: "14px" }}>🐾</span>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="8" cy="7" rx="2.2" ry="2.8"/><ellipse cx="16" cy="7" rx="2.2" ry="2.8"/><ellipse cx="4.5" cy="12.5" rx="2" ry="2.5"/><ellipse cx="19.5" cy="12.5" rx="2" ry="2.5"/><path d="M12 22c-3.5 0-6-2-6.5-4.5-.3-1.5.5-3 2-4 1.2-.8 2.8-1.5 4.5-1.5s3.3.7 4.5 1.5c1.5 1 2.3 2.5 2 4C18 20 15.5 22 12 22z"/></svg>
                                     </button>
                                   )}
                                   <button onClick={() => deleteClient(client.clientID, client.name)}
@@ -954,7 +954,7 @@ function AdminPanel() {
                                   <div className="rounded-xl p-4" style={{ border: '1px solid ' + accentColor + '20' }}>
                                     <div className="flex items-center justify-between mb-3">
                                       <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: panelText }}>
-                                        <span style={{ fontSize: "14px" }}>🐾</span> Pets for {client.name}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="8" cy="7" rx="2.2" ry="2.8"/><ellipse cx="16" cy="7" rx="2.2" ry="2.8"/><ellipse cx="4.5" cy="12.5" rx="2" ry="2.5"/><ellipse cx="19.5" cy="12.5" rx="2" ry="2.5"/><path d="M12 22c-3.5 0-6-2-6.5-4.5-.3-1.5.5-3 2-4 1.2-.8 2.8-1.5 4.5-1.5s3.3.7 4.5 1.5c1.5 1 2.3 2.5 2 4C18 20 15.5 22 12 22z"/></svg> Pets for {client.name}
                                       </h4>
                                     </div>
 
