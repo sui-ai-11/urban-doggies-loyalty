@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     var currentCycle = cardsCompleted + (currentCardStamps > 0 ? 1 : 0);
     var stampInCard = currentCardStamps === 0 ? stampsRequired : currentCardStamps;
 
-    // Try tiered milestones first
+    // Try tiered milestones first — just detect if milestone reached (no auto-coupon)
     if (milestonesJson) {
       try {
         // JSONB column may already be parsed object, or could be string
@@ -109,27 +109,15 @@ export default async function handler(req, res) {
           }
         }
 
-        // Check if current stamp hits a milestone
+        // Check if current stamp hits a milestone — report it but don't auto-create coupon
+        // Staff will use "Give & Claim" on the Loyalty Desk
         var matchedMilestone = milestones.find(function(m) {
           var pos = m.at || m.position || 0;
           return pos === stampInCard;
         });
 
         if (matchedMilestone) {
-          var msLabel = matchedMilestone.label || matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
-          var couponID = generateID('CPN_');
-          await supabase.from('coupons').insert({
-            id: couponID,
-            business_id: businessID,
-            client_id: client.id,
-            client_name: client.name,
-            type: msLabel,
-            text: msLabel,
-            notes: 'milestone_' + stampInCard + '_cycle_' + currentCycle,
-            staff_name: staffName || '',
-            branch: branch || '',
-          });
-          milestoneReward = msLabel;
+          milestoneReward = matchedMilestone.label || matchedMilestone.reward || matchedMilestone.text || 'Milestone Reward';
         }
       } catch (e) {
         console.log('Milestone parse error:', e.message);
