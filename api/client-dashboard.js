@@ -103,6 +103,40 @@ export default async function handler(req, res) {
     var stampsRequired = (biz && biz.stamps_required) || 10;
     var currentProgress = totalVisits % stampsRequired;
 
+    // Count referrals (how many clients used this token as referral code)
+    var referralCount = 0;
+    if (client.token) {
+      var { data: referrals } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('business_id', businessID)
+        .eq('referred_by', client.token)
+        .eq('status', 'approved');
+      referralCount = (referrals || []).length;
+    }
+
+    // Get prepaid balance and transactions
+    var prepaidBalance = 0;
+    var prepaidTransactions = [];
+    try {
+      var { data: txns } = await supabase
+        .from('transactions')
+        .select('id, type, amount, created_at')
+        .eq('business_id', businessID)
+        .eq('client_id', client.id)
+        .order('created_at', { ascending: false });
+
+      (txns || []).forEach(function(t) {
+        if (t.type === 'credit') prepaidBalance += parseFloat(t.amount) || 0;
+        else prepaidBalance -= parseFloat(t.amount) || 0;
+        prepaidTransactions.push({
+          type: t.type,
+          amount: parseFloat(t.amount) || 0,
+          date: t.created_at ? t.created_at.substring(0, 10) : '',
+        });
+      });
+    } catch(e) { /* transactions table may not exist */ }
+
     return res.status(200).json({
       client: {
         clientID: client.id,
@@ -113,6 +147,7 @@ export default async function handler(req, res) {
         birthday: client.birthday || '',
         birthdayMonth: client.birthday_month || '',
         status: client.status || 'approved',
+        referralCount: referralCount,
       },
       business: Object.assign({}, businessData, {
         requiredVisits: stampsRequired,
@@ -131,6 +166,10 @@ export default async function handler(req, res) {
       }),
       totalVisits: totalVisits,
       coupons: mappedCoupons,
+      prepaid: {
+        balance: prepaidBalance,
+        transactions: prepaidTransactions,
+      },
     });
   } catch (err) {
     console.error('client-dashboard error:', err);
