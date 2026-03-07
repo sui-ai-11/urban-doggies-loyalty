@@ -11,7 +11,7 @@ function isDark(hex) {
 
 function RegisterPage() {
   var _a = useState(null), businessInfo = _a[0], setBusinessInfo = _a[1];
-  var _b = useState({ name: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '' }),
+  var _b = useState({ name: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '', referralCode: '' }),
     form = _b[0], setForm = _b[1];
   var _c = useState(false), submitting = _c[0], setSubmitting = _c[1];
   var _d = useState(''), error = _d[0], setError = _d[1];
@@ -22,6 +22,13 @@ function RegisterPage() {
       .then(function(r) { return r.json(); })
       .then(function(data) { setBusinessInfo(data); })
       .catch(function(err) { console.error(err); });
+
+    // Parse referral code from URL: /#/register?ref=ABC123
+    var hash = window.location.hash || '';
+    var refMatch = hash.match(/[?&]ref=([^&]+)/);
+    if (refMatch) {
+      setForm(function(prev) { return Object.assign({}, prev, { referralCode: decodeURIComponent(refMatch[1]) }); });
+    }
   }, []);
 
   function updateForm(key, value) {
@@ -46,6 +53,7 @@ function RegisterPage() {
         birthday: form.birthday,
         birthdayMonth: form.birthdayMonth,
         customField: form.customField.trim(),
+        referralCode: form.referralCode.trim(),
         businessID: 'BIZ_001',
       }),
     })
@@ -212,6 +220,20 @@ function RegisterPage() {
                   placeholder={'Enter ' + customFieldLabel.toLowerCase()}
                   className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm"
                   style={{ borderColor: accentColor + '40' }} />
+              </div>
+            )}
+
+            {businessInfo && businessInfo.features && businessInfo.features.referrals && (
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Referral Code</label>
+                <input type="text" value={form.referralCode}
+                  onChange={function(e) { updateForm('referralCode', e.target.value.toUpperCase()); }}
+                  placeholder="Got a referral code? Enter it here"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm focus:outline-none"
+                  style={{ borderColor: accentColor + '40' }} />
+                {form.referralCode && (
+                  <p className="text-xs mt-1" style={{ color: accentColor }}>🎉 You'll receive a 10% OFF welcome bonus!</p>
+                )}
               </div>
             )}
 
