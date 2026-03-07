@@ -70,46 +70,47 @@ export default async function handler(req, res) {
       currentCycle = Math.floor(totalVisits / stampsRequired);
     }
 
-    // Get all unclaimed coupons for this client
+    // Get ALL coupons for this client (including claimed ones)
     var { data: clientCoupons } = await supabase
       .from('coupons')
-      .select('id, notes')
+      .select('id, notes, redeemed')
       .eq('client_id', client.id)
-      .eq('business_id', businessID)
-      .eq('redeemed', 'FALSE');
+      .eq('business_id', businessID);
 
-    // Check each coupon for milestone tags
-    (clientCoupons || []).forEach(async function(coupon) {
+    // Delete milestone coupons that are now above the stamp count
+    for (var ci = 0; ci < (clientCoupons || []).length; ci++) {
+      var coupon = clientCoupons[ci];
+      if (coupon.redeemed === 'VOIDED') continue; // already voided, skip
       var notes = coupon.notes || '';
       var match = notes.match(/milestone_(\d+)_cycle_(\d+)/);
-      if (!match) return;
+      if (!match) continue;
 
       var msPosition = parseInt(match[1]);
       var msCycle = parseInt(match[2]);
 
-      // Void if position is now above current progress, or cycle is above current
+      // Delete if position is now above current progress, or cycle is above current
       if ((msCycle === currentCycle && msPosition > currentProgress) || msCycle > currentCycle) {
         await supabase
           .from('coupons')
-          .update({ redeemed: 'VOIDED', notes: notes + ' | auto-voided: stamp voided' })
+          .delete()
           .eq('id', coupon.id);
       }
-    });
+    }
 
-    // Also void card completion reward if card is no longer complete
+    // Also delete card completion reward if card is no longer complete
     if (currentProgress < stampsRequired && currentProgress > 0) {
       var { data: rewardCoupons } = await supabase
         .from('coupons')
-        .select('id, notes')
+        .select('id')
         .eq('client_id', client.id)
         .eq('business_id', businessID)
-        .eq('redeemed', 'FALSE')
+        .neq('redeemed', 'VOIDED')
         .ilike('notes', '%completing card%');
 
       if (rewardCoupons && rewardCoupons.length > 0) {
         await supabase
           .from('coupons')
-          .update({ redeemed: 'VOIDED', notes: rewardCoupons[rewardCoupons.length - 1].notes + ' | auto-voided: card no longer complete' })
+          .delete()
           .eq('id', rewardCoupons[rewardCoupons.length - 1].id);
       }
     }
