@@ -56,6 +56,7 @@ export default async function handler(req, res) {
       birthday: body.birthday || '',
       birthday_month: body.birthdayMonth || '',
       custom_field: body.customField || '',
+      referred_by: body.referralCode || '',
       source: 'Self-registered',
       status: 'pending',
     });
