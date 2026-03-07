@@ -13,13 +13,22 @@ export default function PortalPage() {
   var _c = useState(''), searchInput = _c[0], setSearchInput = _c[1];
   var _d = useState(false), searching = _d[0], setSearching = _d[1];
   var _e = useState(''), searchError = _e[0], setSearchError = _e[1];
-  var _f = useState({ firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '' }), form = _f[0], setForm = _f[1];
+  var _f = useState({ firstName: '', lastName: '', mobile: '', email: '', birthday: '', birthdayMonth: '', customField: '', referralCode: '' }), form = _f[0], setForm = _f[1];
   var _g = useState(false), submitting = _g[0], setSubmitting = _g[1];
   var _h = useState(''), regError = _h[0], setRegError = _h[1];
   var _i = useState(null), result = _i[0], setResult = _i[1];
 
   useEffect(function() {
     fetch('/api/get-business-info').then(function(r) { return r.json(); }).then(function(data) { setBusinessInfo(data); }).catch(function() {});
+    
+    // Parse referral code from URL: /#/portal?ref=ABC123
+    var hash = window.location.hash || '';
+    var refMatch = hash.match(/[?&]ref=([^&]+)/);
+    if (refMatch) {
+      var refCode = decodeURIComponent(refMatch[1]);
+      setForm(function(prev) { return Object.assign({}, prev, { referralCode: refCode }); });
+      setActiveTab('register');
+    }
   }, []);
 
   var bgColor = (businessInfo && businessInfo.backgroundColor) || '#f9fafb';
@@ -79,7 +88,7 @@ export default function PortalPage() {
     setSubmitting(true); setRegError('');
     fetch('/api/register-client', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: form.firstName.trim() + ' ' + form.lastName.trim(), mobile: form.mobile.trim(), email: form.email.trim(), birthday: form.birthday, birthdayMonth: form.birthdayMonth, customField: form.customField.trim(), businessID: 'BIZ_001' }),
+      body: JSON.stringify({ name: form.firstName.trim() + ' ' + form.lastName.trim(), mobile: form.mobile.trim(), email: form.email.trim(), birthday: form.birthday, birthdayMonth: form.birthdayMonth, customField: form.customField.trim(), referralCode: form.referralCode.trim(), businessID: 'BIZ_001' }),
     })
       .then(function(r) { return r.json(); })
       .then(function(data) { if (data.error) { setRegError(data.error); return; } setResult(data); })
@@ -286,6 +295,19 @@ export default function PortalPage() {
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">{customFieldLabel}</label>
                       <input type="text" value={form.customField} onChange={function(e) { updateForm('customField', e.target.value); }}
                         placeholder={'Enter ' + customFieldLabel.toLowerCase()} className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm" style={{ borderColor: accentColor + '40' }} />
+                    </div>
+                  )}
+                  {form.referralCode && (
+                    <div className="mb-4 p-3 rounded-xl text-center" style={{ backgroundColor: accentColor + '10', border: '1px solid ' + accentColor + '25' }}>
+                      <p className="text-sm font-bold" style={{ color: accentColor }}>🎉 Referred by: {form.referralCode}</p>
+                      <p className="text-xs mt-1" style={{ color: headingColor }}>You'll receive a 10% OFF welcome bonus!</p>
+                    </div>
+                  )}
+                  {!form.referralCode && businessInfo && businessInfo.features && businessInfo.features.referrals && (
+                    <div className="mb-4">
+                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Referral Code (optional)</label>
+                      <input type="text" value={form.referralCode} onChange={function(e) { updateForm('referralCode', e.target.value.toUpperCase()); }}
+                        placeholder="Got a referral code?" className="w-full px-4 py-3.5 rounded-xl border-2 focus:outline-none text-sm" style={{ borderColor: accentColor + '40' }} />
                     </div>
                   )}
                   {regError && (<div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold text-center">{regError}</div>)}
