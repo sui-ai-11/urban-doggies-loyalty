@@ -367,17 +367,15 @@ function StaffPanel() {
           currentProgress: newProgress,
           cardCycle: newCycle,
         }));
-        // Reload full data after a short delay (let Sheets propagate)
-        setTimeout(function() {
-          fetch('/api/client-dashboard?token=' + clientInfo.token)
-            .then(function(r2) { return r2.json(); })
-            .then(function(fullResult) {
-              if (fullResult.client) {
-                setClientInfo(buildClientInfo(fullResult));
-                setClientCoupons(fullResult.coupons || []);
-              }
-            });
-        }, 1000);
+        // Reload full data to update milestones and coupons
+        fetch('/api/client-dashboard?token=' + clientInfo.token)
+          .then(function(r2) { return r2.json(); })
+          .then(function(fullResult) {
+            if (fullResult.client) {
+              setClientInfo(buildClientInfo(fullResult));
+              setClientCoupons(fullResult.coupons || []);
+            }
+          });
       })
       .catch(function(error) { setMessage('Error: ' + error.message); })
       .finally(function() { setLoading(false); });
