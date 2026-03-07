@@ -566,7 +566,7 @@ function CustomerCard() {
               <div className="space-y-3">
                 {/* Chat Button */}
                 {business.chatLink && (
-                <a href={business.chatLink}
+                <a href={business.chatLink} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3 rounded-2xl p-4 border-2 transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: cardIsDark ? 'rgba(255,255,255,0.05)' : '#ffffff', borderColor: `${accentColor}30` }}>
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0"
