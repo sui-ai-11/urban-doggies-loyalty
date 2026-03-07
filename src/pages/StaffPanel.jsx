@@ -941,19 +941,24 @@ function StaffPanel() {
             </div>
 
             {/* Active Coupons */}
-            {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).length > 0 && (
+            {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED' && (c.notes || '').indexOf('milestone_') === -1; }).length > 0 && (
               <div className="mb-4">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).length})
+                  Coupons ({clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED' && (c.notes || '').indexOf('milestone_') === -1; }).length})
                 </p>
                 <div className="space-y-2">
-                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED'; }).map(function(coupon, idx) {
+                  {clientCoupons.filter(function(c) { return c.redeemed !== 'TRUE' && c.redeemed !== 'VOIDED' && (c.notes || '').indexOf('milestone_') === -1; }).map(function(coupon, idx) {
+                    var isExpired = coupon.expiryDate && new Date(coupon.expiryDate) < new Date();
                     return (
-                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100">
+                      <div key={idx} className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100"
+                        style={{ opacity: isExpired ? 0.5 : 1 }}>
                         <div className="flex-1 min-w-0 mr-2">
-                          <p className="font-semibold text-sm truncate" style={{ color: panelText }}>{coupon.text || 'Coupon'}</p>
-                          <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · ' + coupon.expiryDate : ''}</p>
+                          <p className="font-semibold text-sm truncate" style={{ color: isExpired ? '#9ca3af' : panelText }}>{coupon.text || 'Coupon'}</p>
+                          <p className="text-xs text-gray-400">{coupon.type}{coupon.expiryDate ? ' · Expires ' + coupon.expiryDate : ''}</p>
                         </div>
+                        {isExpired ? (
+                          <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 bg-red-50 shrink-0">Expired</span>
+                        ) : (
                         <button onClick={function() {
                           if (!confirm('Mark "' + (coupon.text || 'coupon') + '" as claimed?')) return;
                           authFetch('/api/manage-coupons', {
@@ -979,6 +984,7 @@ function StaffPanel() {
                           style={{ backgroundColor: '#10b981' }}>
                           Claim
                         </button>
+                        )}
                       </div>
                     );
                   })}
