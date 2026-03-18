@@ -57,24 +57,28 @@ export default function PortalPage() {
 
   function updateForm(key, value) { var u = Object.assign({}, form); u[key] = value; setForm(u); }
 
+  var _sb = useState(''), searchBirthday = _sb[0], setSearchBirthday = _sb[1];
+
   function handleSearch(e) {
     e.preventDefault();
     if (!searchInput.trim()) return;
     setSearching(true); setSearchError('');
     var input = searchInput.trim();
+
+    // First try as token (direct access)
     fetch('/api/client-dashboard?token=' + encodeURIComponent(input))
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (data && data.client) { window.location.hash = '/card?token=' + data.client.token; return; }
-        var isEmail = input.indexOf('@') > -1;
-        var query = isEmail ? 'email=' + encodeURIComponent(input) : 'mobile=' + encodeURIComponent(input);
-        return fetch('/api/find-client-by-email?' + query).then(function(r) { return r.json(); });
+        // Not a token — try mobile + birthday
+        if (!searchBirthday) { setSearchError('Please enter your birthday to verify your identity'); setSearching(false); return; }
+        return fetch('/api/find-client-by-email?mobile=' + encodeURIComponent(input) + '&birthday=' + encodeURIComponent(searchBirthday)).then(function(r) { return r.json(); });
       })
       .then(function(data) {
         if (!data) return;
         if (data.token) { window.location.hash = '/card?token=' + data.token; }
         else if (data.error) { setSearchError(data.error); }
-        else { setSearchError('No card found. Please check your token, email, or mobile number.'); }
+        else { setSearchError('No card found. Please check your details.'); }
       })
       .catch(function() { setSearchError('Something went wrong. Please try again.'); })
       .finally(function() { setSearching(false); });
@@ -228,8 +232,13 @@ export default function PortalPage() {
                 </div>
                 <form onSubmit={handleSearch}>
                   <input type="text" value={searchInput} onChange={function(e) { setSearchInput(e.target.value); setSearchError(''); }}
-                    placeholder="Token, email, or mobile number..." className="w-full px-5 py-4 rounded-2xl border-2 focus:outline-none text-sm mb-4"
+                    placeholder="Token or mobile number" className="w-full px-5 py-4 rounded-2xl border-2 focus:outline-none text-sm mb-3"
                     style={{ borderColor: accentColor + '40' }} autoFocus />
+                  <input type="date" value={searchBirthday} onChange={function(e) { setSearchBirthday(e.target.value); setSearchError(''); }}
+                    className="w-full px-5 py-4 rounded-2xl border-2 focus:outline-none text-sm mb-4"
+                    style={{ borderColor: accentColor + '40', color: searchBirthday ? 'inherit' : '#9ca3af' }}
+                    placeholder="Birthday" />
+                  <p className="text-xs text-gray-400 text-center mb-3">Enter your token directly, or your mobile + birthday to find your card</p>
                   <button type="submit" disabled={searching || !searchInput.trim()}
                     className="w-full py-4 rounded-2xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
                     style={{ backgroundColor: accentColor, color: btnOnAccent }}>
