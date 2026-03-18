@@ -8,34 +8,36 @@ export default async function handler(req, res) {
 
   try {
     var businessID = await getTenant(req);
-    var email = req.query.email || '';
-    var mobile = req.query.mobile || '';
     var token = req.query.token || '';
+    var mobile = req.query.mobile || '';
+    var birthday = req.query.birthday || '';
 
-    if (!email && !mobile && !token) {
-      return res.status(400).json({ error: 'Email, mobile, or token required' });
-    }
-
-    var query = supabase.from('clients').select('*').eq('business_id', businessID);
-
+    // Token lookup — direct access (from saved links)
     if (token) {
-      query = query.eq('token', token);
-    } else if (mobile) {
-      query = query.eq('mobile', mobile);
-    } else {
-      query = query.eq('email', email);
+      var { data: byToken } = await supabase.from('clients').select('token, name')
+        .eq('business_id', businessID).eq('token', token).single();
+      if (!byToken) return res.status(404).json({ error: 'No card found' });
+      return res.status(200).json({ token: byToken.token, name: byToken.name });
     }
 
-    var { data, error } = await query.limit(1).single();
+    // Mobile + birthday required for search
+    if (!mobile || !birthday) {
+      return res.status(400).json({ error: 'Please enter both mobile number and birthday' });
+    }
 
-    if (error || !data) return res.status(404).json({ error: 'No client found' });
+    var { data, error } = await supabase.from('clients').select('token, name, birthday')
+      .eq('business_id', businessID).eq('mobile', mobile).limit(1).single();
 
-    return res.status(200).json({
-      token: data.token,
-      name: data.name,
-    });
+    if (error || !data) return res.status(404).json({ error: 'No card found with this mobile number' });
+
+    // Verify birthday matches
+    if (!data.birthday || data.birthday !== birthday) {
+      return res.status(401).json({ error: 'Birthday does not match. Please try again.' });
+    }
+
+    return res.status(200).json({ token: data.token, name: data.name });
   } catch (err) {
-    console.error('find-client-by-email error:', err);
+    console.error('find-client error:', err);
     return res.status(500).json({ error: err.message });
   }
 }
