@@ -1,15 +1,10 @@
-import { verifySession } from './_lib/auth.js';
 import { supabase, getTenant } from './_lib/supabase.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-
-    // Auth check
-    var session = await verifySession(req);
-    if (!session) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     var businessID = await getTenant(req);
@@ -36,14 +31,8 @@ export default async function handler(req, res) {
     if (error || !data) return res.status(404).json({ error: 'No client found' });
 
     return res.status(200).json({
-      client: {
-        clientID: data.id,
-        name: data.name,
-        token: data.token,
-        mobile: data.mobile || '',
-        email: data.email || '',
-        status: data.status || 'approved',
-      }
+      token: data.token,
+      name: data.name,
     });
   } catch (err) {
     console.error('find-client-by-email error:', err);
