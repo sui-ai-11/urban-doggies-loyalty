@@ -434,6 +434,7 @@ function TrackerApp() {
   var [headerTitle, setHeaderTitle] = useState("DUDE, WHERE'S MY MONEY?");
   var [editingTitle, setEditingTitle] = useState(false);
   var [tempTitle, setTempTitle] = useState("");
+  var [reportYear, setReportYear] = useState(new Date().getFullYear());
   var [selectedMonth, setSelectedMonth] = useState(function() { var n = new Date(); return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0"); });
 
   var fmt = useCallback(function(n) { return formatCurrency(n, currency); }, [currency]);
@@ -491,6 +492,30 @@ function TrackerApp() {
   var monthName = useMemo(function() { var p = selectedMonth.split("-"); return new Date(parseInt(p[0]), parseInt(p[1]) - 1).toLocaleString("default", { month: "long", year: "numeric" }); }, [selectedMonth]);
   var initials = userName.split(" ").map(function(w) { return w[0]; }).join("").toUpperCase().slice(0, 2) || "U";
   var recurringTotal = useMemo(function() { return recurring.filter(function(r) { return r.active; }).reduce(function(s, r) { return s + r.amount; }, 0); }, [recurring]);
+
+  var availableYears = useMemo(function() {
+    var years = {};
+    expenses.forEach(function(e) { years[new Date(e.date).getFullYear()] = true; });
+    years[new Date().getFullYear()] = true;
+    return Object.keys(years).map(Number).sort(function(a, b) { return b - a; });
+  }, [expenses]);
+
+  var monthlyReport = useMemo(function() {
+    var months = [];
+    for (var m = 0; m < 12; m++) {
+      var key = reportYear + "-" + String(m + 1).padStart(2, "0");
+      var mExpenses = expenses.filter(function(e) { return getMonthKey(new Date(e.date)) === key; });
+      var total = mExpenses.reduce(function(s, e) { return s + e.amount; }, 0);
+      var saved = Math.max(budget - total, 0);
+      var over = Math.max(total - budget, 0);
+      months.push({ month: m, key: key, name: new Date(reportYear, m).toLocaleString("default", { month: "short" }), fullName: new Date(reportYear, m).toLocaleString("default", { month: "long" }), total: total, saved: saved, over: over, count: mExpenses.length });
+    }
+    return months;
+  }, [expenses, reportYear, budget]);
+
+  var yearTotal = useMemo(function() { return monthlyReport.reduce(function(s, m) { return s + m.total; }, 0); }, [monthlyReport]);
+  var yearSaved = useMemo(function() { return monthlyReport.reduce(function(s, m) { return s + m.saved; }, 0); }, [monthlyReport]);
+  var yearMaxMonth = useMemo(function() { return Math.max.apply(null, monthlyReport.map(function(m) { return m.total; }).concat([1])); }, [monthlyReport]);
 
   if (!loaded) { return (<div className="min-h-screen bg-white flex items-center justify-center"><div className="text-2xl font-bold uppercase tracking-tighter animate-pulse" style={fH}>LEDGER</div></div>); }
 
@@ -577,7 +602,123 @@ function TrackerApp() {
 
         {view === "recurring" && (<><div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-12"><div><h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-none" style={fH}>RECURRING</h1><p className="text-sm uppercase tracking-[0.2em] mt-2" style={fL}>Monthly auto-expenses</p></div><button onClick={function() { setShowAddRecurring(true); }} className="border-2 border-black px-6 py-3 font-bold uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-colors active:scale-95" style={fH}><Icon name="add" className="mr-1 align-middle text-lg" /> Add</button></div>{pendingRecurring.length > 0 && <PendingBanner pending={pendingRecurring} fmt={fmt} onConfirm={confirmRecurring} onSkip={skipRecurring} onDismiss={function() { }} />}<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-8 mb-12"><div className="border-2 border-black p-6 md:p-8"><p className="text-xs uppercase text-black/60 mb-1" style={fL}>Active Recurring</p><p className="text-3xl md:text-4xl font-bold" style={fH}>{recurring.filter(function(r) { return r.active; }).length}</p></div><div className="border-2 border-black p-6 md:p-8"><p className="text-xs uppercase text-black/60 mb-1" style={fL}>Monthly Total</p><p className="text-3xl md:text-4xl font-bold" style={fH}>{fmt(recurringTotal)}</p></div><div className="border-2 border-black p-6 md:p-8"><p className="text-xs uppercase text-black/60 mb-1" style={fL}>% of Budget</p><p className="text-3xl md:text-4xl font-bold" style={fH}>{budget > 0 ? Math.round((recurringTotal / budget) * 100) : 0}%</p></div></div>{recurring.length === 0 ? (<div className="border-2 border-dashed border-black/30 p-12 text-center"><p className="text-black/40 uppercase text-sm" style={fL}>No recurring expenses set up yet.</p></div>) : (<div className="space-y-4">{recurring.map(function(r) { var logged = loggedRecurring[currentMK + "-" + r.id]; return (<div key={r.id} className={"border-2 border-black p-4 md:p-6 " + (r.active ? "" : "opacity-40")}><div className="flex items-start gap-3 mb-3"><div className="w-10 h-10 border border-black flex items-center justify-center shrink-0"><Icon name={r.icon} className="text-xl" /></div><div className="flex-1 min-w-0"><p className="font-bold uppercase text-xs md:text-sm truncate" style={fL}>{r.description}</p><p className="text-[10px] text-black/50" style={fL}>{r.categoryLabel} &bull; Day {r.dayOfMonth} monthly</p>{logged && logged !== "skipped" && <p className="text-[10px] text-black/40 mt-1" style={fL}>&check; Logged this month</p>}{logged === "skipped" && <p className="text-[10px] text-black/40 mt-1" style={fL}>Skipped this month</p>}</div></div><div className="flex items-center justify-between"><span className="text-lg md:text-xl font-bold" style={fH}>{fmt(r.amount)}</span><div className="flex items-center gap-2"><button onClick={function() { toggleRecurringItem(r.id); }} className="border border-black w-8 h-8 flex items-center justify-center hover:bg-black hover:text-white transition-colors"><Icon name={r.active ? "pause" : "play_arrow"} className="text-lg" /></button><button onClick={function() { deleteRecurringItem(r.id); }} className="border border-black w-8 h-8 flex items-center justify-center hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"><Icon name="delete" className="text-lg" /></button></div></div></div>); })}</div>)}</>)}
 
-        {view === "reports" && (<><h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-2" style={fH}>REPORTS</h1><p className="text-sm uppercase tracking-[0.2em] mb-12" style={fL}>Analytics & Insights</p><div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12"><div className="border-2 border-black p-8"><h2 className="font-bold text-lg uppercase mb-6 tracking-tighter" style={fH}>SPENDING BY CATEGORY</h2>{categoryBreakdown.length === 0 ? (<p className="text-black/40 uppercase text-sm" style={fL}>No data.</p>) : (<div className="space-y-3">{categoryBreakdown.map(function(item) { return (<div key={item.category} className="flex items-center gap-4"><div className="w-20 text-right"><span className="text-xs font-bold uppercase" style={fL}>{item.category}</span></div><div className="flex-1 h-4 border border-black"><div className="h-full bg-black transition-all" style={{ width: item.pct + "%" }} /></div><span className="text-xs w-16 text-right" style={fL}>{fmt(item.amount)}</span></div>); })}</div>)}</div><div className="border-2 border-black p-8"><h2 className="font-bold text-lg uppercase mb-6 tracking-tighter" style={fH}>KEY METRICS</h2><div className="space-y-4"><div className="flex justify-between items-end border-b border-black pb-3"><span className="text-xs uppercase" style={fL}>Total Expenses (All Time)</span><span className="text-xl font-bold" style={fH}>{fmt(expenses.reduce(function(s, e) { return s + e.amount; }, 0))}</span></div><div className="flex justify-between items-end border-b border-black pb-3"><span className="text-xs uppercase" style={fL}>Total Transactions</span><span className="text-xl font-bold" style={fH}>{expenses.length}</span></div><div className="flex justify-between items-end border-b border-black pb-3"><span className="text-xs uppercase" style={fL}>Avg per Transaction</span><span className="text-xl font-bold" style={fH}>{expenses.length > 0 ? fmt(expenses.reduce(function(s, e) { return s + e.amount; }, 0) / expenses.length) : "\u2014"}</span></div><div className="flex justify-between items-end border-b border-black pb-3"><span className="text-xs uppercase" style={fL}>Largest Expense</span><span className="text-xl font-bold" style={fH}>{expenses.length > 0 ? fmt(Math.max.apply(null, expenses.map(function(e) { return e.amount; }))) : "\u2014"}</span></div><div className="flex justify-between items-end border-b border-black pb-3"><span className="text-xs uppercase" style={fL}>Recurring Monthly</span><span className="text-xl font-bold" style={fH}>{fmt(recurringTotal)}</span></div><div className="flex justify-between items-end pb-3"><span className="text-xs uppercase" style={fL}>Categories Used</span><span className="text-xl font-bold" style={fH}>{new Set(expenses.map(function(e) { return e.category; })).size}</span></div></div></div></div><div className="border-2 border-black p-8"><h2 className="font-bold text-lg uppercase mb-6 tracking-tighter" style={fH}>TOP EXPENSES</h2>{expenses.length === 0 ? (<p className="text-black/40 uppercase text-sm" style={fL}>No data.</p>) : (<div className="space-y-3">{expenses.slice().sort(function(a, b) { return b.amount - a.amount; }).slice(0, 10).map(function(e, i) { return (<div key={e.id + e.timestamp} className="flex items-center gap-4 border-b border-black/20 pb-3"><span className="text-2xl font-black w-10" style={fH}>{String(i + 1).padStart(2, "0")}</span><div className="flex-1"><p className="text-xs uppercase font-bold" style={fL}>{e.categoryLabel}</p><p className="text-xs text-black/60">{e.description}</p></div><span className="text-lg font-bold" style={fH}>{fmt(e.amount)}</span></div>); })}</div>)}</div><div className="mt-8 flex justify-center"><button onClick={exportCSV} className="border-2 border-black px-8 py-4 font-bold uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-colors" style={fH}><Icon name="download" className="mr-2 align-middle" /> Export All Data .CSV</button></div></>)}
+        {view === "reports" && (
+          <>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 md:mb-12">
+              <div>
+                <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-none" style={fH}>REPORTS</h1>
+                <p className="text-sm uppercase tracking-[0.2em] mt-2" style={fL}>Year in Review</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={function() { setReportYear(reportYear - 1); }} className="border border-black w-8 h-8 flex items-center justify-center hover:bg-black hover:text-white transition-colors active:scale-95"><Icon name="chevron_left" className="text-lg" /></button>
+                <span className="text-xl font-bold min-w-[60px] text-center" style={fH}>{reportYear}</span>
+                <button onClick={function() { setReportYear(reportYear + 1); }} className="border border-black w-8 h-8 flex items-center justify-center hover:bg-black hover:text-white transition-colors active:scale-95"><Icon name="chevron_right" className="text-lg" /></button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8 mb-8 md:mb-12">
+              <div className="border-2 border-black p-4 md:p-8">
+                <p className="text-[10px] md:text-xs uppercase text-black/60 mb-1" style={fL}>Year Total</p>
+                <p className="text-lg md:text-3xl font-bold" style={fH}>{fmt(yearTotal)}</p>
+              </div>
+              <div className="border-2 border-black p-4 md:p-8">
+                <p className="text-[10px] md:text-xs uppercase text-black/60 mb-1" style={fL}>Monthly Budget</p>
+                <p className="text-lg md:text-3xl font-bold" style={fH}>{fmt(budget)}</p>
+              </div>
+              <div className="border-2 border-black p-4 md:p-8">
+                <p className="text-[10px] md:text-xs uppercase text-black/60 mb-1" style={fL}>Total Saved</p>
+                <p className="text-lg md:text-3xl font-bold" style={fH}>{fmt(yearSaved)}</p>
+              </div>
+              <div className="border-2 border-black p-4 md:p-8">
+                <p className="text-[10px] md:text-xs uppercase text-black/60 mb-1" style={fL}>Monthly Avg</p>
+                <p className="text-lg md:text-3xl font-bold" style={fH}>{fmt(yearTotal / 12)}</p>
+              </div>
+            </div>
+
+            <div className="border-2 border-black p-4 md:p-8 mb-8 md:mb-12">
+              <h2 className="font-bold text-sm md:text-lg uppercase mb-4 md:mb-6 tracking-tighter" style={fH}>MONTH BY MONTH</h2>
+              <div className="h-40 md:h-56 flex items-end gap-1 md:gap-2 mb-2">
+                {monthlyReport.map(function(m) {
+                  var pct = yearMaxMonth > 0 ? (m.total / yearMaxMonth) * 100 : 0;
+                  var isOver = m.total > budget;
+                  return (
+                    <div key={m.key} className="flex-1 flex flex-col items-center gap-1">
+                      <div className={"w-full transition-all duration-500 " + (isOver ? "bg-black" : m.total > 0 ? "bg-black/70" : "bg-black/10")} style={{ height: Math.max(pct, 2) + "%" }} />
+                      <span className="text-[7px] md:text-[10px] uppercase font-bold" style={fL}>{m.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-black"></div><span className="text-[8px] md:text-[10px] uppercase" style={fL}>Over budget</span></div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-black/70"></div><span className="text-[8px] md:text-[10px] uppercase" style={fL}>Under budget</span></div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-black/10"></div><span className="text-[8px] md:text-[10px] uppercase" style={fL}>No data</span></div>
+              </div>
+            </div>
+
+            <div className="border-2 border-black mb-8 md:mb-12">
+              <div className="bg-black text-white p-4 md:p-6">
+                <h2 className="font-bold text-sm md:text-lg uppercase tracking-tighter" style={fH}>MONTHLY BREAKDOWN — {reportYear}</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="text-[8px] md:text-xs uppercase tracking-widest" style={fL}>
+                      <th className="border border-black p-3 md:p-4 text-left bg-neutral-50">Month</th>
+                      <th className="border border-black p-3 md:p-4 text-right bg-neutral-50">Spent</th>
+                      <th className="border border-black p-3 md:p-4 text-right bg-neutral-50 hidden sm:table-cell">Budget</th>
+                      <th className="border border-black p-3 md:p-4 text-right bg-neutral-50">Saved</th>
+                      <th className="border border-black p-3 md:p-4 text-center bg-neutral-50">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs md:text-sm">
+                    {monthlyReport.map(function(m, i) {
+                      var isOver = m.total > budget;
+                      var isFuture = reportYear > new Date().getFullYear() || (reportYear === new Date().getFullYear() && m.month > new Date().getMonth());
+                      return (
+                        <tr key={m.key} className={i % 2 === 1 ? "bg-neutral-50" : ""}>
+                          <td className="border border-black p-3 md:p-4 font-bold uppercase" style={fL}><span className="hidden sm:inline">{m.fullName}</span><span className="sm:hidden">{m.name}</span></td>
+                          <td className="border border-black p-3 md:p-4 text-right font-bold" style={fH}>{m.count > 0 ? fmt(m.total) : "\u2014"}</td>
+                          <td className="border border-black p-3 md:p-4 text-right hidden sm:table-cell" style={fL}>{fmt(budget)}</td>
+                          <td className={"border border-black p-3 md:p-4 text-right font-bold " + (isOver && m.count > 0 ? "text-red-600" : "")} style={fH}>{m.count > 0 ? (isOver ? "-" + fmt(m.over) : fmt(m.saved)) : "\u2014"}</td>
+                          <td className="border border-black p-3 md:p-4 text-center">
+                            {isFuture ? (<span className="text-[8px] md:text-[10px] uppercase text-black/30" style={fL}>Upcoming</span>) : m.count === 0 ? (<span className="text-[8px] md:text-[10px] uppercase text-black/30" style={fL}>No data</span>) : isOver ? (<span className="bg-black text-white px-2 py-1 text-[8px] md:text-[10px] uppercase font-bold" style={fL}>Over</span>) : (<span className="border border-black px-2 py-1 text-[8px] md:text-[10px] uppercase font-bold" style={fL}>Saved</span>)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-black text-white">
+                      <td className="border border-black p-3 md:p-4 font-bold uppercase" style={fL}>Total</td>
+                      <td className="border border-black p-3 md:p-4 text-right font-bold" style={fH}>{fmt(yearTotal)}</td>
+                      <td className="border border-black p-3 md:p-4 text-right hidden sm:table-cell" style={fL}>{fmt(budget * 12)}</td>
+                      <td className="border border-black p-3 md:p-4 text-right font-bold" style={fH}>{fmt(yearSaved)}</td>
+                      <td className="border border-black p-3 md:p-4"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="border-2 border-black p-4 md:p-8 mb-8 md:mb-12">
+              <h2 className="font-bold text-sm md:text-lg uppercase mb-4 md:mb-6 tracking-tighter" style={fH}>SPENDING BY CATEGORY</h2>
+              {categoryBreakdown.length === 0 ? (<p className="text-black/40 uppercase text-sm" style={fL}>No data for selected month.</p>) : (
+                <div className="space-y-3">
+                  {categoryBreakdown.map(function(item) { return (
+                    <div key={item.category} className="flex items-center gap-3 md:gap-4">
+                      <div className="w-16 md:w-20 text-right"><span className="text-[10px] md:text-xs font-bold uppercase" style={fL}>{item.category}</span></div>
+                      <div className="flex-1 h-4 border border-black"><div className="h-full bg-black transition-all" style={{ width: item.pct + "%" }} /></div>
+                      <span className="text-[10px] md:text-xs w-14 md:w-16 text-right" style={fL}>{fmt(item.amount)}</span>
+                    </div>
+                  ); })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-center">
+              <button onClick={exportCSV} className="border-2 border-black px-6 md:px-8 py-3 md:py-4 font-bold uppercase tracking-widest text-xs md:text-sm hover:bg-black hover:text-white transition-colors" style={fH}><Icon name="download" className="mr-2 align-middle" /> Export Data .CSV</button>
+            </div>
+          </>
+        )}
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t-2 border-black h-16 flex items-center justify-around z-50 safe-bottom">
